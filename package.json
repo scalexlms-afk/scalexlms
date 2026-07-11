@@ -1,0 +1,22 @@
+{
+  "name": "scalex-launchpad",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "db:migrate": "node scripts/apply-migrations.mjs",
+    "db:types": "node scripts/generate-types.mjs",
+    "db:seed-test-users": "node scripts/seed-test-users.mjs"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.9.3"
+  },
+  "packageManager": "pnpm@10.12.1",
+  "engines": {
+    "node": ">=20"
+  }
+}

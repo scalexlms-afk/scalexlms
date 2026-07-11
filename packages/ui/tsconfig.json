@@ -1,0 +1,9 @@
+{
+  "extends": "@scalex/config/typescript/base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "rootDir": "src"
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules"]
+}

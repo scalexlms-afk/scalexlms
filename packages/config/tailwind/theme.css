@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@theme {
+  --color-scalex-red: #e31e24;
+  --color-scalex-red-dark: #b4181d;
+  --color-scalex-black: #0b0b10;
+  --color-scalex-charcoal: #16161d;
+  --color-scalex-charcoal-alt: #1d1d26;
+  --color-scalex-white: #ffffff;
+
+  --color-text-primary-dark: #f5f5f7;
+  --color-text-secondary-dark: #9ca3af;
+  --color-text-tertiary-dark: #6b7280;
+
+  --color-accent-blue: #3b82f6;
+  --color-accent-teal: #22d3ee;
+  --color-accent-purple: #8b5cf6;
+  --color-accent-green: #22c55e;
+  --color-accent-amber: #f59e0b;
+  --color-accent-gold: #ffc94a;
+  --color-accent-danger: #ef4444;
+
+  --color-bg-light: #ffffff;
+  --color-bg-light-alt: #f7f7f9;
+  --color-text-primary-light: #0b0b10;
+  --color-text-secondary-light: #4b5563;
+
+  --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 14px;
+  --radius-button: 10px;
+
+  --animate-fade-up: fade-up 0.5s ease-out both;
+  --animate-fade-in: fade-in 0.4s ease-out both;
+  --animate-grow-x: grow-x 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-shimmer: shimmer 2.5s linear infinite;
+  --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-scalex-black text-text-primary-dark font-body antialiased;
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--color-scalex-red) 35%, transparent);
+    color: var(--color-text-primary-dark);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.22);
+  }
+}

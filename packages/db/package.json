@@ -1,0 +1,31 @@
+{
+  "name": "@scalex/db",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts",
+    "./middleware": "./src/middleware.ts",
+    "./rbac": "./src/rbac.ts",
+    "./types": "./src/database.types.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.6.1",
+    "@supabase/supabase-js": "^2.49.8"
+  },
+  "devDependencies": {
+    "@scalex/config": "workspace:*",
+    "@types/node": "^20",
+    "next": "16.2.10",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
