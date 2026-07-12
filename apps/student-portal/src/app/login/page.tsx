@@ -1,9 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@scalex/ui";
 import { loginAction } from "../auth/actions";
 import { AuthShell } from "@/components/auth-shell";
 import { AuthSessionBanner } from "@/components/auth-session-banner";
 import { Field } from "@/components/field";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Sign In",
+  description:
+    "Sign in to ScaleX LaunchPad — your Amazon FBA private label learning portal with milestones, mentor review, and progress tracking.",
+  path: "/login",
+});
 
 export default async function LoginPage({
   searchParams,

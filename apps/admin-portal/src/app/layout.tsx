@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "ScaleX Management OS",
   description:
     "Learn. Build. Launch. Grow. — Admin control room for ScaleX LaunchPad academy management.",
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({

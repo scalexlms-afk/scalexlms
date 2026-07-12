@@ -1,9 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@scalex/ui";
 import { registerAction } from "../auth/actions";
 import { AuthShell } from "@/components/auth-shell";
 import { AuthSessionBanner } from "@/components/auth-session-banner";
 import { Field } from "@/components/field";
+import { pageMetadata } from "@/lib/seo";
+
+export const metadata: Metadata = pageMetadata({
+  title: "Register",
+  description:
+    "Create your ScaleX LaunchPad account and start the Amazon FBA private label journey — structured milestones, AI mentor, and human validation.",
+  path: "/register",
+});
 
 export default async function RegisterPage({
   searchParams,

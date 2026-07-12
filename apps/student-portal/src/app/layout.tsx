@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { GoogleAnalytics } from "@/components/google-analytics";
+import { rootMetadata } from "@/lib/seo";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "ScaleX LaunchPad",
-  description: "Learn. Build. Launch. Grow. — AI-powered Amazon FBA education.",
-};
+export const metadata: Metadata = rootMetadata;
 
 export default function RootLayout({
   children,
