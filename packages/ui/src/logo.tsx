@@ -21,9 +21,9 @@ export function Logo({
     <div className={`inline-flex flex-col items-start ${className}`}>
       {showMark && (
         <img
-          src="/scalex-logo.png"
+          src="/scalex-logo-transparent.png"
           alt="ScaleX"
-          className={`${logoSize[size]} shrink-0 object-contain`}
+          className={`${logoSize[size]} shrink-0 object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,0.85)]`}
         />
       )}
       {showTagline && (
