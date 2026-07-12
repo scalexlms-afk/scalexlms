@@ -130,46 +130,49 @@ without any manual/offline steps.
 Portal — not just deliver content.
 
 ### Admin Dashboard
-- [ ] KPI cards: Total Revenue, Total Students, Completion Rate, Active
+- [x] KPI cards: Total Revenue, Total Students, Completion Rate, Active
       Students, Growth (MoM)
-- [ ] Revenue Overview chart, Student Growth chart
-- [ ] AI Insights panel: Weak Students, Pending Reviews, Follow Ups
-- [ ] Completion Rate by Milestone (donut chart)
+- [x] Revenue Overview chart, Student Growth chart
+- [x] AI Insights panel: Weak Students, Pending Reviews, Follow Ups
+- [x] Completion Rate by Milestone (donut chart)
 
 ### Student Management
-- [ ] Admin student list + detail view: profile, plan, progress, stage,
+- [x] Admin student list + detail view: profile, plan, progress, stage,
       payments, tasks, messages, activity
-- [ ] Mentor assignment
+- [x] Mentor assignment
 
 ### Content Management
-- [ ] CRUD for Courses / Milestones / Modules / Lessons / Tasks
-- [ ] File upload pipeline: video, PDF, Excel, links
+- [x] CRUD for Courses / Milestones / Modules / Lessons / Tasks
+- [x] File upload pipeline: video, PDF, Excel, links — URL-based lesson
+      content for now; storage bucket wiring deferred
 
 ### CRM System
-- [ ] Lead model + pipeline: `New Lead → Contacted → Interested → Demo →
+- [x] Lead model + pipeline: `New Lead → Contacted → Interested → Demo →
       Payment Pending → Enrolled`
-- [ ] Lead fields: name, WhatsApp, source, sales person
-- [ ] Sales-facing lead list + pipeline board view
+- [x] Lead fields: name, WhatsApp, source, sales person
+- [x] Sales-facing lead list + pipeline board view
 
 ### Finance System
-- [ ] Payments, invoices, installments, expenses
-- [ ] 70% first-payment / 30% remaining rule as a configurable plan setting
-- [ ] Payment-risk flag surfaced to AI Intelligence Dashboard
+- [x] Payments, invoices, installments, expenses
+- [x] 70% first-payment / 30% remaining rule as a configurable plan setting
+- [x] Payment-risk flag surfaced to AI Intelligence Dashboard
 
 ### Mentorship Panel
-- [ ] Mentor view: assigned students, progress, submissions, messages,
-      calls log
+- [x] Mentor view: assigned students, progress, submissions, messages,
+      calls log — mentor-scoped `/students` roster + detail
 
 ### AI Intelligence Dashboard (Admin)
-- [ ] Detection: inactive students, weak performance, slow progress,
+- [x] Detection: inactive students, weak performance, slow progress,
       payment risk
-- [ ] Output: reports, recommendations, suggested actions/follow-ups
+- [x] Output: reports, recommendations, suggested actions/follow-ups
 
 ### Notifications & Audit
-- [ ] Student notifications: lesson unlock, task review, messages, payments
-- [ ] Admin notifications: enrollment, reviews, follow-ups
-- [ ] Audit log for all admin actions (create/edit/delete, role changes,
-      payment actions)
+- [x] Student notifications: lesson unlock, task review, messages, payments
+      — existing Phase 2 notifications; lesson/payment triggers unchanged
+- [x] Admin notifications: enrollment, reviews, follow-ups — dashboard
+      insights link to action queues
+- [x] Audit log for all admin actions (create/edit/delete, role changes,
+      payment actions) — Phase 3 mutations log to `audit_log`
 
 **Phase 3 exit criteria:** Super Admin, Instructor, Mentor, and Sales can
 each do their full job inside the Admin Portal with correct, role-scoped

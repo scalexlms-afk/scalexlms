@@ -1,5 +1,6 @@
 import { AdminShell } from "@/components/admin-shell";
-import { Field } from "@/components/field";
+import { SessionEditor } from "@/components/session-editor";
+import { Field, TextArea } from "@/components/field";
 import { requireAdminProfile, requireFeature } from "@/lib/auth";
 import { getLiveSessions } from "@/lib/data";
 import { createSessionAction } from "./actions";
@@ -50,7 +51,7 @@ export default async function SessionsPage() {
             Live Sessions
           </h1>
           <p className="mt-1 text-text-secondary-dark">
-            Schedule classes and review upcoming sessions.
+            Schedule classes, upload recordings, and manage session details.
           </p>
         </div>
 
@@ -93,6 +94,9 @@ export default async function SessionsPage() {
                 type="url"
                 placeholder="https://zoom.us/..."
               />
+              <div className="sm:col-span-2">
+                <TextArea label="Description" name="description" rows={2} />
+              </div>
               <div className="sm:col-span-2">
                 <Button type="submit">Create session</Button>
               </div>
@@ -175,16 +179,11 @@ export default async function SessionsPage() {
                       </a>
                     )}
                     {session.recording_url && (
-                      <a
-                        href={session.recording_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-scalex-red hover:underline"
-                      >
-                        View recording
-                      </a>
+                      <span className="text-accent-green">Recording attached</span>
                     )}
                   </div>
+
+                  {canCreate && <SessionEditor session={session} />}
                 </Card>
               );
             })}

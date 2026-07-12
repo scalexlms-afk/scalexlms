@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { PortalShell } from "@/components/portal-shell";
+import { ProtectedMediaPlayer } from "@/components/protected-media-player";
 import { requireStudentProfile } from "@/lib/auth";
 import { getRecordedSessions, getUpcomingSessions } from "@/lib/data";
+import { getSecureMediaUrl } from "@/lib/secure-media";
 import { Card, Button, StatusPill } from "@scalex/ui";
 import { registerForSessionAction } from "./actions";
 
@@ -23,11 +24,22 @@ const sessionTypeLabels: Record<string, string> = {
 };
 
 export default async function SessionsPage() {
-  const { userId } = await requireStudentProfile();
+  const { userId, profile } = await requireStudentProfile();
   const [upcoming, recordings] = await Promise.all([
     getUpcomingSessions(userId),
     getRecordedSessions(),
   ]);
+
+  const watermark = `${profile.email} · ${profile.name}`;
+
+  const recordingsWithUrls = await Promise.all(
+    recordings.map(async (session) => ({
+      ...session,
+      secureRecordingUrl: session.recording_url
+        ? await getSecureMediaUrl(session.recording_url)
+        : null,
+    }))
+  );
 
   return (
     <PortalShell activePath="/sessions">
@@ -106,34 +118,35 @@ export default async function SessionsPage() {
 
         <div className="space-y-4">
           <h2 className="font-display text-lg font-semibold">Recordings</h2>
-          {recordings.length === 0 ? (
+          {recordingsWithUrls.length === 0 ? (
             <Card>
               <p className="text-sm text-text-secondary-dark">
                 No recordings available yet.
               </p>
             </Card>
           ) : (
-            recordings.map((session) => (
+            recordingsWithUrls.map((session) => (
               <Card key={session.id}>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <h3 className="font-medium text-text-primary-dark">
-                      {session.title}
-                    </h3>
-                    <p className="text-xs text-text-tertiary-dark">
-                      {formatSessionTime(session.scheduled_at)}
-                    </p>
+                <h3 className="font-medium text-text-primary-dark">
+                  {session.title}
+                </h3>
+                <p className="mt-1 text-xs text-text-tertiary-dark">
+                  {formatSessionTime(session.scheduled_at)}
+                </p>
+                {session.secureRecordingUrl ? (
+                  <div className="mt-4">
+                    <ProtectedMediaPlayer
+                      url={session.secureRecordingUrl}
+                      title={session.title}
+                      type="auto"
+                      watermark={watermark}
+                    />
                   </div>
-                  {session.recording_url && (
-                    <Link
-                      href={session.recording_url}
-                      target="_blank"
-                      className="text-sm font-medium text-scalex-red hover:underline"
-                    >
-                      Watch recording →
-                    </Link>
-                  )}
-                </div>
+                ) : session.recording_url ? (
+                  <p className="mt-4 text-sm text-text-secondary-dark">
+                    Recording unavailable. Please refresh the page.
+                  </p>
+                ) : null}
               </Card>
             ))
           )}

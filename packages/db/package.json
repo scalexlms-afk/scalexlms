@@ -10,6 +10,7 @@
     "./server": "./src/server.ts",
     "./middleware": "./src/middleware.ts",
     "./rbac": "./src/rbac.ts",
+    "./media": "./src/media.ts",
     "./types": "./src/database.types.ts"
   },
   "scripts": {

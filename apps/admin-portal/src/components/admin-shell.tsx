@@ -53,6 +53,29 @@ const SessionsIcon = (
   </svg>
 );
 
+const StudentsIcon = (
+  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
+    <path
+      d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const ContentIcon = (
+  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
+    <path
+      d="M4 6h16M4 12h16M4 18h10"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
 const CrmIcon = (
   <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
     <path
@@ -135,6 +158,18 @@ const NAV_CATALOG: { title: string; items: NavDef[] }[] = [
         href: "/sessions",
         feature: "live_sessions",
         icon: SessionsIcon,
+      },
+      {
+        label: "Students",
+        href: "/students",
+        feature: "student_management",
+        icon: StudentsIcon,
+      },
+      {
+        label: "Content",
+        href: "/content",
+        feature: "course_content",
+        icon: ContentIcon,
       },
     ],
   },

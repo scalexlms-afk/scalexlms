@@ -1,58 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
+import { ProtectedMediaPlayer } from "@/components/protected-media-player";
 import { requireStudentProfile } from "@/lib/auth";
 import { getLessonById } from "@/lib/data";
+import { getSecureMediaUrl } from "@/lib/secure-media";
 import { createClient } from "@scalex/db/server";
+import { isLessonStorageMedia } from "@scalex/db/media";
 import { Card, Button, StatusPill } from "@scalex/ui";
 import { markLessonComplete } from "../actions";
-
-function LessonContent({
-  contentType,
-  contentUrl,
-  contentText,
-}: {
-  contentType: string;
-  contentUrl: string | null;
-  contentText: string | null;
-}) {
-  switch (contentType) {
-    case "video":
-      return contentUrl ? (
-        <video controls className="w-full rounded-lg" src={contentUrl} />
-      ) : (
-        <p className="text-text-secondary-dark">Video content coming soon.</p>
-      );
-    case "pdf":
-      return contentUrl ? (
-        <iframe
-          src={contentUrl}
-          className="h-[600px] w-full rounded-lg border border-white/10"
-          title="Lesson PDF"
-        />
-      ) : (
-        <p className="text-text-secondary-dark">PDF content coming soon.</p>
-      );
-    case "link":
-      return contentUrl ? (
-        <a
-          href={contentUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-scalex-red hover:underline"
-        >
-          Open external resource →
-        </a>
-      ) : null;
-    case "text":
-    default:
-      return (
-        <div className="prose prose-invert max-w-none whitespace-pre-wrap text-text-primary-dark">
-          {contentText ?? "No content available."}
-        </div>
-      );
-  }
-}
 
 export default async function LessonPage({
   params,
@@ -60,10 +16,18 @@ export default async function LessonPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { userId } = await requireStudentProfile();
+  const { userId, profile } = await requireStudentProfile();
   const lesson = await getLessonById(id);
 
   if (!lesson) notFound();
+
+  const secureMediaUrl =
+    lesson.content_url &&
+    (lesson.content_type === "video" || lesson.content_type === "pdf")
+      ? await getSecureMediaUrl(lesson.content_url)
+      : lesson.content_url;
+
+  const watermark = `${profile.email} · ${profile.name}`;
 
   const supabase = await createClient();
   const { data: completion } = await supabase
@@ -104,11 +68,39 @@ export default async function LessonPage({
         </div>
 
         <Card>
-          <LessonContent
-            contentType={lesson.content_type}
-            contentUrl={lesson.content_url}
-            contentText={lesson.content_text}
-          />
+          {lesson.content_type === "video" || lesson.content_type === "pdf" ? (
+            secureMediaUrl ? (
+              <ProtectedMediaPlayer
+                url={secureMediaUrl}
+                title={lesson.title}
+                type={lesson.content_type === "pdf" ? "pdf" : "video"}
+                watermark={watermark}
+              />
+            ) : (
+              <p className="text-text-secondary-dark">
+                Media unavailable. Please try again later.
+              </p>
+            )
+          ) : lesson.content_type === "link" && lesson.content_url ? (
+            isLessonStorageMedia(lesson.content_url) ? (
+              <p className="text-sm text-text-secondary-dark">
+                This resource is only available inside protected lessons.
+              </p>
+            ) : (
+              <a
+                href={lesson.content_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-scalex-red hover:underline"
+              >
+                Open external resource →
+              </a>
+            )
+          ) : (
+            <div className="prose prose-invert max-w-none whitespace-pre-wrap text-text-primary-dark">
+              {lesson.content_text ?? "No content available."}
+            </div>
+          )}
         </Card>
 
         <div className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/[0.06] bg-scalex-charcoal px-5 py-4">

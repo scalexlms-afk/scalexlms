@@ -1,3 +1,4 @@
+export * from "./media";
 export * from "./database.types";
 export * from "./rbac";
 export * from "./notifications";
