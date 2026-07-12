@@ -9,6 +9,14 @@ const PUBLIC_ROUTES = [
   "/auth/callback",
   "/",
 ];
+const SEO_ROUTES = [
+  "/robots.txt",
+  "/sitemap.xml",
+  "/icon",
+  "/apple-icon",
+  "/opengraph-image",
+  "/twitter-image",
+];
 const PAYMENT_ROUTES = ["/payment", "/payment/success", "/payment/cancel"];
 const PAYMENT_API_ROUTES = ["/api/stripe/checkout", "/api/stripe/activate"];
 
@@ -20,6 +28,10 @@ function copyCookies(from: NextResponse, to: NextResponse) {
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (SEO_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}?`))) {
+    return NextResponse.next();
+  }
 
   let supabaseResponse = NextResponse.next({ request });
 
@@ -122,6 +134,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api/stripe/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api/stripe/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

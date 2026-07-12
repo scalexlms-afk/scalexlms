@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Button, Logo } from "@scalex/ui";
 import { LandingJsonLd } from "@/components/landing-json-ld";
 import { pageMetadata } from "@/lib/seo";
-import { defaultTitle, siteDescription } from "@/lib/site";
+import { defaultTitle, siteDescription, siteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   ...pageMetadata({
@@ -12,6 +12,16 @@ export const metadata: Metadata = {
     path: "/",
   }),
   title: { absolute: defaultTitle },
+  openGraph: {
+    title: defaultTitle,
+    description: siteDescription,
+    url: siteUrl,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: defaultTitle,
+    description: siteDescription,
+  },
 };
 
 const features = [

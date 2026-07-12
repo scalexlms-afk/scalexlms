@@ -1,5 +1,5 @@
 export const siteUrl =
-  process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL ?? "https://scalexlms.com";
+  process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL ?? "https://www.scalexlms.com";
 
 export const siteName = "ScaleX LaunchPad";
 
