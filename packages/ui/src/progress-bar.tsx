@@ -20,16 +20,16 @@ export function ProgressBar({
       {(label || showPercent) && (
         <div className="flex items-center justify-between text-sm">
           {label && (
-            <span className="text-text-secondary-dark">{label}</span>
+            <span className="text-muted">{label}</span>
           )}
           {showPercent && (
-            <span className="font-medium text-text-primary-dark">
+            <span className="font-medium text-foreground">
               {Math.round(percent)}%
             </span>
           )}
         </div>
       )}
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/[0.08]">
+      <div className="h-2.5 w-full overflow-hidden rounded-full bg-line">
         <div
           className="h-full origin-left animate-grow-x rounded-full bg-gradient-to-r from-scalex-red-dark to-scalex-red shadow-[0_0_12px_-2px_rgba(227,30,36,0.6)] transition-[width] duration-500"
           style={{ width: `${percent}%` }}

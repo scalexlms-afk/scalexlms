@@ -10,7 +10,7 @@ export default function UnauthorizedPage() {
           ⚠
         </div>
         <h1 className="mt-4 font-display text-2xl font-bold">Unauthorized</h1>
-        <p className="mt-2 text-sm text-text-secondary-dark">
+        <p className="mt-2 text-sm text-muted">
           This portal is for students only. Admin users should use the
           Management OS.
         </p>

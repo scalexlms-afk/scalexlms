@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@scalex/ui";
+import { FormError, SubmitButton } from "@scalex/ui";
 import { loginAction } from "../auth/actions";
 import { AuthShell } from "@/components/auth-shell";
 import { AuthSessionBanner } from "@/components/auth-session-banner";
@@ -37,9 +37,9 @@ export default async function LoginPage({
       <AuthSessionBanner />
 
       {params.error && (
-        <p className="mt-4 rounded-lg bg-accent-danger/10 px-3 py-2 text-sm text-accent-danger">
-          {params.error}
-        </p>
+        <div className="mt-4">
+          <FormError message={params.error} />
+        </div>
       )}
 
       <form action={loginAction} className="mt-6 space-y-4">
@@ -49,14 +49,14 @@ export default async function LoginPage({
         <div className="flex justify-end">
           <Link
             href="/reset-password"
-            className="text-xs text-text-secondary-dark hover:text-scalex-red"
+            className="text-xs text-muted hover:text-scalex-red"
           >
             Forgot password?
           </Link>
         </div>
-        <Button type="submit" className="w-full">
+        <SubmitButton className="w-full" pendingLabel="Signing in...">
           Sign In
-        </Button>
+        </SubmitButton>
       </form>
     </AuthShell>
   );

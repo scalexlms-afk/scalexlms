@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@scalex/ui";
+import { FormError, SubmitButton } from "@scalex/ui";
 import { registerAction } from "../auth/actions";
 import { AuthShell } from "@/components/auth-shell";
 import { AuthSessionBanner } from "@/components/auth-session-banner";
@@ -37,9 +37,9 @@ export default async function RegisterPage({
       <AuthSessionBanner />
 
       {params.error && (
-        <p className="mt-4 rounded-lg bg-accent-danger/10 px-3 py-2 text-sm text-accent-danger">
-          {params.error}
-        </p>
+        <div className="mt-4">
+          <FormError message={params.error} />
+        </div>
       )}
 
       <form action={registerAction} className="mt-6 space-y-4">
@@ -53,9 +53,9 @@ export default async function RegisterPage({
           minLength={8}
           placeholder="At least 8 characters"
         />
-        <Button type="submit" className="w-full">
+        <SubmitButton className="w-full" pendingLabel="Creating account...">
           Create Account
-        </Button>
+        </SubmitButton>
       </form>
     </AuthShell>
   );

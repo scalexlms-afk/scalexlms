@@ -82,13 +82,13 @@ export default async function DashboardPage() {
     <PortalShell activePath="/dashboard">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Dashboard
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Welcome back, {profile.name}
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             Keep building momentum on your Amazon journey.
           </p>
         </div>
@@ -148,9 +148,9 @@ export default async function DashboardPage() {
                 <h2 className="font-display text-lg font-semibold">
                   Amazon Journey Progress
                 </h2>
-                <p className="mt-1 text-sm text-text-secondary-dark">
+                <p className="mt-1 text-sm text-muted">
                   Current stage:{" "}
-                  <span className="text-text-primary-dark">{currentStage}</span>
+                  <span className="text-foreground">{currentStage}</span>
                 </p>
               </div>
               <Link
@@ -166,7 +166,7 @@ export default async function DashboardPage() {
                 label="Overall completion"
               />
             </div>
-            <p className="mt-2 text-xs text-text-secondary-dark">
+            <p className="mt-2 text-xs text-muted">
               {completedCount} of {totalLessons} lessons completed
             </p>
           </Card>
@@ -177,7 +177,7 @@ export default async function DashboardPage() {
             </h2>
             {currentTask && currentMilestoneId ? (
               <>
-                <p className="mt-2 text-sm text-text-primary-dark">
+                <p className="mt-2 text-sm text-foreground">
                   {currentTask.title}
                 </p>
                 <div className="mt-3">
@@ -198,7 +198,7 @@ export default async function DashboardPage() {
                 </Link>
               </>
             ) : (
-              <p className="mt-2 text-sm text-text-secondary-dark">
+              <p className="mt-2 text-sm text-muted">
                 No milestone task available yet.
               </p>
             )}
@@ -207,17 +207,17 @@ export default async function DashboardPage() {
           <Card>
             <h2 className="font-display text-lg font-semibold">Upcoming Class</h2>
             {upcomingSessions.length === 0 ? (
-              <p className="mt-2 text-sm text-text-secondary-dark">
+              <p className="mt-2 text-sm text-muted">
                 No upcoming sessions scheduled.
               </p>
             ) : (
               <div className="mt-3 space-y-3">
                 {upcomingSessions.map((session) => (
                   <div key={session.id}>
-                    <p className="text-sm font-medium text-text-primary-dark">
+                    <p className="text-sm font-medium text-foreground">
                       {session.title}
                     </p>
-                    <p className="text-xs text-text-tertiary-dark">
+                    <p className="text-xs text-subtle">
                       {formatSessionTime(session.scheduled_at)}
                     </p>
                   </div>
@@ -238,9 +238,9 @@ export default async function DashboardPage() {
                 <h2 className="font-display text-lg font-semibold">
                   Achievements
                 </h2>
-                <p className="mt-1 text-sm text-text-secondary-dark">
+                <p className="mt-1 text-sm text-muted">
                   Level:{" "}
-                  <span className="text-text-primary-dark">
+                  <span className="text-foreground">
                     {profile.level
                       ? LEVEL_LABELS[profile.level] ?? profile.level
                       : "Beginner Seller"}
@@ -263,17 +263,17 @@ export default async function DashboardPage() {
             <h2 className="font-display text-lg font-semibold">Announcements</h2>
             <div className="mt-4 space-y-3">
               {announcements.length === 0 ? (
-                <p className="text-sm text-text-secondary-dark">
+                <p className="text-sm text-muted">
                   No announcements yet.
                 </p>
               ) : (
                 announcements.map((a) => (
                   <div
                     key={a.id}
-                    className="border-b border-white/[0.06] pb-3 last:border-0 last:pb-0"
+                    className="border-b border-line pb-3 last:border-0 last:pb-0"
                   >
                     <p className="text-sm font-medium">{a.title}</p>
-                    <p className="mt-1 text-xs text-text-secondary-dark">
+                    <p className="mt-1 text-xs text-muted">
                       {a.content}
                     </p>
                   </div>

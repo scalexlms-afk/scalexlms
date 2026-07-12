@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@scalex/ui";
+import { FormError, FormSuccess, SubmitButton } from "@scalex/ui";
 import { resetPasswordAction } from "../auth/actions";
 import { AuthShell } from "@/components/auth-shell";
 import { Field } from "@/components/field";
@@ -23,7 +23,7 @@ export default async function ResetPasswordPage({
   return (
     <AuthShell
       title="Reset Password"
-      subtitle="Password reset emails are disabled in dev to avoid Supabase rate limits."
+      subtitle="Enter your email and we'll send you a secure reset link."
       footer={
         <Link href="/login" className="text-scalex-red hover:underline">
           Back to sign in
@@ -31,21 +31,21 @@ export default async function ResetPasswordPage({
       }
     >
       {params.sent && (
-        <p className="mt-4 rounded-lg bg-accent-green/10 px-3 py-2 text-sm text-accent-green">
-          Check your email for a password reset link.
-        </p>
+        <div className="mt-4">
+          <FormSuccess message="If an account exists for that email, a password reset link is on its way." />
+        </div>
       )}
       {params.error && (
-        <p className="mt-4 rounded-lg bg-accent-danger/10 px-3 py-2 text-sm text-accent-danger">
-          {params.error}
-        </p>
+        <div className="mt-4">
+          <FormError message={params.error} />
+        </div>
       )}
 
       <form action={resetPasswordAction} className="mt-6 space-y-4">
         <Field label="Email" name="email" type="email" required />
-        <Button type="submit" className="w-full">
+        <SubmitButton className="w-full" pendingLabel="Sending...">
           Send Reset Link
-        </Button>
+        </SubmitButton>
       </form>
     </AuthShell>
   );

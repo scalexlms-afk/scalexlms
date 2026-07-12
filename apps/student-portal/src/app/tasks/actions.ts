@@ -120,19 +120,32 @@ export async function submitTaskAction(formData: FormData) {
   }
 
   const scoringText = buildSubmissionText(content);
-  const aiResult = await scoreSubmission(
-    task.title,
-    task.description ?? "",
-    scoringText
-  );
+
+  // AI pre-scoring is best-effort. If it fails, we still advance the submission
+  // to "under_review" so it never gets stuck in "submitted" — a mentor can
+  // review it manually without the AI note.
+  let aiScore: number | null = null;
+  let aiNotes: string | null = null;
+  try {
+    const aiResult = await scoreSubmission(
+      task.title,
+      task.description ?? "",
+      scoringText
+    );
+    aiScore = aiResult.score;
+    aiNotes = aiResult.notes;
+  } catch (err) {
+    console.error("AI scoring failed; advancing submission without a score", err);
+    aiNotes = "AI pre-scoring was unavailable. Awaiting manual mentor review.";
+  }
 
   const serviceClient = createServiceClient();
   const { error: reviewError } = await serviceClient
     .from("submissions")
     .update({
       status: "under_review",
-      ai_score: aiResult.score,
-      ai_notes: aiResult.notes,
+      ai_score: aiScore,
+      ai_notes: aiNotes,
     } as never)
     .eq("id", submission.id);
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Card, Logo } from "@scalex/ui";
+import { Card, Logo, ThemeToggle } from "@scalex/ui";
 
 export function AuthShell({
   title,
@@ -19,6 +19,10 @@ export function AuthShell({
         <div className="absolute left-1/2 top-[-20%] h-[460px] w-[720px] -translate-x-1/2 rounded-full bg-scalex-red/15 blur-[140px]" />
       </div>
 
+      <div className="absolute right-4 top-4 z-10">
+        <ThemeToggle />
+      </div>
+
       <div className="relative w-full max-w-md animate-fade-up">
         <div className="mb-6 flex justify-center">
           <Link href="/">
@@ -30,12 +34,12 @@ export function AuthShell({
             <h1 className="font-display text-2xl font-bold">{title}</h1>
           )}
           {subtitle && (
-            <p className="mt-1 text-sm text-text-secondary-dark">{subtitle}</p>
+            <p className="mt-1 text-sm text-muted">{subtitle}</p>
           )}
           {children}
         </Card>
         {footer && (
-          <div className="mt-5 text-center text-sm text-text-secondary-dark">
+          <div className="mt-5 text-center text-sm text-muted">
             {footer}
           </div>
         )}

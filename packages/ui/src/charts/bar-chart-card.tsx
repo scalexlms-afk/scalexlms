@@ -10,6 +10,12 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Card } from "../card";
+import {
+  CHART_AXIS_COLOR,
+  CHART_BAR_COLOR,
+  CHART_GRID_COLOR,
+  CHART_TOOLTIP_STYLE,
+} from "../tokens";
 
 type ChartPoint = {
   label: string;
@@ -25,7 +31,7 @@ type BarChartCardProps = {
 export function BarChartCard({
   title,
   data,
-  color = "#3B82F6",
+  color = CHART_BAR_COLOR,
 }: BarChartCardProps) {
   return (
     <Card>
@@ -33,25 +39,19 @@ export function BarChartCard({
       <div className="mt-4 h-64">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data}>
-            <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <CartesianGrid stroke={CHART_GRID_COLOR} vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fill: "#9CA3AF", fontSize: 12 }}
+              tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fill: "#9CA3AF", fontSize: 12 }}
+              tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }}
               axisLine={false}
               tickLine={false}
             />
-            <Tooltip
-              contentStyle={{
-                background: "#111827",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 8,
-              }}
-            />
+            <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
             <Bar dataKey="value" fill={color} radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>

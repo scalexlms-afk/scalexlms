@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
-import { requireAdminProfile, requireFeature } from "@/lib/auth";
+import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { canAssignMentor } from "@/lib/admin-db";
 import { getMentors, getStudentDetail } from "@/lib/data";
 import {
@@ -21,7 +21,7 @@ export default async function StudentDetailPage({
 }) {
   const { id } = await params;
   const { profile, userId } = await requireAdminProfile();
-  requireFeature(profile.role, "student_management");
+  requireFeaturePage(profile.role, "student_management");
 
   let detail;
   try {
@@ -42,14 +42,14 @@ export default async function StudentDetailPage({
           <div>
             <Link
               href="/students"
-              className="text-xs text-text-secondary-dark hover:text-scalex-red"
+              className="text-xs text-muted hover:text-scalex-red"
             >
               ← Back to students
             </Link>
             <h1 className="mt-2 font-display text-2xl font-bold">
               {detail.student.name}
             </h1>
-            <p className="text-text-secondary-dark">{detail.student.email}</p>
+            <p className="text-muted">{detail.student.email}</p>
           </div>
           <StatusPill
             label={formatStatus(detail.student.status)}
@@ -64,19 +64,19 @@ export default async function StudentDetailPage({
             <h2 className="font-display text-lg font-semibold">Profile</h2>
             <dl className="mt-4 grid gap-3 sm:grid-cols-2 text-sm">
               <div>
-                <dt className="text-text-tertiary-dark">Plan</dt>
+                <dt className="text-subtle">Plan</dt>
                 <dd>{formatStatus(detail.student.plan ?? "—")}</dd>
               </div>
               <div>
-                <dt className="text-text-tertiary-dark">Stage</dt>
+                <dt className="text-subtle">Stage</dt>
                 <dd>{detail.student.current_stage ?? "—"}</dd>
               </div>
               <div>
-                <dt className="text-text-tertiary-dark">Level</dt>
+                <dt className="text-subtle">Level</dt>
                 <dd>{formatStatus(detail.student.level ?? "—")}</dd>
               </div>
               <div>
-                <dt className="text-text-tertiary-dark">Mentor</dt>
+                <dt className="text-subtle">Mentor</dt>
                 <dd>
                   {detail.student.mentor
                     ? (detail.student.mentor as { name: string }).name
@@ -84,7 +84,7 @@ export default async function StudentDetailPage({
                 </dd>
               </div>
               <div className="sm:col-span-2">
-                <dt className="text-text-tertiary-dark">Course Progress</dt>
+                <dt className="text-subtle">Course Progress</dt>
                 <dd className="mt-1">
                   <ProgressBar
                     value={enrollment?.completion_percent ?? 0}
@@ -105,7 +105,7 @@ export default async function StudentDetailPage({
                 <div>
                   <label
                     htmlFor="mentorId"
-                    className="mb-1.5 block text-sm font-medium text-text-secondary-dark"
+                    className="mb-1.5 block text-sm font-medium text-muted"
                   >
                     Mentor
                   </label>
@@ -113,7 +113,7 @@ export default async function StudentDetailPage({
                     id="mentorId"
                     name="mentorId"
                     defaultValue={detail.student.mentor_id ?? ""}
-                    className="w-full rounded-lg border border-white/10 bg-scalex-charcoal-alt px-3.5 py-2.5 text-sm"
+                    className="w-full rounded-lg border border-line bg-surface-3 px-3.5 py-2.5 text-sm"
                   >
                     <option value="">Unassigned</option>
                     {mentors.map((mentor) => (
@@ -219,16 +219,16 @@ export default async function StudentDetailPage({
             </h2>
             <div className="mt-4 space-y-3">
               {detail.messages.length === 0 ? (
-                <p className="text-sm text-text-secondary-dark">
+                <p className="text-sm text-muted">
                   No messages yet.
                 </p>
               ) : (
                 detail.messages.map((msg) => (
                   <div
                     key={msg.id}
-                    className="rounded-lg border border-white/[0.06] bg-scalex-charcoal-alt p-3"
+                    className="rounded-lg border border-line bg-surface-3 p-3"
                   >
-                    <p className="text-xs text-text-tertiary-dark">
+                    <p className="text-xs text-subtle">
                       {(msg.sender as { name: string } | null)?.name} ·{" "}
                       {formatDateTime(msg.created_at)}
                     </p>
@@ -243,17 +243,17 @@ export default async function StudentDetailPage({
             <h2 className="font-display text-lg font-semibold">Activity</h2>
             <div className="mt-4 space-y-3">
               {detail.activity.length === 0 ? (
-                <p className="text-sm text-text-secondary-dark">
+                <p className="text-sm text-muted">
                   No audit activity yet.
                 </p>
               ) : (
                 detail.activity.map((entry) => (
                   <div
                     key={entry.id}
-                    className="rounded-lg border border-white/[0.06] bg-scalex-charcoal-alt p-3"
+                    className="rounded-lg border border-line bg-surface-3 p-3"
                   >
                     <p className="text-sm font-medium">{entry.action}</p>
-                    <p className="text-xs text-text-tertiary-dark">
+                    <p className="text-xs text-subtle">
                       {formatDateTime(entry.created_at)}
                     </p>
                   </div>

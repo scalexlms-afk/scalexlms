@@ -11,13 +11,13 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-scalex-red hover:bg-scalex-red-dark text-white border-transparent shadow-[0_6px_20px_-8px_rgba(227,30,36,0.7)] hover:shadow-[0_8px_24px_-6px_rgba(227,30,36,0.8)]",
+    "metallic-red text-white border-white/10 shadow-[0_8px_24px_-8px_rgba(227,30,36,0.65),inset_0_1px_0_0_rgba(255,255,255,0.25)] hover:brightness-110 hover:shadow-[0_10px_28px_-6px_rgba(227,30,36,0.8),inset_0_1px_0_0_rgba(255,255,255,0.3)]",
   secondary:
-    "bg-transparent border border-white/10 text-text-primary-dark hover:bg-scalex-charcoal-alt hover:border-white/20",
+    "bg-surface-2 border border-line text-foreground hover:bg-surface-3 hover:border-line-strong metallic-edge",
   tertiary:
     "bg-transparent text-scalex-red hover:text-scalex-red-dark border-transparent hover:underline underline-offset-4",
   destructive:
-    "bg-accent-danger hover:bg-red-600 text-white border-transparent shadow-[0_6px_20px_-8px_rgba(239,68,68,0.7)]",
+    "bg-accent-danger text-white border-white/10 shadow-[0_8px_24px_-8px_rgba(239,68,68,0.65),inset_0_1px_0_0_rgba(255,255,255,0.2)] hover:brightness-110",
 };
 
 const sizeClasses = {
@@ -35,7 +35,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-[var(--radius-button)] border font-medium transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-scalex-red/50 focus-visible:ring-offset-2 focus-visible:ring-offset-scalex-black disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:shadow-none ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-[var(--radius-button)] border font-medium transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-scalex-red/50 focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 disabled:shadow-none ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       {...props}
     >
       {children}

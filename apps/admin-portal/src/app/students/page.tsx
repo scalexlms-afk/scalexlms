@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
-import { requireAdminProfile, requireFeature } from "@/lib/auth";
+import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { getStudents } from "@/lib/data";
 import { formatDate, formatPercent, formatStatus } from "@/lib/format";
 import { DataTable, ProgressBar, StatusPill } from "@scalex/ui";
 
 export default async function StudentsPage() {
   const { profile, userId } = await requireAdminProfile();
-  requireFeature(profile.role, "student_management");
+  requireFeaturePage(profile.role, "student_management");
 
   const students = await getStudents({ userId, role: profile.role });
 
@@ -15,13 +15,13 @@ export default async function StudentsPage() {
     <AdminShell activePath="/students">
       <div className="space-y-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Student Management
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Students
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             {profile.role === "mentor"
               ? "Your assigned students and their progress."
               : "Academy roster with plan, stage, and completion."}
@@ -49,7 +49,7 @@ export default async function StudentsPage() {
               key: "email",
               header: "Email",
               render: (row) => (
-                <span className="text-text-secondary-dark">{row.email}</span>
+                <span className="text-muted">{row.email}</span>
               ),
             },
             {

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Field, TextArea, inputClasses } from "@/components/field";
 import { MediaUploadField } from "@/components/media-upload-field";
+import { MediaPreview } from "@/components/media-preview";
 import {
   deleteLessonAction,
   reextractLessonPdfAction,
@@ -22,20 +23,22 @@ type Lesson = {
 export function EditLessonForm({
   lesson,
   moduleId,
+  previewUrl,
 }: {
   lesson: Lesson;
   moduleId: string;
+  previewUrl?: string | null;
 }) {
   const [contentType, setContentType] = useState(lesson.content_type);
 
   return (
-    <div className="mt-2 rounded-lg border border-white/[0.06] bg-scalex-black/30 p-3">
+    <div className="mt-2 rounded-lg border border-line bg-surface/30 p-3">
       <form action={updateLessonAction} className="grid gap-3">
         <input type="hidden" name="lessonId" value={lesson.id} />
         <div className="grid gap-3 sm:grid-cols-2">
           <Field label="Title" name="title" defaultValue={lesson.title} required />
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-text-secondary-dark">
+            <label className="mb-1.5 block text-sm font-medium text-muted">
               Type
             </label>
             <select
@@ -67,6 +70,11 @@ export function EditLessonForm({
             defaultUrl={lesson.content_url}
           />
         )}
+        {(contentType === "video" || contentType === "pdf") &&
+          previewUrl &&
+          lesson.content_url && (
+            <MediaPreview url={previewUrl} kind={contentType} />
+          )}
         {contentType === "link" && (
           <Field
             label="External URL"
@@ -87,12 +95,13 @@ export function EditLessonForm({
         />
         {contentType === "pdf" && lesson.content_url && (
           <div className="flex items-center gap-2">
-            <form action={reextractLessonPdfAction}>
-              <input type="hidden" name="lessonId" value={lesson.id} />
-              <Button type="submit" className="!px-3 !py-2 text-xs">
-                Re-extract PDF for AI
-              </Button>
-            </form>
+            <Button
+              type="submit"
+              formAction={reextractLessonPdfAction}
+              className="!px-3 !py-2 text-xs"
+            >
+              Re-extract PDF for AI
+            </Button>
             {lesson.content_text && (
               <span className="text-xs text-accent-green">
                 AI text indexed ({lesson.content_text.length.toLocaleString()} chars)
@@ -108,6 +117,7 @@ export function EditLessonForm({
         <input type="hidden" name="lessonId" value={lesson.id} />
         <Button
           type="submit"
+          variant="secondary"
           className="!bg-accent-danger/20 !text-accent-danger !px-3 !py-2 text-xs"
         >
           Delete lesson

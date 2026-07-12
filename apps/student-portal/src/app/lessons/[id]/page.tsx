@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
 import { ProtectedMediaPlayer } from "@/components/protected-media-player";
 import { requireStudentProfile } from "@/lib/auth";
-import { getLessonById } from "@/lib/data";
+import { getLessonById, isMilestoneUnlocked } from "@/lib/data";
 import { getSecureMediaUrl } from "@/lib/secure-media";
 import { createClient } from "@scalex/db/server";
 import { isLessonStorageMedia } from "@scalex/db/media";
@@ -20,6 +20,44 @@ export default async function LessonPage({
   const lesson = await getLessonById(id);
 
   if (!lesson) notFound();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lessonMilestoneId = (lesson as any).modules?.milestones?.id as
+    | string
+    | undefined;
+  const unlocked = lessonMilestoneId
+    ? await isMilestoneUnlocked(userId, lessonMilestoneId)
+    : true;
+
+  if (!unlocked) {
+    return (
+      <PortalShell activePath="/roadmap">
+        <div className="mx-auto max-w-2xl">
+          <Link
+            href="/roadmap"
+            className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-scalex-red"
+          >
+            ← Back to Roadmap
+          </Link>
+          <Card className="mt-6 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-surface-3 text-2xl">
+              &#128274;
+            </div>
+            <h1 className="mt-4 font-display text-xl font-bold">
+              This lesson is locked
+            </h1>
+            <p className="mt-2 text-sm text-muted">
+              Finish and get approval on the previous milestone task to unlock
+              this content.
+            </p>
+            <Link href="/roadmap" className="mt-6 inline-block">
+              <Button>Go to Roadmap</Button>
+            </Link>
+          </Card>
+        </div>
+      </PortalShell>
+    );
+  }
 
   const secureMediaUrl =
     lesson.content_url &&
@@ -50,12 +88,12 @@ export default async function LessonPage({
         <div>
           <Link
             href="/roadmap"
-            className="inline-flex items-center gap-1 text-sm text-text-secondary-dark transition-colors hover:text-scalex-red"
+            className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-scalex-red"
           >
             ← Back to Roadmap
           </Link>
           {course && (
-            <p className="mt-4 text-xs font-medium uppercase tracking-wider text-text-tertiary-dark">
+            <p className="mt-4 text-xs font-medium uppercase tracking-wider text-subtle">
               {course.title} · {milestone?.title} · {mod?.title}
             </p>
           )}
@@ -77,13 +115,13 @@ export default async function LessonPage({
                 watermark={watermark}
               />
             ) : (
-              <p className="text-text-secondary-dark">
+              <p className="text-muted">
                 Media unavailable. Please try again later.
               </p>
             )
           ) : lesson.content_type === "link" && lesson.content_url ? (
             isLessonStorageMedia(lesson.content_url) ? (
-              <p className="text-sm text-text-secondary-dark">
+              <p className="text-sm text-muted">
                 This resource is only available inside protected lessons.
               </p>
             ) : (
@@ -97,13 +135,13 @@ export default async function LessonPage({
               </a>
             )
           ) : (
-            <div className="prose prose-invert max-w-none whitespace-pre-wrap text-text-primary-dark">
+            <div className="prose prose-invert max-w-none whitespace-pre-wrap text-foreground">
               {lesson.content_text ?? "No content available."}
             </div>
           )}
         </Card>
 
-        <div className="flex items-center justify-between rounded-[var(--radius-card)] border border-white/[0.06] bg-scalex-charcoal px-5 py-4">
+        <div className="flex items-center justify-between rounded-[var(--radius-card)] border border-line bg-surface-2 px-5 py-4">
           {isComplete ? (
             <p className="flex items-center gap-2 text-sm text-accent-green">
               <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-green/15">
@@ -113,7 +151,7 @@ export default async function LessonPage({
             </p>
           ) : (
             <>
-              <p className="text-sm text-text-secondary-dark">
+              <p className="text-sm text-muted">
                 Finished? Mark this lesson complete to update your progress.
               </p>
               <form action={markLessonComplete.bind(null, id)}>

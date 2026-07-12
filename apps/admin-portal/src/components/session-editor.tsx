@@ -2,6 +2,7 @@
 
 import { Field, TextArea } from "@/components/field";
 import { MediaUploadField } from "@/components/media-upload-field";
+import { MediaPreview } from "@/components/media-preview";
 import {
   deleteSessionAction,
   updateSessionAction,
@@ -16,11 +17,12 @@ type SessionEditorProps = {
     meeting_url: string | null;
     recording_url: string | null;
   };
+  recordingPreviewUrl?: string | null;
 };
 
-export function SessionEditor({ session }: SessionEditorProps) {
+export function SessionEditor({ session, recordingPreviewUrl }: SessionEditorProps) {
   return (
-    <div className="mt-4 border-t border-white/[0.06] pt-4">
+    <div className="mt-4 border-t border-line pt-4">
       <form action={updateSessionAction} className="grid gap-3">
         <input type="hidden" name="sessionId" value={session.id} />
         <Field label="Title" name="title" defaultValue={session.title} required />
@@ -44,6 +46,13 @@ export function SessionEditor({ session }: SessionEditorProps) {
           defaultUrl={session.recording_url}
           helperText="Upload MP4/WebM — students can watch inside the app."
         />
+        {recordingPreviewUrl && session.recording_url && (
+          <MediaPreview
+            url={recordingPreviewUrl}
+            kind="video"
+            label="Current recording"
+          />
+        )}
         <Button type="submit" className="!px-3 !py-2 text-xs">
           Save changes
         </Button>
@@ -52,6 +61,7 @@ export function SessionEditor({ session }: SessionEditorProps) {
         <input type="hidden" name="sessionId" value={session.id} />
         <Button
           type="submit"
+          variant="secondary"
           className="!bg-accent-danger/20 !text-accent-danger !px-3 !py-2 text-xs"
         >
           Delete session

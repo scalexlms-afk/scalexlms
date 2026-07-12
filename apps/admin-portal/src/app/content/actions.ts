@@ -26,7 +26,7 @@ export async function createCourseAction(formData: FormData) {
   if (!title) throw new Error("Title required");
 
   const { userId, profile } = await requireAdminProfile();
-  requireFeature(profile.role, "course_content");
+  requireFeature(profile.role, "course_content", "full");
 
   const db = getServiceDb();
   const { data, error } = await db
@@ -57,7 +57,7 @@ export async function updateCourseAction(formData: FormData) {
   if (!courseId || !title || !status) throw new Error("Invalid course");
 
   const { userId, profile } = await requireAdminProfile();
-  requireFeature(profile.role, "course_content");
+  requireFeature(profile.role, "course_content", "full");
 
   const db = getServiceDb();
   const { error } = await db
@@ -109,7 +109,7 @@ export async function createMilestoneAction(formData: FormData) {
   }
 
   const { userId, profile } = await requireAdminProfile();
-  requireFeature(profile.role, "course_content");
+  requireFeature(profile.role, "course_content", "full");
 
   const db = getServiceDb();
   const { data, error } = await db
@@ -162,7 +162,7 @@ export async function createModuleAction(formData: FormData) {
   }
 
   const { userId, profile } = await requireAdminProfile();
-  requireFeature(profile.role, "course_content");
+  requireFeature(profile.role, "course_content", "full");
 
   const db = getServiceDb();
   const { data, error } = await db
@@ -232,7 +232,7 @@ export async function createLessonAction(formData: FormData) {
   }
 
   const { userId, profile } = await requireAdminProfile();
-  requireFeature(profile.role, "course_content");
+  requireFeature(profile.role, "course_content", "full");
 
   let finalContentText = contentText;
   let pdfExtractMeta: { pageCount?: number; extracted?: boolean } = {};
@@ -288,7 +288,7 @@ export async function updateLessonAction(formData: FormData) {
   }
 
   const { userId, profile } = await requireAdminProfile();
-  requireFeature(profile.role, "course_content");
+  requireFeature(profile.role, "course_content", "full");
 
   const db = getServiceDb();
   const { data: existing } = await db
@@ -352,7 +352,7 @@ export async function reextractLessonPdfAction(formData: FormData) {
   if (!lessonId) throw new Error("Lesson required");
 
   const { userId, profile } = await requireAdminProfile();
-  requireFeature(profile.role, "course_content");
+  requireFeature(profile.role, "course_content", "full");
 
   const db = getServiceDb();
   const { data: lesson, error: fetchError } = await db
@@ -434,7 +434,7 @@ export async function createTaskAction(formData: FormData) {
   if (!milestoneId || !title) throw new Error("Invalid task");
 
   const { userId, profile } = await requireAdminProfile();
-  requireFeature(profile.role, "course_content");
+  requireFeature(profile.role, "course_content", "full");
 
   const db = getServiceDb();
   const { data, error } = await db
@@ -484,7 +484,7 @@ export async function updateCourseStatusAction(formData: FormData) {
   if (!courseId || !status) throw new Error("Invalid course update");
 
   const { userId, profile } = await requireAdminProfile();
-  requireFeature(profile.role, "course_content");
+  requireFeature(profile.role, "course_content", "full");
 
   const db = getServiceDb();
   const { error } = await db

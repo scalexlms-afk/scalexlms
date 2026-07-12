@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@scalex/db/server";
 import type { Profile } from "@scalex/db/types";
 
@@ -25,8 +26,11 @@ export async function getSessionProfile(): Promise<{
 
 export async function requireStudentProfile() {
   const session = await getSessionProfile();
-  if (!session || session.profile.role !== "student") {
-    throw new Error("Unauthorized");
+  if (!session) {
+    redirect("/login");
+  }
+  if (session.profile.role !== "student") {
+    redirect("/unauthorized");
   }
   return session;
 }

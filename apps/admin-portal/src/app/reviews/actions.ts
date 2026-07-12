@@ -33,6 +33,14 @@ export async function reviewSubmissionAction(formData: FormData) {
   const { userId, profile } = await requireAdminProfile();
   requireFeature(profile.role, "task_review");
 
+  // Per ROLES.md: instructors may review/comment (request revisions) but final
+  // approval on a gating task belongs to a Mentor or Super Admin.
+  if (decision === "approved" && profile.role === "instructor") {
+    throw new Error(
+      "Instructors cannot issue final approval. A mentor or super admin must approve."
+    );
+  }
+
   const supabase = await createClient();
   const serviceClient = createServiceClient();
 

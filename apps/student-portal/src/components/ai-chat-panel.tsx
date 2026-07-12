@@ -84,7 +84,7 @@ export function AiChatPanel() {
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
             <p className="font-display text-lg font-semibold">Ask your AI mentor</p>
-            <p className="mt-2 max-w-md text-sm text-text-secondary-dark">
+            <p className="mt-2 max-w-md text-sm text-muted">
               Get help with product research, sourcing, PPC, and any lesson
               topic from the LaunchPad curriculum.
             </p>
@@ -98,8 +98,8 @@ export function AiChatPanel() {
               <div
                 className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
                   message.role === "user"
-                    ? "bg-scalex-red/15 text-text-primary-dark"
-                    : "bg-scalex-charcoal-alt text-text-primary-dark"
+                    ? "bg-scalex-red/15 text-foreground"
+                    : "bg-surface-3 text-foreground"
                 }`}
               >
                 {message.content || (streaming ? "…" : "")}
@@ -114,7 +114,7 @@ export function AiChatPanel() {
         <p className="mt-3 text-sm text-accent-danger">{error}</p>
       )}
 
-      <form onSubmit={sendMessage} className="mt-4 flex gap-3 border-t border-white/[0.06] pt-4">
+      <form onSubmit={sendMessage} className="mt-4 flex gap-3 border-t border-line pt-4">
         <input
           value={input}
           onChange={(event) => setInput(event.target.value)}

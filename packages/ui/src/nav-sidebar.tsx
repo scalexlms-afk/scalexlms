@@ -20,14 +20,14 @@ interface NavSidebarProps {
 
 export function NavSidebar({ groups, brand, footer }: NavSidebarProps) {
   return (
-    <aside className="flex h-full w-64 flex-col bg-scalex-black border-r border-white/[0.06]">
+    <aside className="flex h-full w-64 flex-col bg-surface border-r border-line">
       {brand && (
-        <div className="border-b border-white/[0.06] px-5 py-6">{brand}</div>
+        <div className="border-b border-line px-5 py-6">{brand}</div>
       )}
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
         {groups.map((group) => (
           <div key={group.title}>
-            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-text-tertiary-dark">
+            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-subtle">
               {group.title}
             </p>
             <ul className="space-y-1">
@@ -37,8 +37,8 @@ export function NavSidebar({ groups, brand, footer }: NavSidebarProps) {
                     href={item.href}
                     className={`group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                       item.active
-                        ? "bg-gradient-to-r from-scalex-red/15 to-transparent text-text-primary-dark"
-                        : "text-text-secondary-dark hover:bg-scalex-charcoal-alt hover:text-text-primary-dark"
+                        ? "bg-gradient-to-r from-scalex-red/15 to-transparent text-foreground"
+                        : "text-muted hover:bg-surface-3 hover:text-foreground"
                     }`}
                   >
                     {item.active && (
@@ -49,7 +49,7 @@ export function NavSidebar({ groups, brand, footer }: NavSidebarProps) {
                         className={
                           item.active
                             ? "text-scalex-red"
-                            : "text-text-tertiary-dark group-hover:text-text-secondary-dark"
+                            : "text-subtle group-hover:text-muted"
                         }
                       >
                         {item.icon}
@@ -64,7 +64,7 @@ export function NavSidebar({ groups, brand, footer }: NavSidebarProps) {
         ))}
       </nav>
       {footer && (
-        <div className="border-t border-white/[0.06] px-5 py-4">{footer}</div>
+        <div className="border-t border-line px-5 py-4">{footer}</div>
       )}
     </aside>
   );

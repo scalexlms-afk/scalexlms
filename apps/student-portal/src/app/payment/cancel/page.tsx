@@ -12,7 +12,7 @@ export default function PaymentCancelPage() {
         <h1 className="mt-4 font-display text-2xl font-bold">
           Payment cancelled
         </h1>
-        <p className="mt-2 text-sm text-text-secondary-dark">
+        <p className="mt-2 text-sm text-muted">
           No worries — you can complete payment anytime to activate your account.
         </p>
         <Link href="/payment" className="mt-6 block">

@@ -1,5 +1,5 @@
 import { AdminShell } from "@/components/admin-shell";
-import { requireAdminProfile, requireFeature } from "@/lib/auth";
+import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { getReportsSummary } from "@/lib/data";
 import {
   formatCurrency,
@@ -15,7 +15,7 @@ import {
 
 export default async function ReportsPage() {
   const { profile, userId } = await requireAdminProfile();
-  requireFeature(profile.role, "reports");
+  requireFeaturePage(profile.role, "reports");
 
   const { stats, revenueSeries, growthSeries, milestoneRates } =
     await getReportsSummary({ userId, role: profile.role });
@@ -24,13 +24,13 @@ export default async function ReportsPage() {
     <AdminShell activePath="/reports">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Reports
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Academy Reports
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             Revenue, growth, and completion summaries for export and review.
           </p>
         </div>
@@ -68,7 +68,7 @@ export default async function ReportsPage() {
 
         <Card>
           <h2 className="font-display text-lg font-semibold">Export Summary</h2>
-          <pre className="mt-4 overflow-x-auto rounded-xl bg-scalex-charcoal-alt p-4 text-xs text-text-secondary-dark">
+          <pre className="mt-4 overflow-x-auto rounded-xl bg-surface-3 p-4 text-xs text-muted">
             {JSON.stringify(
               {
                 generatedAt: new Date().toISOString(),

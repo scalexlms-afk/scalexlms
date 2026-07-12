@@ -6,7 +6,9 @@ const PUBLIC_ROUTES = [
   "/login",
   "/register",
   "/reset-password",
+  "/update-password",
   "/auth/callback",
+  "/unauthorized",
   "/",
 ];
 const SEO_ROUTES = [

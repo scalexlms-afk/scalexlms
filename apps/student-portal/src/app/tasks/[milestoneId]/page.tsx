@@ -23,7 +23,7 @@ function SubmissionContent({
 }) {
   if (content.type === "text" && typeof content.text === "string") {
     return (
-      <p className="whitespace-pre-wrap text-sm text-text-primary-dark">
+      <p className="whitespace-pre-wrap text-sm text-foreground">
         {content.text}
       </p>
     );
@@ -42,13 +42,13 @@ function SubmissionContent({
   }
   if (content.type === "file" && typeof content.file_name === "string") {
     return (
-      <p className="text-sm text-text-primary-dark">
+      <p className="text-sm text-foreground">
         Uploaded file: {content.file_name}
       </p>
     );
   }
   return (
-    <pre className="overflow-x-auto text-xs text-text-secondary-dark">
+    <pre className="overflow-x-auto text-xs text-muted">
       {JSON.stringify(content, null, 2)}
     </pre>
   );
@@ -90,12 +90,12 @@ export default async function TaskPage({
         <div>
           <Link
             href="/roadmap"
-            className="inline-flex items-center gap-1 text-sm text-text-secondary-dark transition-colors hover:text-scalex-red"
+            className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-scalex-red"
           >
             ← Back to Roadmap
           </Link>
           {courseTitle && (
-            <p className="mt-4 text-xs font-medium uppercase tracking-wider text-text-tertiary-dark">
+            <p className="mt-4 text-xs font-medium uppercase tracking-wider text-subtle">
               {courseTitle} · {(milestone as { title: string }).title}
             </p>
           )}
@@ -109,7 +109,7 @@ export default async function TaskPage({
             />
           </div>
           {task.description && (
-            <p className="mt-3 text-text-secondary-dark">{task.description}</p>
+            <p className="mt-3 text-muted">{task.description}</p>
           )}
         </div>
 
@@ -129,24 +129,24 @@ export default async function TaskPage({
               <SubmissionContent content={submission.content} />
             </div>
             {submission.submitted_at && (
-              <p className="mt-2 text-xs text-text-tertiary-dark">
+              <p className="mt-2 text-xs text-subtle">
                 Submitted {new Date(submission.submitted_at).toLocaleString()}
               </p>
             )}
             {submission.ai_score != null && (
-              <p className="mt-3 text-sm text-text-secondary-dark">
+              <p className="mt-3 text-sm text-muted">
                 AI pre-score:{" "}
-                <span className="font-medium text-text-primary-dark">
+                <span className="font-medium text-foreground">
                   {Math.round(submission.ai_score)}/100
                 </span>
               </p>
             )}
             {submission.ai_notes && (
-              <div className="mt-3 rounded-lg bg-scalex-charcoal-alt p-3">
-                <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary-dark">
+              <div className="mt-3 rounded-lg bg-surface-3 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-subtle">
                   AI feedback
                 </p>
-                <p className="mt-1 text-sm text-text-secondary-dark">
+                <p className="mt-1 text-sm text-muted">
                   {submission.ai_notes}
                 </p>
               </div>
@@ -170,11 +170,11 @@ export default async function TaskPage({
               />
             </div>
             {latestReview.feedback && (
-              <p className="mt-3 whitespace-pre-wrap text-sm text-text-secondary-dark">
+              <p className="mt-3 whitespace-pre-wrap text-sm text-muted">
                 {latestReview.feedback}
               </p>
             )}
-            <p className="mt-2 text-xs text-text-tertiary-dark">
+            <p className="mt-2 text-xs text-subtle">
               Reviewed {new Date(latestReview.reviewed_at).toLocaleString()}
             </p>
           </Card>
@@ -185,7 +185,7 @@ export default async function TaskPage({
             <h2 className="font-display text-lg font-semibold">
               {status === "revision_required" ? "Resubmit task" : "Submit task"}
             </h2>
-            <p className="mt-1 text-sm text-text-secondary-dark">
+            <p className="mt-1 text-sm text-muted">
               Accepted formats: {task.accepted_formats.join(", ")}
             </p>
 
@@ -194,7 +194,7 @@ export default async function TaskPage({
                 <form action={submitTaskAction} className="space-y-3">
                   <input type="hidden" name="milestoneId" value={milestoneId} />
                   <input type="hidden" name="submissionType" value="text" />
-                  <label className="block text-sm font-medium text-text-secondary-dark">
+                  <label className="block text-sm font-medium text-muted">
                     Text response
                   </label>
                   <textarea
@@ -212,7 +212,7 @@ export default async function TaskPage({
                 <form action={submitTaskAction} className="space-y-3">
                   <input type="hidden" name="milestoneId" value={milestoneId} />
                   <input type="hidden" name="submissionType" value="link" />
-                  <label className="block text-sm font-medium text-text-secondary-dark">
+                  <label className="block text-sm font-medium text-muted">
                     Link submission
                   </label>
                   <input
@@ -232,7 +232,7 @@ export default async function TaskPage({
                 <form action={submitTaskAction} className="space-y-3">
                   <input type="hidden" name="milestoneId" value={milestoneId} />
                   <input type="hidden" name="submissionType" value="file" />
-                  <label className="block text-sm font-medium text-text-secondary-dark">
+                  <label className="block text-sm font-medium text-muted">
                     File upload
                   </label>
                   <input
@@ -240,7 +240,7 @@ export default async function TaskPage({
                     type="file"
                     required
                     accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx,.csv"
-                    className="block w-full text-sm text-text-secondary-dark file:mr-3 file:rounded-lg file:border-0 file:bg-scalex-red file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+                    className="block w-full text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-scalex-red file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
                   />
                   <Button type="submit">Upload & submit</Button>
                 </form>
@@ -251,9 +251,9 @@ export default async function TaskPage({
 
         {unlocked && !canSubmit && status !== "not_started" && (
           <Card>
-            <p className="text-sm text-text-secondary-dark">
+            <p className="text-sm text-muted">
               Your submission is{" "}
-              <span className="text-text-primary-dark">
+              <span className="text-foreground">
                 {submissionStatusLabel(status).toLowerCase()}
               </span>
               . You&apos;ll be notified when your mentor completes their review.

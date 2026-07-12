@@ -21,9 +21,9 @@ const variantClasses: Record<StatusVariant, string> = {
   review: "bg-accent-amber/15 text-accent-amber",
   revision: "bg-accent-danger/15 text-accent-danger",
   overdue: "bg-accent-danger/15 text-accent-danger",
-  inactive: "bg-text-tertiary-dark/20 text-text-tertiary-dark",
-  not_started: "bg-text-tertiary-dark/20 text-text-tertiary-dark",
-  neutral: "bg-white/10 text-text-secondary-dark",
+  inactive: "bg-text-tertiary-dark/20 text-subtle",
+  not_started: "bg-text-tertiary-dark/20 text-subtle",
+  neutral: "bg-surface-3 text-muted",
 };
 
 const dotClasses: Record<StatusVariant, string> = {

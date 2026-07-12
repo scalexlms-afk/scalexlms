@@ -1104,6 +1104,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auth_can_read_course: { Args: { p_course_id: string }; Returns: boolean }
+      auth_is_active_student: { Args: never; Returns: boolean }
       auth_is_admin: { Args: never; Returns: boolean }
       auth_user_role: {
         Args: never

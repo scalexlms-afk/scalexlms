@@ -22,10 +22,10 @@ export function KpiCard({
     <Card interactive>
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-2">
-          <p className="text-xs font-medium uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted">
             {label}
           </p>
-          <p className="font-display text-3xl font-bold text-text-primary-dark">
+          <p className="font-display text-3xl font-bold text-foreground">
             {value}
           </p>
           {delta && (

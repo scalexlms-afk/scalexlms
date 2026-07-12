@@ -1,8 +1,9 @@
 import { AdminShell } from "@/components/admin-shell";
 import { SessionEditor } from "@/components/session-editor";
 import { Field, TextArea } from "@/components/field";
-import { requireAdminProfile, requireFeature } from "@/lib/auth";
+import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { getLiveSessions } from "@/lib/data";
+import { signMediaUrls } from "@/lib/secure-media";
 import { createSessionAction } from "./actions";
 import { canAccess } from "@scalex/db/rbac";
 import { Button, Card, StatusPill } from "@scalex/ui";
@@ -32,10 +33,17 @@ function sessionVariant(scheduledAt: string): "active" | "pending" | "inactive" 
 
 export default async function SessionsPage() {
   const { profile } = await requireAdminProfile();
-  requireFeature(profile.role, "live_sessions");
+  requireFeaturePage(profile.role, "live_sessions");
 
   const sessions = await getLiveSessions();
   const canCreate = canAccess(profile.role, "live_sessions", "full");
+  const recordingPreviews = canCreate
+    ? await signMediaUrls(
+        sessions
+          .filter((s) => s.recording_url)
+          .map((s) => ({ id: s.id, url: s.recording_url }))
+      )
+    : {};
   const upcoming = sessions.filter(
     (s) => new Date(s.scheduled_at).getTime() > Date.now()
   );
@@ -44,13 +52,13 @@ export default async function SessionsPage() {
     <AdminShell activePath="/sessions">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Academy
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Live Sessions
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             Schedule classes, upload recordings, and manage session details.
           </p>
         </div>
@@ -65,7 +73,7 @@ export default async function SessionsPage() {
               <div>
                 <label
                   htmlFor="type"
-                  className="mb-1.5 block text-sm font-medium text-text-secondary-dark"
+                  className="mb-1.5 block text-sm font-medium text-muted"
                 >
                   Type
                 </label>
@@ -73,7 +81,7 @@ export default async function SessionsPage() {
                   id="type"
                   name="type"
                   required
-                  className="w-full rounded-lg border border-white/10 bg-scalex-charcoal-alt px-3.5 py-2.5 text-sm text-text-primary-dark outline-none focus:border-scalex-red focus:ring-2 focus:ring-scalex-red/20"
+                  className="w-full rounded-lg border border-line bg-surface-3 px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-scalex-red focus:ring-2 focus:ring-scalex-red/20"
                 >
                   {SESSION_TYPES.map((t) => (
                     <option key={t.value} value={t.value}>
@@ -106,19 +114,19 @@ export default async function SessionsPage() {
 
         <div className="grid gap-4 sm:grid-cols-3">
           <Card>
-            <p className="text-xs text-text-tertiary-dark">Total sessions</p>
+            <p className="text-xs text-subtle">Total sessions</p>
             <p className="mt-1 font-display text-2xl font-bold">
               {sessions.length}
             </p>
           </Card>
           <Card>
-            <p className="text-xs text-text-tertiary-dark">Upcoming</p>
+            <p className="text-xs text-subtle">Upcoming</p>
             <p className="mt-1 font-display text-2xl font-bold">
               {upcoming.length}
             </p>
           </Card>
           <Card>
-            <p className="text-xs text-text-tertiary-dark">Past</p>
+            <p className="text-xs text-subtle">Past</p>
             <p className="mt-1 font-display text-2xl font-bold">
               {sessions.length - upcoming.length}
             </p>
@@ -127,7 +135,7 @@ export default async function SessionsPage() {
 
         {sessions.length === 0 ? (
           <Card>
-            <p className="text-sm text-text-secondary-dark">
+            <p className="text-sm text-muted">
               No live sessions scheduled yet.
             </p>
           </Card>
@@ -149,7 +157,7 @@ export default async function SessionsPage() {
                       <h2 className="font-display text-lg font-semibold">
                         {session.title}
                       </h2>
-                      <p className="mt-0.5 text-sm text-text-secondary-dark">
+                      <p className="mt-0.5 text-sm text-muted">
                         Host: {session.host?.name ?? "—"} ·{" "}
                         {typeLabel(session.type)}
                       </p>
@@ -157,12 +165,12 @@ export default async function SessionsPage() {
                     <StatusPill label={statusLabel} variant={variant} />
                   </div>
 
-                  <p className="mt-3 text-sm text-text-secondary-dark">
+                  <p className="mt-3 text-sm text-muted">
                     {new Date(session.scheduled_at).toLocaleString()}
                   </p>
 
                   {session.description && (
-                    <p className="mt-2 text-sm text-text-tertiary-dark">
+                    <p className="mt-2 text-sm text-subtle">
                       {session.description}
                     </p>
                   )}
@@ -183,7 +191,12 @@ export default async function SessionsPage() {
                     )}
                   </div>
 
-                  {canCreate && <SessionEditor session={session} />}
+                  {canCreate && (
+                    <SessionEditor
+                      session={session}
+                      recordingPreviewUrl={recordingPreviews[session.id] ?? null}
+                    />
+                  )}
                 </Card>
               );
             })}

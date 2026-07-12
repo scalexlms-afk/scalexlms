@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { createClient } from "@scalex/db/server";
+import { siteUrl } from "@/lib/site";
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -45,24 +46,40 @@ export async function GET() {
       (planData.total_cents * planData.first_payment_percent) / 100
     );
 
-    const { data: payment, error: paymentError } = await supabase
+    // Reuse an existing pending first payment to avoid piling up duplicate rows
+    // each time the student re-opens checkout (idempotency).
+    const { data: existing } = await supabase
       .from("payments")
-      .insert({
-        student_id: user.id,
-        amount: firstAmount,
-        type: "first_payment",
-        status: "pending",
-      } as never)
-      .select()
-      .single();
+      .select("id")
+      .eq("student_id", user.id)
+      .eq("type", "first_payment")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    const paymentData = payment as { id: string } | null;
+    let paymentData = existing as { id: string } | null;
 
-    if (paymentError || !paymentData) {
-      return NextResponse.json(
-        { error: paymentError?.message ?? "Payment creation failed" },
-        { status: 500 }
-      );
+    if (!paymentData) {
+      const { data: payment, error: paymentError } = await supabase
+        .from("payments")
+        .insert({
+          student_id: user.id,
+          amount: firstAmount,
+          type: "first_payment",
+          status: "pending",
+        } as never)
+        .select()
+        .single();
+
+      paymentData = payment as { id: string } | null;
+
+      if (paymentError || !paymentData) {
+        return NextResponse.json(
+          { error: paymentError?.message ?? "Payment creation failed" },
+          { status: 500 }
+        );
+      }
     }
 
     const stripe = getStripe();
@@ -86,8 +103,8 @@ export async function GET() {
         student_id: user.id,
         payment_id: paymentData.id,
       },
-      success_url: `${process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL}/payment/cancel`,
+      success_url: `${siteUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${siteUrl}/payment/cancel`,
     });
 
     return NextResponse.json({ url: checkoutSession.url });

@@ -63,13 +63,13 @@ export default function PaymentSuccessContent() {
         </h1>
 
         {activating && (
-          <p className="mt-2 flex items-center justify-center gap-2 text-sm text-text-secondary-dark">
-            <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/20 border-t-scalex-red" />
+          <p className="mt-2 flex items-center justify-center gap-2 text-sm text-muted">
+            <span className="h-3 w-3 animate-spin rounded-full border-2 border-line-strong border-t-scalex-red" />
             Activating your account...
           </p>
         )}
         {activated && (
-          <p className="mt-2 text-sm text-text-secondary-dark">
+          <p className="mt-2 text-sm text-muted">
             {authenticated
               ? "Your account is now active. Welcome to ScaleX LaunchPad!"
               : "Your account is now active. Sign in to open your dashboard."}

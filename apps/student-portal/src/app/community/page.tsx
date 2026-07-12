@@ -40,13 +40,13 @@ export default async function CommunityPage({
     <PortalShell activePath="/community">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Community
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Connect with fellow sellers
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             Share wins, ask questions, and learn from the LaunchPad community.
           </p>
         </div>
@@ -59,7 +59,7 @@ export default async function CommunityPage({
               className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
                 activeChannel === channel.key
                   ? "bg-scalex-red text-white"
-                  : "bg-scalex-charcoal text-text-secondary-dark hover:bg-scalex-charcoal-alt hover:text-text-primary-dark"
+                  : "bg-surface-2 text-muted hover:bg-surface-3 hover:text-foreground"
               }`}
             >
               {channel.label}
@@ -69,7 +69,7 @@ export default async function CommunityPage({
 
         <Card>
           <h2 className="font-display text-lg font-semibold">Create a post</h2>
-          <p className="mt-1 text-sm text-text-secondary-dark">
+          <p className="mt-1 text-sm text-muted">
             Posts are reviewed before appearing in the feed.
           </p>
           <form action={createPostAction} className="mt-4 space-y-3">
@@ -88,7 +88,7 @@ export default async function CommunityPage({
         <div className="space-y-4">
           {posts.length === 0 ? (
             <Card>
-              <p className="text-sm text-text-secondary-dark">
+              <p className="text-sm text-muted">
                 No posts in this channel yet. Be the first to share!
               </p>
             </Card>
@@ -97,10 +97,10 @@ export default async function CommunityPage({
               <Card key={post.id}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium text-text-primary-dark">
+                    <p className="font-medium text-foreground">
                       {post.profiles?.name ?? "Student"}
                     </p>
-                    <p className="text-xs text-text-tertiary-dark">
+                    <p className="text-xs text-subtle">
                       {formatTime(post.created_at)}
                     </p>
                   </div>
@@ -109,7 +109,7 @@ export default async function CommunityPage({
                   )}
                 </div>
 
-                <p className="mt-3 whitespace-pre-wrap text-sm text-text-primary-dark">
+                <p className="mt-3 whitespace-pre-wrap text-sm text-foreground">
                   {post.content}
                 </p>
 
@@ -121,28 +121,28 @@ export default async function CommunityPage({
                       className={`text-sm transition-colors ${
                         post.liked_by_user
                           ? "text-scalex-red"
-                          : "text-text-secondary-dark hover:text-scalex-red"
+                          : "text-muted hover:text-scalex-red"
                       }`}
                     >
                       {post.liked_by_user ? "♥" : "♡"} {post.like_count}
                     </button>
                   </form>
-                  <span className="text-sm text-text-tertiary-dark">
+                  <span className="text-sm text-subtle">
                     {post.comments?.length ?? 0} comments
                   </span>
                 </div>
 
                 {(post.comments?.length ?? 0) > 0 && (
-                  <ul className="mt-4 space-y-3 border-t border-white/[0.06] pt-4">
+                  <ul className="mt-4 space-y-3 border-t border-line pt-4">
                     {post.comments?.map((comment) => (
                       <li
                         key={comment.id}
-                        className="rounded-lg bg-scalex-charcoal-alt px-3 py-2"
+                        className="rounded-lg bg-surface-3 px-3 py-2"
                       >
-                        <p className="text-xs font-medium text-text-primary-dark">
+                        <p className="text-xs font-medium text-foreground">
                           {comment.profiles?.name ?? "Student"}
                         </p>
-                        <p className="mt-1 text-sm text-text-secondary-dark">
+                        <p className="mt-1 text-sm text-muted">
                           {comment.content}
                         </p>
                       </li>

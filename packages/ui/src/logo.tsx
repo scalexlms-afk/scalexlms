@@ -5,48 +5,11 @@ interface LogoProps {
   className?: string;
 }
 
-const wordSize = {
-  sm: "text-lg",
-  md: "text-xl",
-  lg: "text-3xl",
+const logoSize = {
+  sm: "h-[3.25rem] w-[4.7rem]",
+  md: "h-[4.5rem] w-[6.5rem]",
+  lg: "h-24 w-[8.7rem]",
 };
-
-const markSize = {
-  sm: 20,
-  md: 26,
-  lg: 40,
-};
-
-function LogoMark({ px }: { px: number }) {
-  return (
-    <svg
-      width={px}
-      height={px}
-      viewBox="0 0 48 48"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <path
-        d="M24 6L38 26H29V34H19V26H10L24 6Z"
-        fill="var(--color-scalex-red)"
-      />
-      <path
-        d="M10 38C16 43 32 43 38 38"
-        stroke="var(--color-scalex-white)"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
-      <path
-        d="M36 36.5L39 38.5L37 41"
-        stroke="var(--color-scalex-white)"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 export function Logo({
   size = "md",
@@ -55,22 +18,19 @@ export function Logo({
   className = "",
 }: LogoProps) {
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`inline-flex flex-col items-start ${className}`}>
       {showMark && (
-        <span className="shrink-0">
-          <LogoMark px={markSize[size]} />
-        </span>
+        <img
+          src="/scalex-logo.png"
+          alt="ScaleX"
+          className={`${logoSize[size]} shrink-0 object-contain`}
+        />
       )}
-      <div className="leading-none">
-        <p className={`font-display font-bold tracking-tight ${wordSize[size]}`}>
-          scale<span className="text-scalex-red">X</span>
+      {showTagline && (
+        <p className="mt-1.5 whitespace-nowrap text-xs text-muted">
+          Learn. Build. Launch. Grow.
         </p>
-        {showTagline && (
-          <p className="mt-1 text-xs text-text-secondary-dark">
-            Learn. Build. Launch. Grow.
-          </p>
-        )}
-      </div>
+      )}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@scalex/db/server";
 import {
   isAdminRole,
@@ -32,9 +33,23 @@ export async function getSessionProfile(): Promise<{
 export async function requireAdminProfile() {
   const session = await getSessionProfile();
   if (!session || !isAdminRole(session.profile.role)) {
-    throw new Error("Unauthorized");
+    redirect("/login");
   }
   return session;
+}
+
+/**
+ * Page-level feature guard. Redirects to a clean /forbidden screen instead of
+ * throwing a 500 when the caller lacks permission. Use in page components.
+ */
+export function requireFeaturePage(
+  role: UserRole | null | undefined,
+  feature: Feature,
+  minLevel: "partial" | "full" | "own" = "partial"
+) {
+  if (!role || !canAccess(role, feature, minLevel)) {
+    redirect("/forbidden");
+  }
 }
 
 export function requireRole(

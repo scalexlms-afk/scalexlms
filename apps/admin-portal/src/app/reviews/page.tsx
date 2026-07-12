@@ -1,6 +1,6 @@
 import { AdminShell } from "@/components/admin-shell";
 import { TextArea } from "@/components/field";
-import { requireAdminProfile, requireFeature } from "@/lib/auth";
+import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { getPendingSubmissions } from "@/lib/data";
 import { reviewSubmissionAction } from "./actions";
 import {
@@ -26,7 +26,7 @@ function formatAiScore(score: number | null): string {
 
 export default async function ReviewsPage() {
   const { userId, profile } = await requireAdminProfile();
-  requireFeature(profile.role, "task_review");
+  requireFeaturePage(profile.role, "task_review");
 
   const submissions = await getPendingSubmissions(userId, profile.role);
 
@@ -34,20 +34,20 @@ export default async function ReviewsPage() {
     <AdminShell activePath="/reviews">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Academy
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Task &amp; Review Center
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             Review student submissions awaiting mentor or instructor feedback.
           </p>
         </div>
 
         {submissions.length === 0 ? (
           <Card>
-            <p className="text-sm text-text-secondary-dark">
+            <p className="text-sm text-muted">
               No submissions pending review. Check back when students submit
               tasks.
             </p>
@@ -61,14 +61,14 @@ export default async function ReviewsPage() {
                     <h2 className="font-display text-lg font-semibold">
                       {submission.task?.title ?? "Task"}
                     </h2>
-                    <p className="mt-0.5 text-sm text-text-secondary-dark">
+                    <p className="mt-0.5 text-sm text-muted">
                       {submission.student?.name ?? "Unknown student"}
                       {submission.student?.email
                         ? ` · ${submission.student.email}`
                         : ""}
                     </p>
                     {submission.task?.milestone?.title && (
-                      <p className="mt-0.5 text-xs text-text-tertiary-dark">
+                      <p className="mt-0.5 text-xs text-subtle">
                         Milestone: {submission.task.milestone.title}
                       </p>
                     )}
@@ -84,32 +84,32 @@ export default async function ReviewsPage() {
                 </div>
 
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-xl border border-white/[0.06] bg-scalex-charcoal-alt p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary-dark">
+                  <div className="rounded-xl border border-line bg-surface-3 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-subtle">
                       Submission
                     </p>
-                    <pre className="mt-2 whitespace-pre-wrap text-sm text-text-secondary-dark">
+                    <pre className="mt-2 whitespace-pre-wrap text-sm text-muted">
                       {formatSubmissionContent(submission.content)}
                     </pre>
                     {submission.submitted_at && (
-                      <p className="mt-2 text-xs text-text-tertiary-dark">
+                      <p className="mt-2 text-xs text-subtle">
                         Submitted{" "}
                         {new Date(submission.submitted_at).toLocaleString()}
                       </p>
                     )}
                   </div>
 
-                  <div className="rounded-xl border border-white/[0.06] bg-scalex-charcoal-alt p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary-dark">
+                  <div className="rounded-xl border border-line bg-surface-3 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-subtle">
                       AI Pre-review (read-only)
                     </p>
                     <p className="mt-2 text-sm">
-                      <span className="text-text-tertiary-dark">Score: </span>
+                      <span className="text-subtle">Score: </span>
                       <span className="font-medium">
                         {formatAiScore(submission.ai_score)}
                       </span>
                     </p>
-                    <p className="mt-2 text-sm text-text-secondary-dark">
+                    <p className="mt-2 text-sm text-muted">
                       {submission.ai_notes ?? "No AI notes available."}
                     </p>
                   </div>

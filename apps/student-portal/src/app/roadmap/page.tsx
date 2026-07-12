@@ -18,7 +18,7 @@ export default async function RoadmapPage() {
   if (!course) {
     return (
       <PortalShell activePath="/roadmap">
-        <p className="text-text-secondary-dark">No published course found.</p>
+        <p className="text-muted">No published course found.</p>
       </PortalShell>
     );
   }
@@ -69,13 +69,13 @@ export default async function RoadmapPage() {
     <PortalShell activePath="/roadmap">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Learning Roadmap
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             {course.title}
           </h1>
-          <p className="mt-1 max-w-2xl text-text-secondary-dark">
+          <p className="mt-1 max-w-2xl text-muted">
             {course.description}
           </p>
         </div>
@@ -110,7 +110,7 @@ export default async function RoadmapPage() {
                         ? "bg-accent-green/15 text-accent-green"
                         : started
                           ? "bg-scalex-red/15 text-scalex-red"
-                          : "bg-white/[0.06] text-text-secondary-dark"
+                          : "bg-surface-3 text-muted"
                     }`}
                   >
                     {allDone ? "✓" : ms.order_index}
@@ -159,7 +159,7 @@ export default async function RoadmapPage() {
                             Milestone task: {task.title} →
                           </Link>
                         ) : (
-                          <p className="text-sm text-text-tertiary-dark">
+                          <p className="text-sm text-subtle">
                             Milestone task: {task.title} (locked)
                           </p>
                         )}
@@ -168,10 +168,10 @@ export default async function RoadmapPage() {
                   </div>
                 </div>
 
-                <div className="mt-5 space-y-4 border-t border-white/[0.06] pt-5">
+                <div className="mt-5 space-y-4 border-t border-line pt-5">
                   {ms.modules.map((mod) => (
                     <div key={mod.id}>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-text-tertiary-dark">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-subtle">
                         {mod.title}
                       </p>
                       <ul className="mt-2 space-y-1">
@@ -181,13 +181,13 @@ export default async function RoadmapPage() {
                             <li key={lesson.id}>
                               <Link
                                 href={`/lessons/${lesson.id}`}
-                                className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-scalex-charcoal-alt"
+                                className="group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-surface-3"
                               >
                                 <span
                                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs ${
                                     done
                                       ? "bg-accent-green/15 text-accent-green"
-                                      : "bg-white/10 text-text-secondary-dark"
+                                      : "bg-surface-3 text-muted"
                                   }`}
                                 >
                                   {done ? "✓" : lesson.order_index}
@@ -195,13 +195,13 @@ export default async function RoadmapPage() {
                                 <span
                                   className={`flex-1 ${
                                     done
-                                      ? "text-text-secondary-dark line-through"
-                                      : "text-text-primary-dark"
+                                      ? "text-muted line-through"
+                                      : "text-foreground"
                                   }`}
                                 >
                                   {lesson.title}
                                 </span>
-                                <span className="text-text-tertiary-dark opacity-0 transition-opacity group-hover:opacity-100">
+                                <span className="text-subtle opacity-0 transition-opacity group-hover:opacity-100">
                                   →
                                 </span>
                               </Link>

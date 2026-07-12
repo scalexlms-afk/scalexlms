@@ -1,6 +1,12 @@
 @import "tailwindcss";
 
+/* Scan the shared UI package (resolved via a node_modules symlink, which
+   Tailwind ignores by default) so classes used only inside @scalex/ui —
+   including custom @utility classes below — are generated. */
+@source "../../ui/src/**/*.{ts,tsx}";
+
 @theme {
+  /* Brand — constant across themes */
   --color-scalex-red: #e31e24;
   --color-scalex-red-dark: #b4181d;
   --color-scalex-black: #0b0b10;
@@ -8,10 +14,12 @@
   --color-scalex-charcoal-alt: #1d1d26;
   --color-scalex-white: #ffffff;
 
+  /* Legacy dark text tokens (kept for back-compat) */
   --color-text-primary-dark: #f5f5f7;
   --color-text-secondary-dark: #9ca3af;
   --color-text-tertiary-dark: #6b7280;
 
+  /* Accents — constant across themes */
   --color-accent-blue: #3b82f6;
   --color-accent-teal: #22d3ee;
   --color-accent-purple: #8b5cf6;
@@ -25,6 +33,16 @@
   --color-text-primary-light: #0b0b10;
   --color-text-secondary-light: #4b5563;
 
+  /* ---- Semantic, themeable tokens (dark defaults) ---- */
+  --color-surface: #0b0b10;
+  --color-surface-2: #16161d;
+  --color-surface-3: #1d1d26;
+  --color-foreground: #f5f5f7;
+  --color-muted: #9ca3af;
+  --color-subtle: #6b7280;
+  --color-line: rgba(255, 255, 255, 0.08);
+  --color-line-strong: rgba(255, 255, 255, 0.14);
+
   --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
 
@@ -36,6 +54,79 @@
   --animate-grow-x: grow-x 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-shimmer: shimmer 2.5s linear infinite;
   --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ---- Non-color themeable vars (glass + metallic) ---- */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-glass: rgba(22, 22, 29, 0.55);
+  --surface-glass-strong: rgba(22, 22, 29, 0.78);
+  --border-glass: rgba(255, 255, 255, 0.1);
+  --glass-blur: 16px;
+  --sheen: rgba(255, 255, 255, 0.08);
+  --sheen-strong: rgba(255, 255, 255, 0.14);
+  --metallic-graphite: linear-gradient(
+    160deg,
+    #23232d 0%,
+    #16161d 45%,
+    #101015 100%
+  );
+  --metallic-silver: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.04) 40%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  --metallic-red: linear-gradient(
+    160deg,
+    #f0353b 0%,
+    #e31e24 45%,
+    #b4181d 100%
+  );
+  --shadow-glow-red: 0 8px 30px -10px rgba(227, 30, 36, 0.55);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --color-surface: #f4f5f8;
+  --color-surface-2: #ffffff;
+  --color-surface-3: #eceef3;
+  --color-foreground: #0b0b10;
+  --color-muted: #4b5563;
+  --color-subtle: #6b7280;
+  --color-line: rgba(15, 17, 26, 0.1);
+  --color-line-strong: rgba(15, 17, 26, 0.16);
+
+  /* Legacy tokens re-point so un-migrated surfaces still adapt */
+  --color-text-primary-dark: #0b0b10;
+  --color-text-secondary-dark: #4b5563;
+  --color-text-tertiary-dark: #6b7280;
+
+  --surface-glass: rgba(255, 255, 255, 0.65);
+  --surface-glass-strong: rgba(255, 255, 255, 0.85);
+  --border-glass: rgba(15, 17, 26, 0.08);
+  --sheen: rgba(255, 255, 255, 0.9);
+  --sheen-strong: rgba(255, 255, 255, 1);
+  --metallic-graphite: linear-gradient(
+    160deg,
+    #ffffff 0%,
+    #f4f5f8 45%,
+    #e9ebf1 100%
+  );
+  --metallic-silver: linear-gradient(
+    160deg,
+    rgba(15, 17, 26, 0.06) 0%,
+    rgba(15, 17, 26, 0.02) 40%,
+    rgba(15, 17, 26, 0.01) 100%
+  );
+  --metallic-red: linear-gradient(
+    160deg,
+    #f0353b 0%,
+    #e31e24 45%,
+    #b4181d 100%
+  );
+  --shadow-glow-red: 0 10px 30px -12px rgba(227, 30, 36, 0.4);
 }
 
 @keyframes fade-up {
@@ -87,19 +178,64 @@
   }
 }
 
+/* ---- Design utilities: glass + metallic ---- */
+@utility glass {
+  background-color: var(--surface-glass);
+  backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(140%);
+  border: 1px solid var(--border-glass);
+}
+
+@utility glass-strong {
+  background-color: var(--surface-glass-strong);
+  backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(150%);
+  border: 1px solid var(--border-glass);
+}
+
+/* Subtle metallic top-sheen + inner rim, layers over any background */
+@utility metallic-edge {
+  box-shadow:
+    inset 0 1px 0 0 var(--sheen),
+    inset 0 0 0 1px color-mix(in srgb, var(--sheen) 45%, transparent);
+}
+
+@utility metallic-graphite {
+  background-image: var(--metallic-graphite);
+}
+
+@utility metallic-red {
+  background-image: var(--metallic-red);
+}
+
+@utility glow-red {
+  box-shadow: var(--shadow-glow-red);
+}
+
+/* Animated metallic shimmer sweep (pairs with animate-shimmer) */
+@utility shimmer-sheen {
+  background-image: linear-gradient(
+    110deg,
+    transparent 25%,
+    var(--sheen-strong) 50%,
+    transparent 75%
+  );
+  background-size: 200% 100%;
+}
+
 @layer base {
   body {
-    @apply bg-scalex-black text-text-primary-dark font-body antialiased;
+    @apply bg-surface text-foreground font-body antialiased;
   }
 
   ::selection {
     background-color: color-mix(in srgb, var(--color-scalex-red) 35%, transparent);
-    color: var(--color-text-primary-dark);
+    color: var(--color-foreground);
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+    scrollbar-color: var(--color-line-strong) transparent;
   }
 
   *::-webkit-scrollbar {
@@ -108,13 +244,13 @@
   }
 
   *::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.12);
+    background-color: var(--color-line-strong);
     border-radius: 9999px;
     border: 2px solid transparent;
     background-clip: content-box;
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(255, 255, 255, 0.22);
+    background-color: var(--color-line);
   }
 }

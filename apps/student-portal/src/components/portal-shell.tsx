@@ -1,4 +1,10 @@
-import { NavSidebar, Logo, NotificationBell } from "@scalex/ui";
+import {
+  NavSidebar,
+  MobileNav,
+  Logo,
+  NotificationBell,
+  ThemeToggle,
+} from "@scalex/ui";
 import type { NavGroup } from "@scalex/ui";
 import { createClient } from "@scalex/db/server";
 import { redirect } from "next/navigation";
@@ -117,10 +123,10 @@ export async function PortalShell({
           brand={<Logo size="md" showTagline />}
           footer={
             <div className="text-sm">
-              <p className="font-medium text-text-primary-dark">
+              <p className="font-medium text-foreground">
                 {profileData?.name ?? "Student"}
               </p>
-              <p className="truncate text-xs text-text-secondary-dark">
+              <p className="truncate text-xs text-muted">
                 {profileData?.email}
               </p>
               <form action="/auth/signout" method="post" className="mt-3">
@@ -137,23 +143,38 @@ export async function PortalShell({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.06] bg-scalex-black/80 px-4 py-3 backdrop-blur">
-          <div className="md:hidden">
+        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-surface/80 px-4 py-3 backdrop-blur">
+          <div className="flex items-center gap-3 md:hidden">
+            <MobileNav
+              groups={groups}
+              brand={<Logo size="sm" />}
+              footer={
+                <div className="text-sm">
+                  <p className="font-medium text-foreground">
+                    {profileData?.name ?? "Student"}
+                  </p>
+                  <p className="truncate text-xs text-muted">
+                    {profileData?.email}
+                  </p>
+                  <form action="/auth/signout" method="post" className="mt-3">
+                    <button
+                      type="submit"
+                      className="text-xs text-scalex-red hover:underline"
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              }
+            />
             <Logo size="sm" />
           </div>
           <div className="ml-auto flex items-center gap-3">
+            <ThemeToggle />
             <NotificationBell
               notifications={notifications}
               markReadAction={markNotificationRead}
             />
-            <form action="/auth/signout" method="post" className="md:hidden">
-              <button
-                type="submit"
-                className="text-xs text-scalex-red hover:underline"
-              >
-                Sign out
-              </button>
-            </form>
           </div>
         </header>
 

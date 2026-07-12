@@ -1,18 +1,18 @@
 import { AdminShell } from "@/components/admin-shell";
 import { Field } from "@/components/field";
-import { requireAdminProfile, requireFeature } from "@/lib/auth";
+import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import {
   getAdminUsers,
   getPaymentPlanSettings,
   getRecentAuditLogs,
 } from "@/lib/data";
-import { formatCurrency, formatDateTime, formatRole } from "@/lib/format";
+import { formatCurrency, formatDateTime, formatStatus } from "@/lib/format";
 import { updatePaymentPlanAction, updateUserRoleAction } from "./actions";
 import { Button, Card, DataTable } from "@scalex/ui";
 
 export default async function SettingsPage() {
   const { profile } = await requireAdminProfile();
-  requireFeature(profile.role, "system_settings", "full");
+  requireFeaturePage(profile.role, "system_settings", "full");
 
   const [users, planSettings, auditLogs] = await Promise.all([
     getAdminUsers(),
@@ -24,13 +24,13 @@ export default async function SettingsPage() {
     <AdminShell activePath="/settings">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             System Settings
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Settings
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             Role management, payment plan configuration, and audit trail.
           </p>
         </div>
@@ -61,7 +61,7 @@ export default async function SettingsPage() {
                       <select
                         name="role"
                         defaultValue={row.role}
-                        className="rounded border border-white/10 bg-scalex-charcoal-alt px-2 py-1 text-xs"
+                        className="rounded border border-line bg-surface-3 px-2 py-1 text-xs"
                       >
                         <option value="super_admin">Super Admin</option>
                         <option value="instructor">Instructor</option>
@@ -77,7 +77,7 @@ export default async function SettingsPage() {
                 {
                   key: "status",
                   header: "Status",
-                  render: (row) => formatRole(row.status),
+                  render: (row) => formatStatus(row.status),
                 },
               ]}
             />
@@ -93,11 +93,11 @@ export default async function SettingsPage() {
               <form
                 key={plan.id}
                 action={updatePaymentPlanAction}
-                className="grid gap-3 rounded-xl border border-white/[0.06] bg-scalex-charcoal-alt p-4 sm:grid-cols-4"
+                className="grid gap-3 rounded-xl border border-line bg-surface-3 p-4 sm:grid-cols-4"
               >
                 <input type="hidden" name="planId" value={plan.id} />
                 <div>
-                  <p className="text-xs text-text-tertiary-dark">Plan Key</p>
+                  <p className="text-xs text-subtle">Plan Key</p>
                   <p className="font-medium">{plan.plan_key}</p>
                 </div>
                 <Field
@@ -119,7 +119,7 @@ export default async function SettingsPage() {
                   defaultValue={String(plan.remaining_percent)}
                 />
                 <div className="sm:col-span-4">
-                  <p className="text-xs text-text-secondary-dark">
+                  <p className="text-xs text-muted">
                     Current: {formatCurrency(plan.total_cents)} ·{" "}
                     {plan.first_payment_percent}% first /{" "}
                     {plan.remaining_percent}% remaining

@@ -25,21 +25,21 @@ export function PipelineBoard<T>({
       {columns.map((column) => (
         <Card key={column.id} className="min-h-[280px]">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-text-primary-dark">
+            <h3 className="text-sm font-semibold text-foreground">
               {column.title}
             </h3>
-            <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-text-secondary-dark">
+            <span className="rounded-full bg-surface-3 px-2 py-0.5 text-xs text-muted">
               {column.items.length}
             </span>
           </div>
           <div className="space-y-2">
             {column.items.length === 0 ? (
-              <p className="text-xs text-text-tertiary-dark">No leads</p>
+              <p className="text-xs text-subtle">No leads</p>
             ) : (
               column.items.map((item) => (
                 <div
                   key={getItemKey(item)}
-                  className="rounded-lg border border-white/[0.06] bg-scalex-charcoal-alt p-3"
+                  className="rounded-lg border border-line bg-surface-3 p-3"
                 >
                   {renderCard(item)}
                 </div>

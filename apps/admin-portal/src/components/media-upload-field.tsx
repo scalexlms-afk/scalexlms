@@ -57,7 +57,7 @@ export function MediaUploadField({
 
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-text-secondary-dark">
+      <label className="mb-1.5 block text-sm font-medium text-muted">
         {label}
       </label>
       <input type="hidden" name={name} value={url} />
@@ -78,7 +78,7 @@ export function MediaUploadField({
           {uploading ? "Uploading…" : url ? "Replace file" : "Upload file"}
         </Button>
         {fileName && (
-          <span className="text-xs text-text-tertiary-dark">{fileName}</span>
+          <span className="text-xs text-subtle">{fileName}</span>
         )}
         {url && !fileName && (
           <span className="max-w-[200px] truncate text-xs text-accent-green">
@@ -87,7 +87,7 @@ export function MediaUploadField({
         )}
       </div>
       {helperText && (
-        <p className="mt-1 text-xs text-text-tertiary-dark">{helperText}</p>
+        <p className="mt-1 text-xs text-subtle">{helperText}</p>
       )}
       {error && <p className="mt-1 text-xs text-accent-danger">{error}</p>}
     </div>

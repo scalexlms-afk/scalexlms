@@ -45,13 +45,13 @@ export default async function SessionsPage() {
     <PortalShell activePath="/sessions">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Live Sessions
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Classes & recordings
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             Register for upcoming live sessions and catch up on recordings.
           </p>
         </div>
@@ -60,7 +60,7 @@ export default async function SessionsPage() {
           <h2 className="font-display text-lg font-semibold">Upcoming sessions</h2>
           {upcoming.length === 0 ? (
             <Card>
-              <p className="text-sm text-text-secondary-dark">
+              <p className="text-sm text-muted">
                 No upcoming sessions scheduled. Check back soon!
               </p>
             </Card>
@@ -78,11 +78,11 @@ export default async function SessionsPage() {
                         variant="neutral"
                       />
                     </div>
-                    <p className="mt-1 text-sm text-text-secondary-dark">
+                    <p className="mt-1 text-sm text-muted">
                       {formatSessionTime(session.scheduled_at)}
                     </p>
                     {session.description && (
-                      <p className="mt-2 text-sm text-text-secondary-dark">
+                      <p className="mt-2 text-sm text-muted">
                         {session.description}
                       </p>
                     )}
@@ -120,17 +120,17 @@ export default async function SessionsPage() {
           <h2 className="font-display text-lg font-semibold">Recordings</h2>
           {recordingsWithUrls.length === 0 ? (
             <Card>
-              <p className="text-sm text-text-secondary-dark">
+              <p className="text-sm text-muted">
                 No recordings available yet.
               </p>
             </Card>
           ) : (
             recordingsWithUrls.map((session) => (
               <Card key={session.id}>
-                <h3 className="font-medium text-text-primary-dark">
+                <h3 className="font-medium text-foreground">
                   {session.title}
                 </h3>
-                <p className="mt-1 text-xs text-text-tertiary-dark">
+                <p className="mt-1 text-xs text-subtle">
                   {formatSessionTime(session.scheduled_at)}
                 </p>
                 {session.secureRecordingUrl ? (
@@ -143,7 +143,7 @@ export default async function SessionsPage() {
                     />
                   </div>
                 ) : session.recording_url ? (
-                  <p className="mt-4 text-sm text-text-secondary-dark">
+                  <p className="mt-4 text-sm text-muted">
                     Recording unavailable. Please refresh the page.
                   </p>
                 ) : null}

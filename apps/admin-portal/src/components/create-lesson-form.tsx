@@ -18,16 +18,16 @@ export function CreateLessonForm({
   return (
     <form
       action={createLessonAction}
-      className="mt-3 grid gap-3 rounded-lg border border-white/[0.06] bg-scalex-black/40 p-3"
+      className="mt-3 grid gap-3 rounded-lg border border-line bg-surface/40 p-3"
     >
-      <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+      <p className="text-xs font-semibold uppercase tracking-wider text-muted">
         Add lesson
       </p>
       <input type="hidden" name="moduleId" value={moduleId} />
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Title" name="title" required placeholder="Lesson title" />
         <div>
-          <label className="mb-1.5 block text-sm font-medium text-text-secondary-dark">
+          <label className="mb-1.5 block text-sm font-medium text-muted">
             Type
           </label>
           <select

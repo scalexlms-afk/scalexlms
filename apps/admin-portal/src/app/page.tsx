@@ -47,13 +47,13 @@ export default async function AdminDashboardPage() {
     <AdminShell activePath="/">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Dashboard
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Welcome back, {profile.name}
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             Live business metrics from your academy data layer.
           </p>
         </div>
@@ -153,7 +153,7 @@ export default async function AdminDashboardPage() {
             <h2 className="font-display text-lg font-semibold">
               AI Insights
             </h2>
-            <p className="mt-1 text-sm text-text-secondary-dark">
+            <p className="mt-1 text-sm text-muted">
               Signals detected from student activity, reviews, and payments.
             </p>
             <div className="mt-4 space-y-3">
@@ -161,7 +161,7 @@ export default async function AdminDashboardPage() {
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="block rounded-xl border border-white/[0.06] bg-scalex-charcoal-alt p-3 transition-colors hover:border-scalex-red/30"
+                  className="block rounded-xl border border-line bg-surface-3 p-3 transition-colors hover:border-scalex-red/30"
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">{item.title}</p>
@@ -170,7 +170,7 @@ export default async function AdminDashboardPage() {
                     </span>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
-                    <p className="text-xs text-text-tertiary-dark">
+                    <p className="text-xs text-subtle">
                       {item.note}
                     </p>
                     <StatusPill label="View" variant={item.variant} />

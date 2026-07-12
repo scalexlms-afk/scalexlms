@@ -10,6 +10,12 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Card } from "../card";
+import {
+  CHART_AXIS_COLOR,
+  CHART_GRID_COLOR,
+  CHART_LINE_COLOR,
+  CHART_TOOLTIP_STYLE,
+} from "../tokens";
 
 type ChartPoint = {
   label: string;
@@ -27,7 +33,7 @@ export function LineChartCard({
   title,
   data,
   valuePrefix = "",
-  color = "#E63946",
+  color = CHART_LINE_COLOR,
 }: LineChartCardProps) {
   return (
     <Card>
@@ -35,24 +41,20 @@ export function LineChartCard({
       <div className="mt-4 h-64">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <CartesianGrid stroke={CHART_GRID_COLOR} vertical={false} />
             <XAxis
               dataKey="label"
-              tick={{ fill: "#9CA3AF", fontSize: 12 }}
+              tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fill: "#9CA3AF", fontSize: 12 }}
+              tick={{ fill: CHART_AXIS_COLOR, fontSize: 12 }}
               axisLine={false}
               tickLine={false}
             />
             <Tooltip
-              contentStyle={{
-                background: "#111827",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 8,
-              }}
+              contentStyle={CHART_TOOLTIP_STYLE}
               formatter={(value) => [`${valuePrefix}${value}`, ""]}
             />
             <Line

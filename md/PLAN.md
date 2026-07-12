@@ -211,6 +211,30 @@ backend as web.
 - [ ] **Security & compliance** — audit logging, data privacy for student
       records, payment data handling reviewed before Phase 3 finance ships
 
+## Audit Fixes + Design Overhaul (2026-07 pass)
+
+One-time hardening + visual pass layered on the existing app (see
+`DESIGN.md §11` for the design details):
+
+- **Security (RLS):** `009_rls_hardening.sql` — profile/submission/community
+  self-escalation guards, enrollment-scoped lesson/media reads, scoped
+  `search_lessons_context`, paid-enrollment insert check.
+- **Reliability:** `error.tsx` / `not-found.tsx` / `loading.tsx` for both
+  apps, admin `/forbidden` 403 page, `requireFeaturePage` redirects instead
+  of 500s, shared `FormError` / `FormSuccess` / `SubmitButton`.
+- **Student fixes:** unauthorized redirect-loop, open-redirect validation,
+  real password reset + `/update-password`, Stripe URL fallback + idempotent
+  first payment, lesson gating, YouTube/Vimeo/HLS embeds, task-submit
+  resilience, mobile nav.
+- **Admin fixes:** content-mutation RBAC + read-only UI gating, dashboard /
+  AI-insight scoping for mentor/sales, instructor cannot final-approve,
+  super_admin self-demotion guard, nested-form fix, private-bucket media
+  preview (`getSecureMediaUrl`).
+- **Design:** semantic themeable tokens + working light/dark mode with a
+  no-flash script and persisted toggle, glass + metallic utilities, centralized
+  chart colors. Diverged from plan by re-pointing legacy tokens in light mode
+  (safety net) rather than migrating every raw `-dark` class.
+
 ## Suggested Success Metrics per Phase
 
 | Phase | Primary metric |

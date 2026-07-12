@@ -10,6 +10,7 @@ import {
   type AdminScope,
 } from "./admin-db";
 import { monthKey, monthLabel } from "./format";
+import { CHART_COLORS } from "@scalex/ui/tokens";
 
 async function countTable(
   table: "submissions" | "community_posts" | "live_sessions",
@@ -74,16 +75,30 @@ export async function getDashboardStats(scope: AdminScope) {
     paymentsQuery,
     enrollmentsQuery,
   ] = await Promise.all([
-    countTable("submissions", {
-      column: "status",
-      op: "in",
-      value: ["submitted", "under_review"],
-    }),
-    countTable("community_posts", {
-      column: "status",
-      op: "eq",
-      value: "pending_approval",
-    }),
+    (async () => {
+      let query = db
+        .from("submissions")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["submitted", "under_review"]);
+      if (scopedStudentIds) {
+        if (scopedStudentIds.length === 0) return 0;
+        query = query.in("student_id", scopedStudentIds);
+      }
+      const { count } = await query;
+      return count ?? 0;
+    })(),
+    (async () => {
+      let query = db
+        .from("community_posts")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending_approval");
+      if (scopedStudentIds) {
+        if (scopedStudentIds.length === 0) return 0;
+        query = query.in("author_id", scopedStudentIds);
+      }
+      const { count } = await query;
+      return count ?? 0;
+    })(),
     countTable("live_sessions", {
       column: "scheduled_at",
       op: "gt",
@@ -248,16 +263,7 @@ export async function getMilestoneCompletionRates(scope: AdminScope) {
 
   if (milestoneError || !milestones?.length) return [];
 
-  const colors = [
-    "#E63946",
-    "#3B82F6",
-    "#10B981",
-    "#8B5CF6",
-    "#F59E0B",
-    "#06B6D4",
-    "#EC4899",
-    "#84CC16",
-  ];
+  const colors = CHART_COLORS;
 
   const results = [];
   for (const milestone of milestones) {
@@ -323,11 +329,18 @@ export async function getAiInsights(scope: AdminScope): Promise<AiInsight[]> {
   const scopedStudentIds = await getScopedStudentIds(scope);
   const insights: AiInsight[] = [];
 
-  let pendingReviews = await countTable("submissions", {
-    column: "status",
-    op: "in",
-    value: ["submitted", "under_review"],
-  });
+  const pendingReviews = await (async () => {
+    let query = db
+      .from("submissions")
+      .select("*", { count: "exact", head: true })
+      .in("status", ["submitted", "under_review"]);
+    if (scopedStudentIds) {
+      if (scopedStudentIds.length === 0) return 0;
+      query = query.in("student_id", scopedStudentIds);
+    }
+    const { count } = await query;
+    return count ?? 0;
+  })();
 
   let studentsQuery = db
     .from("profiles")

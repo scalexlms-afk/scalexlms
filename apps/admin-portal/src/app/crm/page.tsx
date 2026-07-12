@@ -1,6 +1,6 @@
 import { AdminShell } from "@/components/admin-shell";
 import { Field, TextArea } from "@/components/field";
-import { requireAdminProfile, requireFeature } from "@/lib/auth";
+import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { LEAD_STAGE_LABELS, LEAD_STAGES } from "@/lib/admin-db";
 import { getLeads } from "@/lib/data";
 import { formatDate } from "@/lib/format";
@@ -13,7 +13,7 @@ import { Button, Card, DataTable, PipelineBoard } from "@scalex/ui";
 
 export default async function CrmPage() {
   const { profile, userId } = await requireAdminProfile();
-  requireFeature(profile.role, "crm");
+  requireFeaturePage(profile.role, "crm");
 
   const leads = await getLeads({ userId, role: profile.role });
   const columns = LEAD_STAGES.map((stage) => ({
@@ -26,13 +26,13 @@ export default async function CrmPage() {
     <AdminShell activePath="/crm">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             CRM
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Lead Pipeline
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             Track prospects from first contact to enrollment.
           </p>
         </div>
@@ -63,11 +63,11 @@ export default async function CrmPage() {
             renderCard={(lead) => (
               <div>
                 <p className="font-medium">{lead.name}</p>
-                <p className="mt-1 text-xs text-text-tertiary-dark">
+                <p className="mt-1 text-xs text-subtle">
                   {lead.source ?? "Unknown source"}
                 </p>
                 {lead.whatsapp && (
-                  <p className="mt-1 text-xs text-text-secondary-dark">
+                  <p className="mt-1 text-xs text-muted">
                     {lead.whatsapp}
                   </p>
                 )}
@@ -76,7 +76,7 @@ export default async function CrmPage() {
                   <select
                     name="stage"
                     defaultValue={lead.stage}
-                    className="flex-1 rounded border border-white/10 bg-scalex-black px-2 py-1 text-xs"
+                    className="flex-1 rounded border border-line bg-surface px-2 py-1 text-xs"
                   >
                     {LEAD_STAGES.map((stage) => (
                       <option key={stage} value={stage}>
@@ -145,13 +145,13 @@ export default async function CrmPage() {
                       <input
                         name="name"
                         defaultValue={row.name}
-                        className="w-28 rounded border border-white/10 bg-scalex-charcoal-alt px-2 py-1 text-xs"
+                        className="w-28 rounded border border-line bg-surface-3 px-2 py-1 text-xs"
                       />
                       <input
                         name="notes"
                         defaultValue={row.notes ?? ""}
                         placeholder="Notes"
-                        className="w-32 rounded border border-white/10 bg-scalex-charcoal-alt px-2 py-1 text-xs"
+                        className="w-32 rounded border border-line bg-surface-3 px-2 py-1 text-xs"
                       />
                       <Button type="submit" className="!px-2 !py-1 text-xs">
                         Save

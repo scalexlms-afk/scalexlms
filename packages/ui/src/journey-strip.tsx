@@ -18,7 +18,7 @@ const statusRing: Record<NonNullable<JourneyStep["status"]>, string> = {
   completed: "border-accent-green bg-accent-green/10 text-accent-green",
   current:
     "border-scalex-red bg-scalex-red/10 ring-4 ring-scalex-red/20 text-scalex-red",
-  upcoming: "border-white/15 bg-scalex-charcoal-alt text-text-tertiary-dark",
+  upcoming: "border-line bg-surface-3 text-subtle",
 };
 
 export function JourneyStrip({ steps, onStepClick }: JourneyStripProps) {
@@ -49,14 +49,14 @@ export function JourneyStrip({ steps, onStepClick }: JourneyStripProps) {
                 <p
                   className={`mt-3 text-sm font-semibold ${
                     status === "upcoming"
-                      ? "text-text-secondary-dark"
-                      : "text-text-primary-dark"
+                      ? "text-muted"
+                      : "text-foreground"
                   }`}
                 >
                   {step.title}
                 </p>
                 {step.description && (
-                  <p className="mt-1 text-xs text-text-tertiary-dark">
+                  <p className="mt-1 text-xs text-subtle">
                     {step.description}
                   </p>
                 )}
@@ -66,7 +66,7 @@ export function JourneyStrip({ steps, onStepClick }: JourneyStripProps) {
                   className={`mx-1 mt-6 h-0.5 w-8 rounded-full ${
                     isCompleted
                       ? "bg-accent-green/50"
-                      : "border-t-2 border-dashed border-white/15 bg-transparent"
+                      : "border-t-2 border-dashed border-line bg-transparent"
                   }`}
                 />
               )}

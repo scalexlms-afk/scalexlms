@@ -2,6 +2,7 @@
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { Card } from "../card";
+import { CHART_TOOLTIP_STYLE } from "../tokens";
 
 type DonutSlice = {
   name: string;
@@ -36,11 +37,7 @@ export function DonutChart({ title, data }: DonutChartProps) {
               ))}
             </Pie>
             <Tooltip
-              contentStyle={{
-                background: "#111827",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 8,
-              }}
+              contentStyle={CHART_TOOLTIP_STYLE}
               formatter={(value, name) => [
                 `${value}${total > 0 ? ` (${Math.round((Number(value) / total) * 100)}%)` : ""}`,
                 name,
@@ -56,7 +53,7 @@ export function DonutChart({ title, data }: DonutChartProps) {
               className="h-2.5 w-2.5 rounded-full"
               style={{ backgroundColor: slice.color }}
             />
-            <span className="text-text-secondary-dark">{slice.name}</span>
+            <span className="text-muted">{slice.name}</span>
           </div>
         ))}
       </div>

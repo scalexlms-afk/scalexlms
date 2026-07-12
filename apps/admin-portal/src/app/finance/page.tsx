@@ -1,6 +1,6 @@
 import { AdminShell } from "@/components/admin-shell";
 import { Field, TextArea } from "@/components/field";
-import { requireAdminProfile, requireFeature } from "@/lib/auth";
+import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { canManageFinance } from "@/lib/admin-db";
 import {
   getExpenses,
@@ -17,7 +17,7 @@ import { Button, Card, DataTable, KpiCard, StatusPill } from "@scalex/ui";
 
 export default async function FinancePage() {
   const { profile, userId } = await requireAdminProfile();
-  requireFeature(profile.role, "finance");
+  requireFeaturePage(profile.role, "finance");
 
   const [payments, expenses, planSettings] = await Promise.all([
     getPayments({ userId, role: profile.role }),
@@ -38,13 +38,13 @@ export default async function FinancePage() {
     <AdminShell activePath="/finance">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Finance
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Payments & Expenses
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             Revenue tracking, installments, and academy expenses.
           </p>
         </div>
@@ -199,6 +199,7 @@ export default async function FinancePage() {
                           />
                           <Button
                             type="submit"
+                            variant="secondary"
                             className="!bg-accent-danger/20 !text-accent-danger text-xs"
                           >
                             Delete

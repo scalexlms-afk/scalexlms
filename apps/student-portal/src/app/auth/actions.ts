@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@scalex/db/server";
+import { safeRelativePath, siteUrl } from "@/lib/site";
 
 async function redirectAfterAuth(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, fallback = "/dashboard") {
   const { data: profile } = await supabase
@@ -22,7 +23,10 @@ async function redirectAfterAuth(supabase: Awaited<ReturnType<typeof createClien
 export async function loginAction(formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
-  const redirectTo = (formData.get("redirect") as string) || "/dashboard";
+  const redirectTo = safeRelativePath(
+    formData.get("redirect") as string | null,
+    "/dashboard"
+  );
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -81,10 +85,60 @@ export async function registerAction(formData: FormData) {
   await redirectAfterAuth(supabase, data.user.id, "/payment");
 }
 
-export async function resetPasswordAction() {
-  redirect(
-    `/reset-password?error=${encodeURIComponent("Password reset emails are disabled in dev. Sign in with your existing password or register a new account.")}`
-  );
+export async function resetPasswordAction(formData: FormData) {
+  const email = (formData.get("email") as string | null)?.trim();
+
+  if (!email) {
+    redirect(
+      `/reset-password?error=${encodeURIComponent("Enter the email associated with your account.")}`
+    );
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/auth/callback?next=/update-password`,
+  });
+
+  if (error) {
+    redirect(`/reset-password?error=${encodeURIComponent(error.message)}`);
+  }
+
+  // Always report success (avoid leaking which emails exist).
+  redirect("/reset-password?sent=1");
+}
+
+export async function updatePasswordAction(formData: FormData) {
+  const password = (formData.get("password") as string | null) ?? "";
+  const confirm = (formData.get("confirm") as string | null) ?? "";
+
+  if (password.length < 8) {
+    redirect(
+      `/update-password?error=${encodeURIComponent("Password must be at least 8 characters.")}`
+    );
+  }
+  if (password !== confirm) {
+    redirect(
+      `/update-password?error=${encodeURIComponent("Passwords do not match.")}`
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect(
+      `/login?error=${encodeURIComponent("Your reset link has expired. Request a new one.")}`
+    );
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) {
+    redirect(`/update-password?error=${encodeURIComponent(error.message)}`);
+  }
+
+  redirect("/dashboard");
 }
 
 export async function signOutAction() {

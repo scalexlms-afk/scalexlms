@@ -1,5 +1,5 @@
 import { AdminShell } from "@/components/admin-shell";
-import { requireAdminProfile, requireFeature } from "@/lib/auth";
+import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { getPendingCommunityPosts } from "@/lib/data";
 import { moderatePostAction } from "./actions";
 import { Button, Card, StatusPill } from "@scalex/ui";
@@ -10,7 +10,7 @@ function channelLabel(channel: string): string {
 
 export default async function CommunityModerationPage() {
   const { profile } = await requireAdminProfile();
-  requireFeature(profile.role, "community");
+  requireFeaturePage(profile.role, "community");
 
   const posts = await getPendingCommunityPosts();
 
@@ -18,20 +18,20 @@ export default async function CommunityModerationPage() {
     <AdminShell activePath="/community">
       <div className="space-y-8">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Academy
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
             Community Moderation
           </h1>
-          <p className="mt-1 text-text-secondary-dark">
+          <p className="mt-1 text-muted">
             Approve or reject student posts awaiting moderation.
           </p>
         </div>
 
         {posts.length === 0 ? (
           <Card>
-            <p className="text-sm text-text-secondary-dark">
+            <p className="text-sm text-muted">
               The moderation queue is empty.
             </p>
           </Card>
@@ -44,7 +44,7 @@ export default async function CommunityModerationPage() {
                     <p className="text-sm font-medium">
                       {post.author?.name ?? "Unknown author"}
                     </p>
-                    <p className="text-xs text-text-tertiary-dark">
+                    <p className="text-xs text-subtle">
                       {post.author?.email}
                     </p>
                   </div>
@@ -54,11 +54,11 @@ export default async function CommunityModerationPage() {
                   </div>
                 </div>
 
-                <p className="mt-4 whitespace-pre-wrap text-sm text-text-secondary-dark">
+                <p className="mt-4 whitespace-pre-wrap text-sm text-muted">
                   {post.content}
                 </p>
 
-                <p className="mt-2 text-xs text-text-tertiary-dark">
+                <p className="mt-2 text-xs text-subtle">
                   Submitted {new Date(post.created_at).toLocaleString()}
                 </p>
 

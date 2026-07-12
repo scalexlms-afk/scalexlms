@@ -25,6 +25,36 @@ export async function updateUserRoleAction(formData: FormData) {
   requireFeature(profile.role, "system_settings", "full");
 
   const db = getServiceDb();
+
+  // Fetch the target's current role to enforce super_admin safety rules.
+  const { data: target } = await db
+    .from("profiles")
+    .select("role")
+    .eq("id", targetUserId)
+    .single();
+
+  const currentRole = (target as { role: UserRole } | null)?.role;
+
+  if (currentRole === "super_admin" && role !== "super_admin") {
+    // Block self-lockout.
+    if (targetUserId === userId) {
+      throw new Error(
+        "You cannot remove your own Super Admin role. Ask another Super Admin."
+      );
+    }
+    // Block demoting the last remaining super_admin.
+    const { count } = await db
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "super_admin");
+
+    if ((count ?? 0) <= 1) {
+      throw new Error(
+        "At least one Super Admin must remain. Promote another user first."
+      );
+    }
+  }
+
   const { error } = await db
     .from("profiles")
     .update({ role })
