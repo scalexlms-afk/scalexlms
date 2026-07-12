@@ -74,15 +74,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
     }
 
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    // Stripe Checkout is cross-site; auth cookies are often missing on return.
+    // Treat a paid Stripe session + metadata as proof of payment.
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.retrieve(sessionId);
 
@@ -100,13 +93,25 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Invalid session metadata" }, { status: 400 });
     }
 
-    if (studentId !== user.id) {
-      return NextResponse.json({ error: "Session does not belong to user" }, { status: 403 });
+    // If the browser still has a session, ensure it matches the payer.
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user && studentId !== user.id) {
+      return NextResponse.json(
+        { error: "Session does not belong to user" },
+        { status: 403 }
+      );
     }
 
     await activateStudentPayment(studentId, paymentId, session.id);
 
-    return NextResponse.json({ activated: true });
+    return NextResponse.json({
+      activated: true,
+      authenticated: Boolean(user),
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Activation failed";
     return NextResponse.json({ error: message }, { status: 500 });

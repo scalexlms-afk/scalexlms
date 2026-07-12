@@ -12,6 +12,7 @@ export default function PaymentSuccessContent() {
   const sessionId = searchParams.get("session_id");
   const [activating, setActivating] = useState(true);
   const [activated, setActivated] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function PaymentSuccessContent() {
           return;
         }
         setActivated(true);
+        setAuthenticated(Boolean(data.authenticated));
         router.refresh();
       } catch {
         setError("Network error while activating account");
@@ -68,7 +70,9 @@ export default function PaymentSuccessContent() {
         )}
         {activated && (
           <p className="mt-2 text-sm text-text-secondary-dark">
-            Your account is now active. Welcome to ScaleX LaunchPad!
+            {authenticated
+              ? "Your account is now active. Welcome to ScaleX LaunchPad!"
+              : "Your account is now active. Sign in to open your dashboard."}
           </p>
         )}
         {error && (
@@ -78,8 +82,13 @@ export default function PaymentSuccessContent() {
         )}
 
         {activated ? (
-          <Link href="/dashboard" className="mt-6 block">
-            <Button className="w-full">Go to Dashboard</Button>
+          <Link
+            href={authenticated ? "/dashboard" : "/login?redirect=/dashboard"}
+            className="mt-6 block"
+          >
+            <Button className="w-full">
+              {authenticated ? "Go to Dashboard" : "Sign in to continue"}
+            </Button>
           </Link>
         ) : (
           <Link href="/payment" className="mt-6 block">
