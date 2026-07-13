@@ -1124,6 +1124,9 @@ export type Database = {
           created_at: string
           id: string
           priority: Database["public"]["Enums"]["ticket_priority"]
+          staff_replied_by: string | null
+          staff_reply: string | null
+          staff_reply_at: string | null
           status: Database["public"]["Enums"]["ticket_status"]
           student_id: string
           subject: string
@@ -1134,6 +1137,9 @@ export type Database = {
           created_at?: string
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
+          staff_replied_by?: string | null
+          staff_reply?: string | null
+          staff_reply_at?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           student_id: string
           subject: string
@@ -1144,12 +1150,22 @@ export type Database = {
           created_at?: string
           id?: string
           priority?: Database["public"]["Enums"]["ticket_priority"]
+          staff_replied_by?: string | null
+          staff_reply?: string | null
+          staff_reply_at?: string | null
           status?: Database["public"]["Enums"]["ticket_status"]
           student_id?: string
           subject?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "support_tickets_staff_replied_by_fkey"
+            columns: ["staff_replied_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "support_tickets_student_id_fkey"
             columns: ["student_id"]
