@@ -43,14 +43,20 @@ export async function updateTicketStatusAction(formData: FormData) {
     }
   }
 
-  const updates: Record<string, unknown> = { status };
+  const nextStatus =
+    reply && status === "open" ? "in_progress" : status;
+
+  const updates: {
+    status: string;
+    staff_reply?: string;
+    staff_reply_at?: string;
+    staff_replied_by?: string;
+  } = { status: nextStatus };
+
   if (reply) {
     updates.staff_reply = reply;
     updates.staff_reply_at = new Date().toISOString();
     updates.staff_replied_by = userId;
-    if (status === "open") {
-      updates.status = "in_progress";
-    }
   }
 
   const { data: ticket, error } = await db
@@ -69,7 +75,7 @@ export async function updateTicketStatusAction(formData: FormData) {
       : "support_ticket.status_updated",
     targetType: "support_ticket",
     targetId: ticketId,
-    metadata: { status: updates.status, hasReply: Boolean(reply) },
+    metadata: { status: nextStatus, hasReply: Boolean(reply) },
   });
 
   await createNotification({
@@ -78,7 +84,7 @@ export async function updateTicketStatusAction(formData: FormData) {
     title: reply ? "Mentor replied to your ticket" : "Support ticket updated",
     body: reply
       ? reply.slice(0, 120)
-      : `Your ticket "${(ticket as { subject: string }).subject}" is now ${String(updates.status).replace(/_/g, " ")}.`,
+      : `Your ticket "${(ticket as { subject: string }).subject}" is now ${nextStatus.replace(/_/g, " ")}.`,
     payload: { ticketId },
   });
 
