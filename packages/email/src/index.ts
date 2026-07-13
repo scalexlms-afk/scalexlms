@@ -1,9 +1,13 @@
 import { Resend } from "resend";
 import {
   passwordOtpEmailHtml,
+  passwordOtpEmailText,
   remainingPaymentEmailHtml,
+  remainingPaymentEmailText,
   taskReviewedEmailHtml,
+  taskReviewedEmailText,
   welcomeEmailHtml,
+  welcomeEmailText,
 } from "./templates";
 
 export type SendEmailResult = { ok: true; id?: string } | { ok: false; error: string };
@@ -19,6 +23,7 @@ export async function sendEmail(input: {
   to: string;
   subject: string;
   html: string;
+  text?: string;
 }): Promise<SendEmailResult> {
   try {
     const apiKey = process.env.RESEND_API_KEY?.trim();
@@ -33,6 +38,7 @@ export async function sendEmail(input: {
       to: input.to,
       subject: input.subject,
       html: input.html,
+      text: input.text,
     });
 
     if (error) {
@@ -58,6 +64,7 @@ export async function sendWelcomeEmail(input: {
     to: input.to,
     subject: "Welcome to ScaleX LaunchPad",
     html: welcomeEmailHtml(input),
+    text: welcomeEmailText(input),
   });
 }
 
@@ -75,6 +82,7 @@ export async function sendRemainingPaymentEmail(input: {
         ? "Remaining balance paid — ScaleX"
         : "Reminder: remaining balance due — ScaleX",
     html: remainingPaymentEmailHtml(input),
+    text: remainingPaymentEmailText(input),
   });
 }
 
@@ -92,6 +100,7 @@ export async function sendTaskReviewedEmail(input: {
         ? "Your ScaleX task was approved"
         : "Revision requested on your ScaleX task",
     html: taskReviewedEmailHtml(input),
+    text: taskReviewedEmailText(input),
   });
 }
 
@@ -105,7 +114,9 @@ export async function sendPasswordOtpEmail(input: {
     to: input.to,
     subject: `${input.code} is your ScaleX password reset code`,
     html: passwordOtpEmailHtml(input),
+    text: passwordOtpEmailText(input),
   });
 }
 
 export * from "./templates";
+export * from "./previews";

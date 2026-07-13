@@ -27,7 +27,11 @@ export default async function CommunityPostPage({
   const post = await getCommunityPost(id, userId);
   if (!post) notFound();
 
-  const name = post.profiles?.name ?? "Student";
+  const name = post.profiles?.name ?? "Member";
+  const staff =
+    post.profiles?.role === "mentor" ||
+    post.profiles?.role === "instructor" ||
+    post.profiles?.role === "super_admin";
 
   return (
     <PortalShell activePath="/community">
@@ -59,11 +63,20 @@ export default async function CommunityPostPage({
                 <p className="text-xs text-subtle">
                   {formatTime(post.created_at)}
                 </p>
-                {post.profiles?.plan && (
+                {staff ? (
                   <StatusPill
-                    label={planLabel(post.profiles.plan, true)}
-                    variant={planPillVariant(post.profiles.plan)}
+                    label={
+                      post.profiles?.role === "mentor" ? "Mentor" : "Staff"
+                    }
+                    variant="active"
                   />
+                ) : (
+                  post.profiles?.plan && (
+                    <StatusPill
+                      label={planLabel(post.profiles.plan, true)}
+                      variant={planPillVariant(post.profiles.plan)}
+                    />
+                  )
                 )}
                 {post.status === "pending_approval" && (
                   <StatusPill label="Pending approval" variant="pending" />

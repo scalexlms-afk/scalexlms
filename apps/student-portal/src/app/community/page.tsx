@@ -16,13 +16,30 @@ import {
   toggleLikeAction,
 } from "./actions";
 
-function formatTime(value: string) {
-  return new Date(value).toLocaleString(undefined, {
+function formatRelative(value: string) {
+  const diff = Date.now() - new Date(value).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(value).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
   });
+}
+
+function channelLabel(channel: string) {
+  return (
+    COMMUNITY_CHANNELS.find((c) => c.key === channel)?.label ??
+    channel.replace(/_/g, " ")
+  );
+}
+
+function isStaffRole(role?: string | null) {
+  return role === "mentor" || role === "instructor" || role === "super_admin";
 }
 
 function AuthorAvatar({
@@ -39,12 +56,12 @@ function AuthorAvatar({
       <img
         src={avatarUrl}
         alt=""
-        className="h-10 w-10 rounded-full object-cover"
+        className="h-11 w-11 rounded-full object-cover ring-1 ring-line"
       />
     );
   }
   return (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-scalex-red/20 text-sm font-semibold text-scalex-red">
+    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-scalex-red/20 text-sm font-semibold text-scalex-red ring-1 ring-line">
       {initial}
     </div>
   );
@@ -53,122 +70,145 @@ function AuthorAvatar({
 function PostCard({
   post,
   activeChannel,
-  showFullComments = false,
 }: {
   post: CommunityPost;
   activeChannel: string;
-  showFullComments?: boolean;
 }) {
-  const name = post.profiles?.name ?? "Student";
+  const name = post.profiles?.name ?? "Member";
   const comments = post.comments ?? [];
-  const previewComments = showFullComments ? comments : comments.slice(-2);
+  const previewComments = comments.slice(-2);
+  const staff = isStaffRole(post.profiles?.role);
 
   return (
-    <Card>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <AuthorAvatar name={name} avatarUrl={post.profiles?.avatar_url} />
-          <div>
+    <article className="border-b border-line py-5 last:border-b-0">
+      <div className="flex gap-3">
+        <AuthorAvatar name={name} avatarUrl={post.profiles?.avatar_url} />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
             <p className="font-medium text-foreground">{name}</p>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <p className="text-xs text-subtle">{formatTime(post.created_at)}</p>
-              {post.profiles?.plan && (
-                <StatusPill
-                  label={planLabel(post.profiles.plan, true)}
-                  variant={planPillVariant(post.profiles.plan)}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-        {post.status === "pending_approval" && (
-          <StatusPill label="Pending approval" variant="pending" />
-        )}
-      </div>
-
-      <Link href={`/community/${post.id}`} className="mt-3 block">
-        <p className="whitespace-pre-wrap text-sm text-foreground hover:opacity-90">
-          {post.content}
-        </p>
-      </Link>
-
-      {(post.media_urls?.length ?? 0) > 0 && (
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          {post.media_urls?.map((url) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={url}
-              src={url}
-              alt=""
-              className="max-h-64 w-full rounded-lg object-cover"
-            />
-          ))}
-        </div>
-      )}
-
-      <div className="mt-4 flex items-center gap-4">
-        <form action={toggleLikeAction}>
-          <input type="hidden" name="postId" value={post.id} />
-          <input type="hidden" name="channel" value={activeChannel} />
-          <button
-            type="submit"
-            className={`text-sm transition-colors ${
-              post.liked_by_user
-                ? "text-scalex-red"
-                : "text-muted hover:text-scalex-red"
-            }`}
-          >
-            {post.liked_by_user ? "♥ Liked" : "♡ Like"} · {post.like_count}
-          </button>
-        </form>
-        <Link
-          href={`/community/${post.id}`}
-          className="text-sm text-subtle hover:text-scalex-red"
-        >
-          {comments.length} comments
-        </Link>
-      </div>
-
-      {previewComments.length > 0 && (
-        <ul className="mt-4 space-y-3 border-t border-line pt-4">
-          {previewComments.map((comment) => (
-            <li key={comment.id} className="flex gap-2">
-              <AuthorAvatar
-                name={comment.profiles?.name ?? "Student"}
-                avatarUrl={comment.profiles?.avatar_url}
+            {staff && (
+              <StatusPill
+                label={
+                  post.profiles?.role === "mentor" ? "Mentor" : "Staff"
+                }
+                variant="active"
               />
-              <div className="min-w-0 flex-1 rounded-lg bg-surface-3 px-3 py-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-xs font-medium text-foreground">
-                    {comment.profiles?.name ?? "Student"}
-                  </p>
-                  <p className="text-[11px] text-subtle">
-                    {formatTime(comment.created_at)}
-                  </p>
-                </div>
-                <p className="mt-1 text-sm text-muted">{comment.content}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+            )}
+            {!staff && post.profiles?.plan && (
+              <StatusPill
+                label={planLabel(post.profiles.plan, true)}
+                variant={planPillVariant(post.profiles.plan)}
+              />
+            )}
+            <span className="text-xs text-subtle">
+              · {formatRelative(post.created_at)}
+            </span>
+            {activeChannel === "latest" && (
+              <StatusPill
+                label={channelLabel(post.channel)}
+                variant="neutral"
+              />
+            )}
+            {post.status === "pending_approval" && (
+              <StatusPill label="Pending" variant="pending" />
+            )}
+          </div>
 
-      {post.status === "approved" && (
-        <form action={addCommentAction} className="mt-4 flex gap-2">
-          <input type="hidden" name="postId" value={post.id} />
-          <input type="hidden" name="channel" value={activeChannel} />
-          <input
-            name="content"
-            required
-            placeholder="Add a comment…"
-            className={inputClasses}
-          />
-          <Button type="submit" size="sm">
-            Reply
-          </Button>
-        </form>
-      )}
-    </Card>
+          <Link href={`/community/${post.id}`} className="mt-2 block">
+            <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground hover:opacity-90">
+              {post.content}
+            </p>
+          </Link>
+
+          {(post.media_urls?.length ?? 0) > 0 && (
+            <div
+              className={`mt-3 grid gap-2 ${
+                (post.media_urls?.length ?? 0) > 1
+                  ? "sm:grid-cols-2"
+                  : "grid-cols-1"
+              }`}
+            >
+              {post.media_urls?.map((url) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={url}
+                  src={url}
+                  alt=""
+                  className="max-h-80 w-full rounded-xl object-cover"
+                />
+              ))}
+            </div>
+          )}
+
+          <div className="mt-3 flex items-center gap-5">
+            <form action={toggleLikeAction}>
+              <input type="hidden" name="postId" value={post.id} />
+              <input type="hidden" name="channel" value={activeChannel} />
+              <button
+                type="submit"
+                className={`text-sm font-medium transition-colors ${
+                  post.liked_by_user
+                    ? "text-scalex-red"
+                    : "text-muted hover:text-scalex-red"
+                }`}
+              >
+                {post.liked_by_user ? "♥" : "♡"} {post.like_count}
+              </button>
+            </form>
+            <Link
+              href={`/community/${post.id}`}
+              className="text-sm text-muted hover:text-scalex-red"
+            >
+              💬 {post.comment_count ?? comments.length}
+            </Link>
+            <Link
+              href={`/community/${post.id}`}
+              className="text-sm text-subtle hover:text-foreground"
+            >
+              Open
+            </Link>
+          </div>
+
+          {previewComments.length > 0 && (
+            <ul className="mt-3 space-y-2 rounded-xl bg-surface-2/60 px-3 py-2">
+              {previewComments.map((comment) => (
+                <li key={comment.id} className="flex gap-2">
+                  <AuthorAvatar
+                    name={comment.profiles?.name ?? "Member"}
+                    avatarUrl={comment.profiles?.avatar_url}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-medium">
+                      {comment.profiles?.name ?? "Member"}{" "}
+                      <span className="font-normal text-subtle">
+                        {formatRelative(comment.created_at)}
+                      </span>
+                    </p>
+                    <p className="text-sm text-muted">{comment.content}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {post.status === "approved" && (
+            <form action={addCommentAction} className="mt-3 flex gap-2">
+              <input type="hidden" name="postId" value={post.id} />
+              <input type="hidden" name="channel" value={activeChannel} />
+              <input
+                name="content"
+                required
+                placeholder="Write a comment…"
+                className={inputClasses}
+              />
+              <Button type="submit" size="sm" variant="secondary">
+                Reply
+              </Button>
+            </form>
+          )}
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -180,33 +220,47 @@ export default async function CommunityPage({
   const { userId } = await requireStudentProfile();
   const params = await searchParams;
   const activeChannel =
-    COMMUNITY_CHANNELS.find((item) => item.key === params.channel)?.key ??
-    "questions";
+    params.channel === "latest" || !params.channel
+      ? "latest"
+      : (COMMUNITY_CHANNELS.find((item) => item.key === params.channel)?.key ??
+        "latest");
 
   const posts = await getCommunityPosts(
-    activeChannel as CommunityChannel,
+    activeChannel as CommunityChannel | "latest",
     userId,
     15,
     params.before
   );
   const oldest = posts[posts.length - 1]?.created_at;
+  const composerChannel =
+    activeChannel === "latest" ? "questions" : activeChannel;
 
   return (
     <PortalShell activePath="/community">
-      <div className="space-y-8">
+      <div className="mx-auto max-w-2xl space-y-6">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Community
           </p>
           <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
-            Community feed
+            Feed
           </h1>
           <p className="mt-1 text-muted">
-            Share wins, ask questions, and learn from fellow sellers.
+            Wins, questions, and guidance from the ScaleX cohort.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <Link
+            href="/community?channel=latest"
+            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+              activeChannel === "latest"
+                ? "bg-scalex-red text-white"
+                : "bg-surface-2 text-muted hover:bg-surface-3 hover:text-foreground"
+            }`}
+          >
+            Latest
+          </Link>
           {COMMUNITY_CHANNELS.map((channel) => (
             <Link
               key={channel.key}
@@ -225,20 +279,45 @@ export default async function CommunityPage({
         <Card>
           <h2 className="font-display text-lg font-semibold">Create a post</h2>
           <p className="mt-1 text-sm text-muted">
-            Posts are reviewed before appearing publicly.
+            Student posts are reviewed before going live.
           </p>
           <form
             action={createPostAction}
             className="mt-4 space-y-3"
             encType="multipart/form-data"
           >
-            <input type="hidden" name="channel" value={activeChannel} />
+            {activeChannel === "latest" ? (
+              <div>
+                <label
+                  htmlFor="channel"
+                  className="mb-1.5 block text-sm font-medium text-muted"
+                >
+                  Channel
+                </label>
+                <select
+                  id="channel"
+                  name="channel"
+                  defaultValue={composerChannel}
+                  className={inputClasses}
+                >
+                  {COMMUNITY_CHANNELS.filter((c) => c.key !== "announcements").map(
+                    (c) => (
+                      <option key={c.key} value={c.key}>
+                        {c.label}
+                      </option>
+                    )
+                  )}
+                </select>
+              </div>
+            ) : (
+              <input type="hidden" name="channel" value={activeChannel} />
+            )}
             <textarea
               name="content"
-              rows={4}
+              rows={3}
               required
               className={inputClasses}
-              placeholder="Share an update or ask a question…"
+              placeholder="What's on your mind?"
             />
             <input
               type="file"
@@ -246,27 +325,27 @@ export default async function CommunityPage({
               accept="image/*"
               className="block w-full text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-surface-3 file:px-3 file:py-2 file:text-sm file:text-foreground"
             />
-            <Button type="submit">Submit for approval</Button>
+            <Button type="submit">Post</Button>
           </form>
         </Card>
 
-        <div className="space-y-4">
-          {posts.length === 0 ? (
-            <Card>
-              <p className="text-sm text-muted">
-                No posts in this channel yet. Be the first to share!
+        <Card className="!p-0 overflow-hidden">
+          <div className="divide-y divide-line px-4 sm:px-5">
+            {posts.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted">
+                No posts yet. Be the first to share!
               </p>
-            </Card>
-          ) : (
-            posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                activeChannel={activeChannel}
-              />
-            ))
-          )}
-        </div>
+            ) : (
+              posts.map((post) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  activeChannel={activeChannel}
+                />
+              ))
+            )}
+          </div>
+        </Card>
 
         {oldest && posts.length >= 15 && (
           <div className="text-center">

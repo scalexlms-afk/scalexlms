@@ -87,18 +87,12 @@ export async function getDashboardStats(scope: AdminScope) {
       const { count } = await query;
       return count ?? 0;
     })(),
-    (async () => {
-      let query = db
-        .from("community_posts")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending_approval");
-      if (scopedStudentIds) {
-        if (scopedStudentIds.length === 0) return 0;
-        query = query.in("author_id", scopedStudentIds);
-      }
-      const { count } = await query;
-      return count ?? 0;
-    })(),
+    // Global moderation queue for all staff who can moderate (matches /community).
+    countTable("community_posts", {
+      column: "status",
+      op: "eq",
+      value: "pending_approval",
+    }),
     countTable("live_sessions", {
       column: "scheduled_at",
       op: "gt",
@@ -430,12 +424,115 @@ export async function getAiInsights(scope: AdminScope): Promise<AiInsight[]> {
       title: "Payment Risk",
       count: paymentRisk,
       note: "Students with pending/overdue payments",
-      href: "/finance",
+      href:
+        scope.role === "sales" || scope.role === "super_admin"
+          ? scope.role === "sales"
+            ? "/crm"
+            : "/finance"
+          : "/students",
       variant: "pending",
     }
   );
 
   return insights;
+}
+
+export async function getCrmPipelineCounts(scope: AdminScope) {
+  const db = getServiceDb();
+  let query = db.from("leads").select("stage");
+  if (scope.role === "sales") {
+    query = query.eq("assigned_sales_id", scope.userId);
+  }
+  const { data, error } = await query;
+  if (error) {
+    console.error("getCrmPipelineCounts:", error.message);
+    return [] as { stage: string; count: number }[];
+  }
+  const counts = new Map<string, number>();
+  for (const row of data ?? []) {
+    counts.set(row.stage, (counts.get(row.stage) ?? 0) + 1);
+  }
+  const order = [
+    "new_lead",
+    "contacted",
+    "interested",
+    "demo",
+    "payment_pending",
+    "enrolled",
+  ];
+  return order.map((stage) => ({
+    stage,
+    count: counts.get(stage) ?? 0,
+  }));
+}
+
+export async function getContentHealthStats() {
+  const db = getServiceDb();
+  const { data: courses, error } = await db
+    .from("courses")
+    .select(
+      "id, status, milestones(id, modules(id, lessons(id)), tasks(id))"
+    );
+  if (error) {
+    console.error("getContentHealthStats:", error.message);
+    return {
+      totalCourses: 0,
+      published: 0,
+      draft: 0,
+      lessonCount: 0,
+      taskCount: 0,
+    };
+  }
+  let lessonCount = 0;
+  let taskCount = 0;
+  let published = 0;
+  let draft = 0;
+  const asArray = <T,>(value: T | T[] | null | undefined): T[] =>
+    Array.isArray(value) ? value : value ? [value] : [];
+  for (const course of courses ?? []) {
+    if (course.status === "published") published += 1;
+    if (course.status === "draft") draft += 1;
+    for (const ms of asArray(course.milestones as unknown) as Array<{
+      tasks?: unknown;
+      modules?: Array<{ lessons?: unknown }> | null;
+    }>) {
+      taskCount += asArray(ms.tasks as unknown).length;
+      for (const mod of asArray(ms.modules)) {
+        lessonCount += asArray(mod.lessons as unknown).length;
+      }
+    }
+  }
+  return {
+    totalCourses: courses?.length ?? 0,
+    published,
+    draft,
+    lessonCount,
+    taskCount,
+  };
+}
+
+export async function getAssignedStudentSummary(scope: AdminScope) {
+  const ids = await getScopedStudentIds(scope);
+  if (ids === null) {
+    // Full academy — return top-line from profiles
+    const db = getServiceDb();
+    const { count } = await db
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("role", "student")
+      .eq("status", "active");
+    return { assignedCount: count ?? 0, atRiskCount: 0 };
+  }
+  if (ids.length === 0) return { assignedCount: 0, atRiskCount: 0 };
+
+  const db = getServiceDb();
+  const { data: enrollments } = await db
+    .from("enrollments")
+    .select("student_id, completion_percent")
+    .in("student_id", ids);
+  const atRiskCount =
+    enrollments?.filter((e) => e.completion_percent < 25).length ?? 0;
+  return { assignedCount: ids.length, atRiskCount };
 }
 
 export type StudentRow = Profile & {
@@ -853,16 +950,112 @@ export async function getPaymentPlanSettings() {
   return data ?? [];
 }
 
-export async function getContentTree() {
+export type CourseSummary = {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  created_at: string;
+  milestoneCount: number;
+  lessonCount: number;
+  moduleCount: number;
+  taskCount: number;
+};
+
+export async function getCoursesSummary(): Promise<CourseSummary[]> {
   const db = getServiceDb();
   const { data: courses, error } = await db
+    .from("courses")
+    .select(
+      `
+      id, title, description, status, created_at,
+      milestones(
+        id,
+        tasks(id),
+        modules(id, lessons(id))
+      )
+    `
+    )
+    .order("created_at", { ascending: true });
+
+  if (error) throw new Error(error.message);
+
+  const asArray = <T,>(value: T | T[] | null | undefined): T[] =>
+    Array.isArray(value) ? value : value ? [value] : [];
+
+  return (courses ?? []).map((course) => {
+    const milestones = asArray(course.milestones as unknown);
+    let lessonCount = 0;
+    let moduleCount = 0;
+    let taskCount = 0;
+    for (const ms of milestones as Array<{
+      tasks?: { id: string }[] | { id: string } | null;
+      modules?: Array<{
+        lessons?: { id: string }[] | { id: string } | null;
+      }> | null;
+    }>) {
+      taskCount += asArray(ms.tasks).length;
+      const modules = asArray(ms.modules);
+      moduleCount += modules.length;
+      for (const mod of modules) {
+        lessonCount += asArray(mod.lessons).length;
+      }
+    }
+    return {
+      id: course.id,
+      title: course.title,
+      description: course.description,
+      status: course.status,
+      created_at: course.created_at,
+      milestoneCount: milestones.length,
+      lessonCount,
+      moduleCount,
+      taskCount,
+    };
+  });
+}
+
+export type ContentCourse = {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  milestones: Array<{
+    id: string;
+    title: string;
+    order_index: number;
+    tasks: Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      accepted_formats: string[];
+    }>;
+    modules: Array<{
+      id: string;
+      title: string;
+      order_index: number;
+      lessons: Array<{
+        id: string;
+        title: string;
+        content_type: string;
+        content_url: string | null;
+        content_text: string | null;
+        order_index: number;
+      }>;
+    }>;
+  }>;
+};
+
+export async function getContentTree(courseId?: string): Promise<ContentCourse[]> {
+  const db = getServiceDb();
+  let query = db
     .from("courses")
     .select(
       `
       id, title, description, status,
       milestones(
         id, title, order_index,
-        tasks(id, title),
+        tasks(id, title, description, accepted_formats),
         modules(
           id, title, order_index,
           lessons(id, title, content_type, content_url, content_text, order_index)
@@ -872,8 +1065,70 @@ export async function getContentTree() {
     )
     .order("created_at", { ascending: true });
 
+  if (courseId) {
+    query = query.eq("id", courseId);
+  }
+
+  const { data: courses, error } = await query;
+
   if (error) throw new Error(error.message);
-  return courses ?? [];
+
+  const asArray = <T,>(value: T | T[] | null | undefined): T[] =>
+    Array.isArray(value) ? value : value ? [value] : [];
+
+  return ((courses ?? []) as unknown as Array<Record<string, unknown>>).map(
+    (raw) => {
+      const milestones = asArray(raw.milestones as unknown).map((msRaw) => {
+        const ms = msRaw as Record<string, unknown>;
+        return {
+          id: ms.id as string,
+          title: ms.title as string,
+          order_index: ms.order_index as number,
+          tasks: asArray(ms.tasks as unknown).map((tRaw) => {
+            const t = tRaw as Record<string, unknown>;
+            return {
+              id: t.id as string,
+              title: t.title as string,
+              description: (t.description as string | null) ?? null,
+              accepted_formats: (t.accepted_formats as string[]) ?? [],
+            };
+          }),
+          modules: asArray(ms.modules as unknown).map((modRaw) => {
+            const mod = modRaw as Record<string, unknown>;
+            return {
+              id: mod.id as string,
+              title: mod.title as string,
+              order_index: mod.order_index as number,
+              lessons: asArray(mod.lessons as unknown).map((lRaw) => {
+                const l = lRaw as Record<string, unknown>;
+                return {
+                  id: l.id as string,
+                  title: l.title as string,
+                  content_type: l.content_type as string,
+                  content_url: (l.content_url as string | null) ?? null,
+                  content_text: (l.content_text as string | null) ?? null,
+                  order_index: l.order_index as number,
+                };
+              }),
+            };
+          }),
+        };
+      });
+
+      return {
+        id: raw.id as string,
+        title: raw.title as string,
+        description: (raw.description as string | null) ?? null,
+        status: raw.status as string,
+        milestones,
+      } satisfies ContentCourse;
+    }
+  );
+}
+
+export async function getCourseById(courseId: string): Promise<ContentCourse | null> {
+  const courses = await getContentTree(courseId);
+  return courses[0] ?? null;
 }
 
 export async function getReportsSummary(scope: AdminScope) {
@@ -980,17 +1235,25 @@ export async function getPendingSubmissions(
   return submissions;
 }
 
-export type PendingPost = {
+export type CommunityModerationStatus =
+  | "pending_approval"
+  | "approved"
+  | "rejected";
+
+export type CommunityModerationPost = {
   id: string;
   channel: string;
   content: string;
   status: string;
   created_at: string;
   media_urls?: string[] | null;
-  author: { name: string; email: string } | null;
+  author: { name: string; email: string; role?: string } | null;
 };
 
-export async function getPendingCommunityPosts(): Promise<PendingPost[]> {
+export async function getCommunityPostsByStatus(
+  status: CommunityModerationStatus,
+  limit = 50
+): Promise<CommunityModerationPost[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("community_posts")
@@ -1002,15 +1265,47 @@ export async function getPendingCommunityPosts(): Promise<PendingPost[]> {
       status,
       created_at,
       media_urls,
-      author:profiles!author_id(name, email)
+      author:profiles!author_id(name, email, role)
     `
     )
-    .eq("status", "pending_approval")
-    .order("created_at", { ascending: true });
+    .eq("status", status)
+    .order("created_at", {
+      ascending: status === "pending_approval",
+    })
+    .limit(limit);
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as PendingPost[];
+  return (data ?? []) as CommunityModerationPost[];
 }
+
+export async function getCommunityModerationStats() {
+  const supabase = await createClient();
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const [pending, approvedWeek] = await Promise.all([
+    supabase
+      .from("community_posts")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending_approval"),
+    supabase
+      .from("community_posts")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "approved")
+      .gte("created_at", weekAgo),
+  ]);
+  return {
+    pendingCount: pending.count ?? 0,
+    postsThisWeek: approvedWeek.count ?? 0,
+  };
+}
+
+/** @deprecated use getCommunityPostsByStatus('pending_approval') */
+export async function getPendingCommunityPosts(): Promise<
+  CommunityModerationPost[]
+> {
+  return getCommunityPostsByStatus("pending_approval");
+}
+
+export type PendingPost = CommunityModerationPost;
 
 export type LiveSessionRow = {
   id: string;

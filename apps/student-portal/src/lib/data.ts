@@ -102,9 +102,11 @@ export interface CommunityPost {
     avatar_url?: string | null;
     plan?: string | null;
     level?: string | null;
+    role?: string | null;
   } | null;
   comments?: CommunityComment[];
   liked_by_user?: boolean;
+  comment_count?: number;
 }
 
 export interface CommunityComment {
@@ -408,7 +410,7 @@ export async function getRecordedSessions(limit = 10): Promise<LiveSession[]> {
 }
 
 export async function getCommunityPosts(
-  channel: CommunityChannel,
+  channel: CommunityChannel | "latest",
   userId: string,
   limit = 20,
   before?: string
@@ -418,12 +420,15 @@ export async function getCommunityPosts(
   let query = supabase
     .from("community_posts")
     .select(
-      "*, profiles:author_id(name, avatar_url, plan, level)"
+      "*, profiles:author_id(name, avatar_url, plan, level, role)"
     )
-    .eq("channel", channel)
     .or(`status.eq.approved,author_id.eq.${userId}`)
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  if (channel !== "latest") {
+    query = query.eq("channel", channel);
+  }
 
   if (before) {
     query = query.lt("created_at", before);
@@ -459,12 +464,16 @@ export async function getCommunityPosts(
     commentsByPost.set(comment.post_id, list);
   }
 
-  return (posts as CommunityPost[]).map((post) => ({
-    ...post,
-    media_urls: (post as CommunityPost).media_urls ?? [],
-    comments: commentsByPost.get(post.id) ?? [],
-    liked_by_user: likedPostIds.has(post.id),
-  }));
+  return (posts as CommunityPost[]).map((post) => {
+    const postComments = commentsByPost.get(post.id) ?? [];
+    return {
+      ...post,
+      media_urls: (post as CommunityPost).media_urls ?? [],
+      comments: postComments,
+      comment_count: postComments.length,
+      liked_by_user: likedPostIds.has(post.id),
+    };
+  });
 }
 
 export async function getCommunityPost(
@@ -474,7 +483,7 @@ export async function getCommunityPost(
   const supabase = await createClient();
   const { data: post } = await supabase
     .from("community_posts")
-    .select("*, profiles:author_id(name, avatar_url, plan, level)")
+    .select("*, profiles:author_id(name, avatar_url, plan, level, role)")
     .eq("id", postId)
     .or(`status.eq.approved,author_id.eq.${userId}`)
     .maybeSingle();

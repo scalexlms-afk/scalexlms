@@ -154,7 +154,7 @@ const NAV_CATALOG: { title: string; items: NavDef[] }[] = [
         icon: ReviewIcon,
       },
       {
-        label: "Community Moderation",
+        label: "Community",
         href: "/community",
         feature: "community",
         icon: CommunityIcon,
@@ -172,7 +172,7 @@ const NAV_CATALOG: { title: string; items: NavDef[] }[] = [
         icon: StudentsIcon,
       },
       {
-        label: "Messages",
+        label: "Student Chat",
         href: "/messages",
         feature: "student_management",
         icon: CommunityIcon,
@@ -184,7 +184,7 @@ const NAV_CATALOG: { title: string; items: NavDef[] }[] = [
         icon: ReviewIcon,
       },
       {
-        label: "Content",
+        label: "Content Management",
         href: "/content",
         feature: "course_content",
         icon: ContentIcon,

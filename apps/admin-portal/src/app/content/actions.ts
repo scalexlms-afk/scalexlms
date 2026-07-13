@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { writeAuditLog } from "@scalex/db";
 import type { CourseStatus, LessonContentType } from "@scalex/db/types";
 import { requireAdminProfile, requireFeature } from "@/lib/auth";
@@ -10,6 +11,12 @@ import {
   storagePathFromPublicUrl,
 } from "@/lib/media";
 import { buildPdfLessonContentText } from "@/lib/pdf-extract";
+
+function revalidateContent(courseId?: string | null) {
+  revalidatePath("/content");
+  revalidatePath("/content", "layout");
+  if (courseId) revalidatePath(`/content/courses/${courseId}`);
+}
 
 async function removeStorageFileIfOwned(url: string | null) {
   const path = storagePathFromPublicUrl(url);
@@ -45,7 +52,8 @@ export async function createCourseAction(formData: FormData) {
     metadata: { title },
   });
 
-  revalidatePath("/content");
+  revalidateContent(data.id);
+  redirect(`/content/courses/${data.id}`);
 }
 
 export async function updateCourseAction(formData: FormData) {
@@ -75,7 +83,7 @@ export async function updateCourseAction(formData: FormData) {
     metadata: { title, status },
   });
 
-  revalidatePath("/content");
+  revalidateContent(courseId);
 }
 
 export async function deleteCourseAction(formData: FormData) {
@@ -96,7 +104,7 @@ export async function deleteCourseAction(formData: FormData) {
     targetId: courseId,
   });
 
-  revalidatePath("/content");
+  revalidateContent();
 }
 
 export async function createMilestoneAction(formData: FormData) {
@@ -128,7 +136,7 @@ export async function createMilestoneAction(formData: FormData) {
     metadata: { title, courseId },
   });
 
-  revalidatePath("/content");
+  revalidateContent();
 }
 
 export async function deleteMilestoneAction(formData: FormData) {
@@ -149,7 +157,7 @@ export async function deleteMilestoneAction(formData: FormData) {
     targetId: milestoneId,
   });
 
-  revalidatePath("/content");
+  revalidateContent();
 }
 
 export async function createModuleAction(formData: FormData) {
@@ -181,7 +189,7 @@ export async function createModuleAction(formData: FormData) {
     metadata: { title, milestoneId },
   });
 
-  revalidatePath("/content");
+  revalidateContent();
 }
 
 export async function deleteModuleAction(formData: FormData) {
@@ -212,7 +220,7 @@ export async function deleteModuleAction(formData: FormData) {
     targetId: moduleId,
   });
 
-  revalidatePath("/content");
+  revalidateContent();
 }
 
 export async function createLessonAction(formData: FormData) {
@@ -272,7 +280,7 @@ export async function createLessonAction(formData: FormData) {
     metadata: { title, moduleId, contentType, pdfExtract: pdfExtractMeta },
   });
 
-  revalidatePath("/content");
+  revalidateContent();
 }
 
 export async function updateLessonAction(formData: FormData) {
@@ -344,7 +352,7 @@ export async function updateLessonAction(formData: FormData) {
     metadata: { title, contentType, pdfExtract: pdfExtractMeta },
   });
 
-  revalidatePath("/content");
+  revalidateContent();
 }
 
 export async function reextractLessonPdfAction(formData: FormData) {
@@ -394,7 +402,7 @@ export async function reextractLessonPdfAction(formData: FormData) {
     },
   });
 
-  revalidatePath("/content");
+  revalidateContent();
 }
 
 export async function deleteLessonAction(formData: FormData) {
@@ -423,7 +431,7 @@ export async function deleteLessonAction(formData: FormData) {
     targetId: lessonId,
   });
 
-  revalidatePath("/content");
+  revalidateContent();
 }
 
 export async function createTaskAction(formData: FormData) {
@@ -453,7 +461,7 @@ export async function createTaskAction(formData: FormData) {
     metadata: { title, milestoneId },
   });
 
-  revalidatePath("/content");
+  revalidateContent();
 }
 
 export async function deleteTaskAction(formData: FormData) {
@@ -474,7 +482,7 @@ export async function deleteTaskAction(formData: FormData) {
     targetId: taskId,
   });
 
-  revalidatePath("/content");
+  revalidateContent();
 }
 
 export async function updateCourseStatusAction(formData: FormData) {
@@ -502,5 +510,201 @@ export async function updateCourseStatusAction(formData: FormData) {
     metadata: { status },
   });
 
-  revalidatePath("/content");
+  revalidateContent(courseId);
+}
+
+export async function updateMilestoneAction(formData: FormData) {
+  const milestoneId = formData.get("milestoneId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const title = (formData.get("title") as string)?.trim();
+
+  if (!milestoneId || !title) throw new Error("Invalid milestone");
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { error } = await db
+    .from("milestones")
+    .update({ title })
+    .eq("id", milestoneId);
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "milestone.updated",
+    targetType: "milestone",
+    targetId: milestoneId,
+    metadata: { title },
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function updateModuleAction(formData: FormData) {
+  const moduleId = formData.get("moduleId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const title = (formData.get("title") as string)?.trim();
+
+  if (!moduleId || !title) throw new Error("Invalid module");
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { error } = await db.from("modules").update({ title }).eq("id", moduleId);
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "module.updated",
+    targetType: "module",
+    targetId: moduleId,
+    metadata: { title },
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function updateTaskAction(formData: FormData) {
+  const taskId = formData.get("taskId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const title = (formData.get("title") as string)?.trim();
+  const description = (formData.get("description") as string)?.trim() || null;
+  const formatsRaw = formData.getAll("acceptedFormats");
+  const accepted_formats = formatsRaw
+    .filter((v): v is string => typeof v === "string" && v.length > 0)
+    .map((v) => v as "image" | "excel" | "pdf" | "link" | "text");
+
+  if (!taskId || !title) throw new Error("Invalid task");
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { error } = await db
+    .from("tasks")
+    .update({
+      title,
+      description,
+      accepted_formats:
+        accepted_formats.length > 0
+          ? accepted_formats
+          : (["image", "pdf", "link", "text"] as const),
+    })
+    .eq("id", taskId);
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "task.updated",
+    targetType: "task",
+    targetId: taskId,
+    metadata: { title },
+  });
+
+  revalidateContent(courseId);
+}
+
+async function swapOrder(
+  table: "milestones" | "modules" | "lessons",
+  id: string,
+  direction: "up" | "down",
+  parentColumn: string,
+  parentId: string
+) {
+  const db = getServiceDb();
+  const { data: rows, error } = await db
+    .from(table)
+    .select("id, order_index")
+    .eq(parentColumn, parentId)
+    .order("order_index", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  const list = rows ?? [];
+  const idx = list.findIndex((r) => r.id === id);
+  if (idx < 0) throw new Error("Item not found");
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= list.length) return;
+
+  const a = list[idx];
+  const b = list[swapIdx];
+  const { error: e1 } = await db
+    .from(table)
+    .update({ order_index: b.order_index })
+    .eq("id", a.id);
+  if (e1) throw new Error(e1.message);
+  const { error: e2 } = await db
+    .from(table)
+    .update({ order_index: a.order_index })
+    .eq("id", b.id);
+  if (e2) throw new Error(e2.message);
+}
+
+export async function reorderMilestoneAction(formData: FormData) {
+  const milestoneId = formData.get("milestoneId") as string;
+  const courseId = formData.get("courseId") as string;
+  const direction = formData.get("direction") as "up" | "down";
+  if (!milestoneId || !courseId || !["up", "down"].includes(direction)) {
+    throw new Error("Invalid reorder");
+  }
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  await swapOrder("milestones", milestoneId, direction, "course_id", courseId);
+  await writeAuditLog({
+    actorId: userId,
+    action: "milestone.reordered",
+    targetType: "milestone",
+    targetId: milestoneId,
+    metadata: { direction },
+  });
+  revalidateContent(courseId);
+}
+
+export async function reorderModuleAction(formData: FormData) {
+  const moduleId = formData.get("moduleId") as string;
+  const milestoneId = formData.get("milestoneId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const direction = formData.get("direction") as "up" | "down";
+  if (!moduleId || !milestoneId || !["up", "down"].includes(direction)) {
+    throw new Error("Invalid reorder");
+  }
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  await swapOrder("modules", moduleId, direction, "milestone_id", milestoneId);
+  await writeAuditLog({
+    actorId: userId,
+    action: "module.reordered",
+    targetType: "module",
+    targetId: moduleId,
+    metadata: { direction },
+  });
+  revalidateContent(courseId);
+}
+
+export async function reorderLessonAction(formData: FormData) {
+  const lessonId = formData.get("lessonId") as string;
+  const moduleId = formData.get("moduleId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const direction = formData.get("direction") as "up" | "down";
+  if (!lessonId || !moduleId || !["up", "down"].includes(direction)) {
+    throw new Error("Invalid reorder");
+  }
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  await swapOrder("lessons", lessonId, direction, "module_id", moduleId);
+  await writeAuditLog({
+    actorId: userId,
+    action: "lesson.reordered",
+    targetType: "lesson",
+    targetId: lessonId,
+    metadata: { direction },
+  });
+  revalidateContent(courseId);
 }
