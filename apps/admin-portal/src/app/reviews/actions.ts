@@ -122,6 +122,26 @@ export async function reviewSubmissionAction(formData: FormData) {
     payload: { submissionId, decision },
   });
 
+  const { data: studentProfile } = await serviceClient
+    .from("profiles")
+    .select("name, email")
+    .eq("id", row.student_id)
+    .maybeSingle();
+  const student = studentProfile as { name?: string; email?: string } | null;
+  if (student?.email) {
+    const { sendTaskReviewedEmail } = await import("@scalex/email");
+    const studentPortal =
+      process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL?.replace(/\/$/, "") ||
+      "http://localhost:3000";
+    await sendTaskReviewedEmail({
+      to: student.email,
+      name: student.name || "there",
+      decision,
+      feedback,
+      taskUrl: `${studentPortal}/roadmap`,
+    });
+  }
+
   if (decision === "approved") {
     const orderIndex = row.task?.milestone?.order_index;
     const badgeKey = orderIndex ? badgeKeyForMilestone(orderIndex) : null;

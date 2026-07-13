@@ -58,6 +58,20 @@ export default async function CommunityModerationPage() {
                   {post.content}
                 </p>
 
+                {(post.media_urls?.length ?? 0) > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {post.media_urls?.map((url) => (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        key={url}
+                        src={url}
+                        alt=""
+                        className="h-24 w-24 rounded-lg object-cover"
+                      />
+                    ))}
+                  </div>
+                )}
+
                 <p className="mt-2 text-xs text-subtle">
                   Submitted {new Date(post.created_at).toLocaleString()}
                 </p>

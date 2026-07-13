@@ -40,6 +40,14 @@ export default async function LoginPage({
         <input type="hidden" name="redirect" value={params.redirect ?? ""} />
         <Field label="Email" name="email" type="email" required />
         <Field label="Password" name="password" type="password" required />
+        <div className="flex justify-end">
+          <Link
+            href="/reset-password"
+            className="text-xs text-muted hover:text-scalex-red hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
         <SubmitButton className="w-full" pendingLabel="Signing in...">
           Sign In
         </SubmitButton>

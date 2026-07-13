@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@scalex/db/types";
 
-const PUBLIC_ROUTES = ["/login", "/auth/callback"];
+const PUBLIC_ROUTES = ["/login", "/auth/callback", "/reset-password"];
 const ADMIN_ROLES = ["super_admin", "instructor", "mentor", "sales"] as const;
 
 function copyCookies(from: NextResponse, to: NextResponse) {

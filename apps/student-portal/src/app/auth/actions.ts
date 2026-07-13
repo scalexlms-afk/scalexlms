@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@scalex/db/server";
-import { safeRelativePath, siteUrl } from "@/lib/site";
+import { safeRelativePath } from "@/lib/site";
 
 async function redirectAfterAuth(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, fallback = "/dashboard") {
   const { data: profile } = await supabase
@@ -109,51 +109,52 @@ export async function resetPasswordAction(formData: FormData) {
     );
   }
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/auth/callback?next=/update-password`,
+  const { requestPasswordOtp } = await import("@scalex/db/server");
+  await requestPasswordOtp({
+    email,
+    portal: "student",
+    portalLabel: "LaunchPad",
   });
 
-  if (error) {
-    redirect(`/reset-password?error=${encodeURIComponent(error.message)}`);
-  }
-
   // Always report success (avoid leaking which emails exist).
-  redirect("/reset-password?sent=1");
+  redirect(`/reset-password/verify?email=${encodeURIComponent(email)}`);
 }
 
-export async function updatePasswordAction(formData: FormData) {
+export async function verifyPasswordOtpAction(formData: FormData) {
+  const email = (formData.get("email") as string | null)?.trim() ?? "";
+  const code = (formData.get("code") as string | null)?.trim() ?? "";
   const password = (formData.get("password") as string | null) ?? "";
   const confirm = (formData.get("confirm") as string | null) ?? "";
 
-  if (password.length < 8) {
-    redirect(
-      `/update-password?error=${encodeURIComponent("Password must be at least 8 characters.")}`
-    );
-  }
   if (password !== confirm) {
     redirect(
-      `/update-password?error=${encodeURIComponent("Passwords do not match.")}`
+      `/reset-password/verify?email=${encodeURIComponent(email)}&error=${encodeURIComponent("Passwords do not match.")}`
     );
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { verifyPasswordOtpAndSetPassword } = await import("@scalex/db/server");
+  const result = await verifyPasswordOtpAndSetPassword({
+    email,
+    code,
+    newPassword: password,
+    portal: "student",
+  });
 
-  if (!user) {
+  if (!result.ok) {
     redirect(
-      `/login?error=${encodeURIComponent("Your reset link has expired. Request a new one.")}`
+      `/reset-password/verify?email=${encodeURIComponent(email)}&error=${encodeURIComponent(result.error)}`
     );
   }
 
-  const { error } = await supabase.auth.updateUser({ password });
-  if (error) {
-    redirect(`/update-password?error=${encodeURIComponent(error.message)}`);
-  }
+  redirect(
+    `/login?error=${encodeURIComponent("Password updated. Sign in with your new password.")}`
+  );
+}
 
-  redirect("/dashboard");
+export async function updatePasswordAction(formData: FormData) {
+  // Legacy magic-link route — redirect users to OTP flow.
+  void formData;
+  redirect("/reset-password");
 }
 
 export async function signOutAction() {

@@ -1,7 +1,26 @@
 import { createServiceClient } from "@scalex/db/server";
 import { createNotification } from "@scalex/db";
+import {
+  sendRemainingPaymentEmail,
+  sendWelcomeEmail,
+} from "@scalex/email";
 
 export type PlanType = "standard" | "premium";
+
+function studentPortalUrl() {
+  return (
+    process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL?.replace(/\/$/, "") ||
+    "http://localhost:3000"
+  );
+}
+
+function planLabel(plan: PlanType) {
+  return plan === "premium" ? "Premium Launch Program" : "Standard";
+}
+
+function centsLabel(cents: number) {
+  return `$${(cents / 100).toFixed(0)}`;
+}
 
 export async function fulfillCheckoutPayment(input: {
   studentId: string;
@@ -22,6 +41,8 @@ export async function fulfillCheckoutPayment(input: {
 
   const alreadyPaid =
     (existingPayment as { status?: string } | null)?.status === "paid";
+  const paymentAmount =
+    (existingPayment as { amount?: number } | null)?.amount ?? 0;
 
   if (!alreadyPaid) {
     await supabase
@@ -48,6 +69,13 @@ export async function fulfillCheckoutPayment(input: {
     }
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name, email")
+    .eq("id", studentId)
+    .maybeSingle();
+  const student = profile as { name?: string; email?: string } | null;
+
   if (checkoutMode === "first_payment") {
     await supabase
       .from("profiles")
@@ -72,7 +100,6 @@ export async function fulfillCheckoutPayment(input: {
       );
     }
 
-    // Create pending remaining balance if not already present.
     const { data: planSettings } = await supabase
       .from("payment_plan_settings")
       .select("total_cents, remaining_percent")
@@ -118,6 +145,15 @@ export async function fulfillCheckoutPayment(input: {
         payload: { paymentId, planType },
       });
 
+      if (student?.email) {
+        await sendWelcomeEmail({
+          to: student.email,
+          name: student.name || "there",
+          planLabel: planLabel(planType),
+          dashboardUrl: `${studentPortalUrl()}/dashboard`,
+        });
+      }
+
       const { data: admins } = await supabase
         .from("profiles")
         .select("id")
@@ -145,6 +181,16 @@ export async function fulfillCheckoutPayment(input: {
       body: "Thank you — your installment is complete.",
       payload: { paymentId },
     });
+
+    if (student?.email) {
+      await sendRemainingPaymentEmail({
+        to: student.email,
+        name: student.name || "there",
+        amountLabel: centsLabel(paymentAmount),
+        paymentUrl: `${studentPortalUrl()}/dashboard`,
+        kind: "paid",
+      });
+    }
   }
 
   if (checkoutMode === "upgrade") {

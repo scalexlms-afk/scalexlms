@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./client": "./src/client.ts",
     "./server": "./src/server.ts",
+    "./password-otp": "./src/password-otp.ts",
     "./middleware": "./src/middleware.ts",
     "./rbac": "./src/rbac.ts",
     "./media": "./src/media.ts",
@@ -20,6 +21,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@scalex/email": "workspace:*",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.8"
   },

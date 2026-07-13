@@ -2,6 +2,11 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "./database.types";
 export { createServiceClient } from "./service";
+export {
+  requestPasswordOtp,
+  verifyPasswordOtpAndSetPassword,
+  type OtpPortal,
+} from "./password-otp";
 
 export async function createClient() {
   const cookieStore = await cookies();

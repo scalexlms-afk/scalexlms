@@ -5,10 +5,13 @@ import { createClient } from "@scalex/db/server";
 import { requireStudentProfile } from "@/lib/auth";
 import type { CommunityChannel } from "@/lib/data";
 
+const COMMUNITY_MEDIA_BUCKET = "community-media";
+
 export async function createPostAction(formData: FormData) {
   const { userId } = await requireStudentProfile();
   const channel = formData.get("channel");
   const content = formData.get("content");
+  const image = formData.get("image");
 
   if (typeof channel !== "string" || !channel) {
     throw new Error("Channel is required");
@@ -18,11 +21,31 @@ export async function createPostAction(formData: FormData) {
   }
 
   const supabase = await createClient();
+  const mediaUrls: string[] = [];
+
+  if (image instanceof File && image.size > 0) {
+    const ext = image.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${userId}/${Date.now()}.${ext}`;
+    const { error: uploadError } = await supabase.storage
+      .from(COMMUNITY_MEDIA_BUCKET)
+      .upload(path, image, {
+        contentType: image.type || "image/jpeg",
+        upsert: false,
+      });
+    if (uploadError) throw new Error(uploadError.message);
+
+    const { data: publicUrl } = supabase.storage
+      .from(COMMUNITY_MEDIA_BUCKET)
+      .getPublicUrl(path);
+    if (publicUrl?.publicUrl) mediaUrls.push(publicUrl.publicUrl);
+  }
+
   const { error } = await supabase.from("community_posts").insert({
     channel: channel as CommunityChannel,
     author_id: userId,
     content: content.trim(),
     status: "pending_approval",
+    media_urls: mediaUrls,
   } as never);
 
   if (error) throw new Error(error.message);
@@ -53,6 +76,7 @@ export async function addCommentAction(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/community");
+  revalidatePath(`/community/${postId}`);
   if (typeof channel === "string" && channel) {
     revalidatePath(`/community?channel=${channel}`);
   }
@@ -90,4 +114,5 @@ export async function toggleLikeAction(formData: FormData) {
   }
 
   revalidatePath("/community");
+  revalidatePath(`/community/${postId}`);
 }

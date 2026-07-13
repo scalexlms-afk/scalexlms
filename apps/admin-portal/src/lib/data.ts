@@ -986,6 +986,7 @@ export type PendingPost = {
   content: string;
   status: string;
   created_at: string;
+  media_urls?: string[] | null;
   author: { name: string; email: string } | null;
 };
 
@@ -1000,6 +1001,7 @@ export async function getPendingCommunityPosts(): Promise<PendingPost[]> {
       content,
       status,
       created_at,
+      media_urls,
       author:profiles!author_id(name, email)
     `
     )

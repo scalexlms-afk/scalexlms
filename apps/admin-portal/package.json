@@ -12,6 +12,7 @@
   "dependencies": {
     "@scalex/ai": "workspace:*",
     "@scalex/db": "workspace:*",
+    "@scalex/email": "workspace:*",
     "@scalex/ui": "workspace:*",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.8",

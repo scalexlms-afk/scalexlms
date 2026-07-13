@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@scalex/db/server";
-import { writeAuditLog } from "@scalex/db";
+import { createNotification, writeAuditLog } from "@scalex/db";
 import { requireAdminProfile, requireFeature } from "@/lib/auth";
 
 export async function moderatePostAction(formData: FormData) {
@@ -46,6 +46,20 @@ export async function moderatePostAction(formData: FormData) {
       decision,
       authorId: (post as { author_id: string }).author_id,
     },
+  });
+
+  await createNotification({
+    userId: (post as { author_id: string }).author_id,
+    type: "community_moderation",
+    title:
+      decision === "approved"
+        ? "Your community post was approved"
+        : "Your community post was rejected",
+    body:
+      decision === "approved"
+        ? "Your post is now live in the community feed."
+        : "Your post did not pass moderation. You can revise and post again.",
+    payload: { postId, decision },
   });
 
   revalidatePath("/community");

@@ -94,9 +94,15 @@ export interface CommunityPost {
   content: string;
   status: "pending_approval" | "approved" | "rejected";
   like_count: number;
+  media_urls?: string[];
   created_at: string;
   updated_at: string;
-  profiles?: { name: string } | null;
+  profiles?: {
+    name: string;
+    avatar_url?: string | null;
+    plan?: string | null;
+    level?: string | null;
+  } | null;
   comments?: CommunityComment[];
   liked_by_user?: boolean;
 }
@@ -107,7 +113,10 @@ export interface CommunityComment {
   author_id: string;
   content: string;
   created_at: string;
-  profiles?: { name: string } | null;
+  profiles?: {
+    name: string;
+    avatar_url?: string | null;
+  } | null;
 }
 
 export const COMMUNITY_CHANNELS: { key: CommunityChannel; label: string }[] = [
@@ -400,16 +409,27 @@ export async function getRecordedSessions(limit = 10): Promise<LiveSession[]> {
 
 export async function getCommunityPosts(
   channel: CommunityChannel,
-  userId: string
+  userId: string,
+  limit = 20,
+  before?: string
 ): Promise<CommunityPost[]> {
   const supabase = await createClient();
 
-  const { data: posts } = await supabase
+  let query = supabase
     .from("community_posts")
-    .select("*, profiles:author_id(name)")
+    .select(
+      "*, profiles:author_id(name, avatar_url, plan, level)"
+    )
     .eq("channel", channel)
     .or(`status.eq.approved,author_id.eq.${userId}`)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (before) {
+    query = query.lt("created_at", before);
+  }
+
+  const { data: posts } = await query;
 
   if (!posts || posts.length === 0) return [];
 
@@ -418,7 +438,7 @@ export async function getCommunityPosts(
   const [{ data: comments }, { data: likes }] = await Promise.all([
     supabase
       .from("comments")
-      .select("*, profiles:author_id(name)")
+      .select("*, profiles:author_id(name, avatar_url)")
       .in("post_id", postIds)
       .order("created_at", { ascending: true }),
     supabase
@@ -441,7 +461,44 @@ export async function getCommunityPosts(
 
   return (posts as CommunityPost[]).map((post) => ({
     ...post,
+    media_urls: (post as CommunityPost).media_urls ?? [],
     comments: commentsByPost.get(post.id) ?? [],
     liked_by_user: likedPostIds.has(post.id),
   }));
+}
+
+export async function getCommunityPost(
+  postId: string,
+  userId: string
+): Promise<CommunityPost | null> {
+  const supabase = await createClient();
+  const { data: post } = await supabase
+    .from("community_posts")
+    .select("*, profiles:author_id(name, avatar_url, plan, level)")
+    .eq("id", postId)
+    .or(`status.eq.approved,author_id.eq.${userId}`)
+    .maybeSingle();
+
+  if (!post) return null;
+
+  const [{ data: comments }, { data: likes }] = await Promise.all([
+    supabase
+      .from("comments")
+      .select("*, profiles:author_id(name, avatar_url)")
+      .eq("post_id", postId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("post_likes")
+      .select("post_id")
+      .eq("post_id", postId)
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+
+  return {
+    ...(post as CommunityPost),
+    media_urls: (post as CommunityPost).media_urls ?? [],
+    comments: (comments ?? []) as CommunityComment[],
+    liked_by_user: Boolean(likes),
+  };
 }

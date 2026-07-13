@@ -216,6 +216,7 @@ export type Database = {
           created_at: string
           id: string
           like_count: number
+          media_urls: string[]
           status: Database["public"]["Enums"]["post_status"]
           updated_at: string
         }
@@ -226,6 +227,7 @@ export type Database = {
           created_at?: string
           id?: string
           like_count?: number
+          media_urls?: string[]
           status?: Database["public"]["Enums"]["post_status"]
           updated_at?: string
         }
@@ -236,6 +238,7 @@ export type Database = {
           created_at?: string
           id?: string
           like_count?: number
+          media_urls?: string[]
           status?: Database["public"]["Enums"]["post_status"]
           updated_at?: string
         }
@@ -814,6 +817,39 @@ export type Database = {
           },
         ]
       }
+      password_reset_otps: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          portal: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          portal: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          portal?: string
+        }
+        Relationships: []
+      }
       payment_plan_settings: {
         Row: {
           created_at: string
@@ -855,6 +891,7 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          last_reminded_at: string | null
           method: string | null
           paid_at: string | null
           status: Database["public"]["Enums"]["payment_status"]
@@ -867,6 +904,7 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
+          last_reminded_at?: string | null
           method?: string | null
           paid_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]
@@ -879,6 +917,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          last_reminded_at?: string | null
           method?: string | null
           paid_at?: string | null
           status?: Database["public"]["Enums"]["payment_status"]

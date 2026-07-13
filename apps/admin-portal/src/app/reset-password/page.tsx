@@ -1,19 +1,10 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { FormError, SubmitButton } from "@scalex/ui";
 import { resetPasswordAction } from "../auth/actions";
 import { AuthShell } from "@/components/auth-shell";
 import { Field } from "@/components/field";
-import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = pageMetadata({
-  title: "Reset Password",
-  description: "Reset your ScaleX LaunchPad account password with a one-time code.",
-  path: "/reset-password",
-  index: false,
-});
-
-export default async function ResetPasswordPage({
+export default async function AdminResetPasswordPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;

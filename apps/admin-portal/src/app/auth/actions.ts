@@ -38,6 +38,56 @@ export async function loginAction(formData: FormData) {
   redirect(redirectTo);
 }
 
+export async function resetPasswordAction(formData: FormData) {
+  const email = (formData.get("email") as string | null)?.trim();
+
+  if (!email) {
+    redirect(
+      `/reset-password?error=${encodeURIComponent("Enter the email associated with your account.")}`
+    );
+  }
+
+  const { requestPasswordOtp } = await import("@scalex/db/server");
+  await requestPasswordOtp({
+    email,
+    portal: "admin",
+    portalLabel: "Management OS",
+  });
+
+  redirect(`/reset-password/verify?email=${encodeURIComponent(email)}`);
+}
+
+export async function verifyPasswordOtpAction(formData: FormData) {
+  const email = (formData.get("email") as string | null)?.trim() ?? "";
+  const code = (formData.get("code") as string | null)?.trim() ?? "";
+  const password = (formData.get("password") as string | null) ?? "";
+  const confirm = (formData.get("confirm") as string | null) ?? "";
+
+  if (password !== confirm) {
+    redirect(
+      `/reset-password/verify?email=${encodeURIComponent(email)}&error=${encodeURIComponent("Passwords do not match.")}`
+    );
+  }
+
+  const { verifyPasswordOtpAndSetPassword } = await import("@scalex/db/server");
+  const result = await verifyPasswordOtpAndSetPassword({
+    email,
+    code,
+    newPassword: password,
+    portal: "admin",
+  });
+
+  if (!result.ok) {
+    redirect(
+      `/reset-password/verify?email=${encodeURIComponent(email)}&error=${encodeURIComponent(result.error)}`
+    );
+  }
+
+  redirect(
+    `/login?error=${encodeURIComponent("Password updated. Sign in with your new password.")}`
+  );
+}
+
 export async function signOutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
