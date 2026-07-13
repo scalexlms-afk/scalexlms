@@ -126,6 +126,14 @@ export async function reviewSubmissionAction(formData: FormData) {
     const orderIndex = row.task?.milestone?.order_index;
     const badgeKey = orderIndex ? badgeKeyForMilestone(orderIndex) : null;
 
+    await createNotification({
+      userId: row.student_id,
+      type: "milestone_unlocked",
+      title: "Progress unlocked",
+      body: "Your milestone task was approved — continue to the next stage on your roadmap.",
+      payload: { submissionId, orderIndex },
+    });
+
     if (badgeKey) {
       const { error: badgeError } = await servicePhase2
         .from("badges")

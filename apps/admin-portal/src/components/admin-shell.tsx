@@ -172,6 +172,12 @@ const NAV_CATALOG: { title: string; items: NavDef[] }[] = [
         icon: StudentsIcon,
       },
       {
+        label: "Support",
+        href: "/support",
+        feature: "student_management",
+        icon: ReviewIcon,
+      },
+      {
         label: "Content",
         href: "/content",
         feature: "course_content",

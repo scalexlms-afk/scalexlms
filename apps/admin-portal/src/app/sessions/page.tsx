@@ -1,8 +1,9 @@
 import { AdminShell } from "@/components/admin-shell";
 import { SessionEditor } from "@/components/session-editor";
+import { SessionAudiencePicker } from "@/components/session-audience-picker";
 import { Field, TextArea } from "@/components/field";
 import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
-import { getLiveSessions } from "@/lib/data";
+import { getActiveStudentsForSessions, getLiveSessions } from "@/lib/data";
 import { signMediaUrls } from "@/lib/secure-media";
 import { createSessionAction } from "./actions";
 import { canAccess } from "@scalex/db/rbac";
@@ -35,8 +36,11 @@ export default async function SessionsPage() {
   const { profile } = await requireAdminProfile();
   requireFeaturePage(profile.role, "live_sessions");
 
-  const sessions = await getLiveSessions();
   const canCreate = canAccess(profile.role, "live_sessions", "full");
+  const [sessions, students] = await Promise.all([
+    getLiveSessions(),
+    canCreate ? getActiveStudentsForSessions() : Promise.resolve([]),
+  ]);
   const recordingPreviews = canCreate
     ? await signMediaUrls(
         sessions
@@ -59,7 +63,7 @@ export default async function SessionsPage() {
             Live Sessions
           </h1>
           <p className="mt-1 text-muted">
-            Schedule classes, upload recordings, and manage session details.
+            Schedule classes for all Premium students or a selected group.
           </p>
         </div>
 
@@ -68,8 +72,16 @@ export default async function SessionsPage() {
             <h2 className="font-display text-lg font-semibold">
               Schedule a session
             </h2>
-            <form action={createSessionAction} className="mt-4 grid gap-4 sm:grid-cols-2">
-              <Field label="Title" name="title" required placeholder="Session title" />
+            <form
+              action={createSessionAction}
+              className="mt-4 grid gap-4 sm:grid-cols-2"
+            >
+              <Field
+                label="Title"
+                name="title"
+                required
+                placeholder="Session title"
+              />
               <div>
                 <label
                   htmlFor="type"
@@ -105,6 +117,14 @@ export default async function SessionsPage() {
               <div className="sm:col-span-2">
                 <TextArea label="Description" name="description" rows={2} />
               </div>
+              <SessionAudiencePicker
+                students={students.map((s) => ({
+                  id: s.id as string,
+                  name: s.name as string,
+                  email: s.email as string,
+                  plan: (s.plan as string | null) ?? null,
+                }))}
+              />
               <div className="sm:col-span-2">
                 <Button type="submit">Create session</Button>
               </div>
@@ -135,9 +155,7 @@ export default async function SessionsPage() {
 
         {sessions.length === 0 ? (
           <Card>
-            <p className="text-sm text-muted">
-              No live sessions scheduled yet.
-            </p>
+            <p className="text-sm text-muted">No live sessions scheduled yet.</p>
           </Card>
         ) : (
           <div className="space-y-4">
@@ -160,6 +178,15 @@ export default async function SessionsPage() {
                       <p className="mt-0.5 text-sm text-muted">
                         Host: {session.host?.name ?? "—"} ·{" "}
                         {typeLabel(session.type)}
+                      </p>
+                      <p className="mt-1 text-xs text-subtle">
+                        Audience:{" "}
+                        {session.audience === "selected"
+                          ? "Selected students"
+                          : "All Premium"}
+                        {typeof session.invite_count === "number"
+                          ? ` · ${session.invite_count} invited`
+                          : ""}
                       </p>
                     </div>
                     <StatusPill label={statusLabel} variant={variant} />
@@ -187,14 +214,18 @@ export default async function SessionsPage() {
                       </a>
                     )}
                     {session.recording_url && (
-                      <span className="text-accent-green">Recording attached</span>
+                      <span className="text-accent-green">
+                        Recording attached
+                      </span>
                     )}
                   </div>
 
                   {canCreate && (
                     <SessionEditor
                       session={session}
-                      recordingPreviewUrl={recordingPreviews[session.id] ?? null}
+                      recordingPreviewUrl={
+                        recordingPreviews[session.id] ?? null
+                      }
                     />
                   )}
                 </Card>

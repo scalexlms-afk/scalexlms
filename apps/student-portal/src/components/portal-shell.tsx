@@ -70,6 +70,28 @@ const SessionsIcon = (
   </svg>
 );
 
+const SupportIcon = (
+  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
+    <path
+      d="M12 21a9 9 0 1 0-9-9c0 1.6.4 3.1 1.2 4.4L3 21l4.6-1.2A8.9 8.9 0 0 0 12 21Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const MessagesIcon = (
+  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
+    <path
+      d="M4 6h16v10H8l-4 4V6Z"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 const navGroups: NavGroup[] = [
   {
     title: "Academy",
@@ -84,6 +106,8 @@ const navGroups: NavGroup[] = [
       { label: "AI Mentor", href: "/ai-mentor", active: false, icon: AiIcon },
       { label: "Community", href: "/community", active: false, icon: CommunityIcon },
       { label: "Sessions", href: "/sessions", active: false, icon: SessionsIcon },
+      { label: "Messages", href: "/messages", active: false, icon: MessagesIcon },
+      { label: "Support", href: "/support", active: false, icon: SupportIcon },
     ],
   },
 ];

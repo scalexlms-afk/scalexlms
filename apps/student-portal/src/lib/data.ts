@@ -335,6 +335,20 @@ export async function getNotifications(
   return (data ?? []) as Notification[];
 }
 
+export async function getPendingRemainingPayment(studentId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("payments")
+    .select("id, amount, status")
+    .eq("student_id", studentId)
+    .eq("type", "remaining")
+    .in("status", ["pending", "overdue"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data as { id: string; amount: number; status: string } | null;
+}
+
 export async function getUpcomingSessions(
   studentId: string,
   limit = 10

@@ -53,7 +53,7 @@ export async function registerAction(formData: FormData) {
       email,
       password,
       email_confirm: true,
-      user_metadata: { name },
+      user_metadata: { name, plan },
     });
 
     if (createError) {
@@ -65,7 +65,7 @@ export async function registerAction(formData: FormData) {
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: { data: { name, plan } },
     });
 
     if (signUpError) {

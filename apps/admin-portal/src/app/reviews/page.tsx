@@ -69,11 +69,14 @@ export default async function ReviewsPage() {
                         ? ` · ${submission.student.email}`
                         : ""}
                     </p>
-                    <div className="mt-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                       <StatusPill
                         label={planLabel(submission.student?.plan, true)}
                         variant={planPillVariant(submission.student?.plan)}
                       />
+                      {submission.student?.plan === "premium" && (
+                        <StatusPill label="Priority" variant="review" />
+                      )}
                     </div>
                     {submission.task?.milestone?.title && (
                       <p className="mt-1 text-xs text-subtle">

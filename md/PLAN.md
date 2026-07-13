@@ -29,7 +29,8 @@ course content, even if tasks/AI/community aren't live yet.
       | student`) — `profiles` table + Supabase Auth trigger
 - [x] Registration + payment flow (first-payment gate before account
       activation, per the 70/30 payment rule) — Stripe Checkout + webhook; plan
-      settings in `payment_plan_settings` table (configurable 70/30)
+      settings in `payment_plan_settings` table (configurable 70/30). Remaining
+      30% + Standard→Premium upgrade checkout added in web-gaps pass.
 - [x] Login / session management — Supabase Auth + middleware session refresh
 - [x] Account activation email/flow — signup confirmation via Supabase Auth;
       account flips to `active` on first-payment webhook (no separate
@@ -40,7 +41,8 @@ course content, even if tasks/AI/community aren't live yet.
 - [x] Welcome header ("Welcome back, {name}")
 - [x] Amazon Journey Progress card (overall % + current stage)
 - [x] Today's Task card (static/placeholder until Phase 2 task engine lands)
-- [x] Upcoming Class card (placeholder until live sessions ship)
+- [x] Upcoming Class card (placeholder until live sessions ship) — Premium
+      shows invited sessions; Standard shows upgrade CTA
 - [x] Announcements feed (read-only)
 
 ### Courses & Learning Roadmap
@@ -116,7 +118,8 @@ other.
 - [x] Schedule + reminder notifications — admin create notifies active students
       (in-app only; email/WhatsApp deferred to Phase 3)
 - [x] Recording access post-session — `/sessions` shows recordings when
-      `recording_url` set
+      `recording_url` set; admin can target All Premium or selected students
+      (invite-only visibility via `session_registrations`)
 
 **Phase 2 exit criteria:** a student can complete a milestone end-to-end —
 learn, submit, get AI-assisted mentor feedback, get approved, earn a badge —
@@ -153,13 +156,15 @@ Portal — not just deliver content.
 - [x] Sales-facing lead list + pipeline board view
 
 ### Finance System
-- [x] Payments, invoices, installments, expenses
+- [x] Payments, invoices, installments, expenses — remaining balance row created
+      on first payment; student can pay via `/payment?mode=remaining`
 - [x] 70% first-payment / 30% remaining rule as a configurable plan setting
 - [x] Payment-risk flag surfaced to AI Intelligence Dashboard
 
 ### Mentorship Panel
 - [x] Mentor view: assigned students, progress, submissions, messages,
-      calls log — mentor-scoped `/students` roster + detail
+      calls log — mentor-scoped `/students` roster + detail; mentor calls table
+      + reply messages; support tickets queue
 
 ### AI Intelligence Dashboard (Admin)
 - [x] Detection: inactive students, weak performance, slow progress,
@@ -168,9 +173,9 @@ Portal — not just deliver content.
 
 ### Notifications & Audit
 - [x] Student notifications: lesson unlock, task review, messages, payments
-      — existing Phase 2 notifications; lesson/payment triggers unchanged
+      — milestone unlock on approval; payment/enrollment/upgrade notifications
 - [x] Admin notifications: enrollment, reviews, follow-ups — dashboard
-      insights link to action queues
+      insights link to action queues; enrollment notify on first payment
 - [x] Audit log for all admin actions (create/edit/delete, role changes,
       payment actions) — Phase 3 mutations log to `audit_log`
 
@@ -202,14 +207,16 @@ backend as web.
       `DESIGN.md` before merge
 - [ ] **RBAC coverage** — every new route/endpoint reviewed against
       `ROLES.md` before merge
-- [ ] **Testing** — state-machine logic (task lifecycle, CRM pipeline) gets
-      unit tests from Phase 2 onward
-- [ ] **Analytics instrumentation** — key funnel events (registration,
+- [x] **Testing** — state-machine logic (task lifecycle, CRM pipeline) gets
+      unit tests from Phase 2 onward — `submissions.test.ts` + `leads.test.ts`
+- [x] **Analytics instrumentation** — key funnel events (registration,
       milestone completion, task approval, churn signals) tracked from
       Phase 1 onward so Phase 3's AI Intelligence Dashboard has real
-      historical data to work with
-- [ ] **Security & compliance** — audit logging, data privacy for student
-      records, payment data handling reviewed before Phase 3 finance ships
+      historical data to work with — `trackEvent()` GA4 helper on checkout /
+      payment success
+- [x] **Security & compliance** — audit logging, data privacy for student
+      records, payment data handling reviewed before Phase 3 finance ships —
+      covered by `009_rls_hardening` + `audit_log` (ongoing review still advised)
 
 ## Audit Fixes + Design Overhaul (2026-07 pass)
 

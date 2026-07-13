@@ -497,7 +497,8 @@ export async function getStudentDetail(studentId: string, scope: AdminScope) {
 
   if (error || !student) throw new Error("Student not found");
 
-  const [payments, submissions, messages, activity] = await Promise.all([
+  const [payments, submissions, messages, activity, mentorCalls] =
+    await Promise.all([
     db
       .from("payments")
       .select("*")
@@ -520,6 +521,14 @@ export async function getStudentDetail(studentId: string, scope: AdminScope) {
       .eq("target_id", studentId)
       .order("created_at", { ascending: false })
       .limit(10),
+    db
+      .from("mentor_calls")
+      .select(
+        "id, scheduled_at, duration_minutes, notes, status, mentor:profiles!mentor_id(name)"
+      )
+      .eq("student_id", studentId)
+      .order("scheduled_at", { ascending: false })
+      .limit(20),
   ]);
 
   return {
@@ -528,7 +537,51 @@ export async function getStudentDetail(studentId: string, scope: AdminScope) {
     submissions: submissions.data ?? [],
     messages: messages.data ?? [],
     activity: activity.data ?? [],
+    mentorCalls: mentorCalls.data ?? [],
   };
+}
+
+export async function getSupportTickets(scope: AdminScope) {
+  const db = getServiceDb();
+  const scopedStudentIds = await getScopedStudentIds(scope);
+
+  let query = db
+    .from("support_tickets")
+    .select(
+      `
+      id, subject, body, status, priority, created_at, updated_at, student_id,
+      student:profiles!student_id(name, email, plan)
+    `
+    )
+    .order("priority", { ascending: false })
+    .order("created_at", { ascending: true });
+
+  if (scopedStudentIds) {
+    if (scopedStudentIds.length === 0) return [];
+    query = query.in("student_id", scopedStudentIds);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("getSupportTickets:", error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
+export async function getActiveStudentsForSessions() {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("profiles")
+    .select("id, name, email, plan, status")
+    .eq("role", "student")
+    .eq("status", "active")
+    .order("name", { ascending: true });
+  if (error) {
+    console.error("getActiveStudentsForSessions:", error.message);
+    return [];
+  }
+  return data ?? [];
 }
 
 export async function getMentors(): Promise<Profile[]> {
@@ -762,6 +815,15 @@ export async function getPendingSubmissions(
     submissions = submissions.filter((s) => s.student?.mentor_id === userId);
   }
 
+  submissions.sort((a, b) => {
+    const aPremium = a.student?.plan === "premium" ? 0 : 1;
+    const bPremium = b.student?.plan === "premium" ? 0 : 1;
+    if (aPremium !== bPremium) return aPremium - bPremium;
+    const aTime = a.submitted_at ? new Date(a.submitted_at).getTime() : 0;
+    const bTime = b.submitted_at ? new Date(b.submitted_at).getTime() : 0;
+    return aTime - bTime;
+  });
+
   return submissions;
 }
 
@@ -804,6 +866,8 @@ export type LiveSessionRow = {
   meeting_url: string | null;
   recording_url: string | null;
   created_at: string;
+  audience?: string;
+  invite_count?: number;
   host: { name: string } | null;
 };
 
@@ -821,13 +885,20 @@ export async function getLiveSessions(): Promise<LiveSessionRow[]> {
       meeting_url,
       recording_url,
       created_at,
-      host:profiles!host_id(name)
+      audience,
+      host:profiles!host_id(name),
+      session_registrations(count)
     `
     )
     .order("scheduled_at", { ascending: false });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as LiveSessionRow[];
+  return ((data ?? []) as Array<LiveSessionRow & {
+    session_registrations?: { count: number }[];
+  }>).map((row) => ({
+    ...row,
+    invite_count: row.session_registrations?.[0]?.count ?? 0,
+  }));
 }
 
 export type AdminNotification = {

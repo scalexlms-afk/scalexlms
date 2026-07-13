@@ -112,7 +112,13 @@ export async function middleware(request: NextRequest) {
 
   // Redirect away from auth/payment pages if already active
   if (profileData?.status === "active") {
-    if (isAuthPage || (isPayment && pathname !== "/payment/success")) {
+    const paymentMode = request.nextUrl.searchParams.get("mode");
+    const allowActivePayment =
+      pathname === "/payment/success" ||
+      (pathname === "/payment" &&
+        (paymentMode === "remaining" || paymentMode === "upgrade"));
+
+    if (isAuthPage || (isPayment && !allowActivePayment)) {
       return redirectTo("/dashboard");
     }
   }

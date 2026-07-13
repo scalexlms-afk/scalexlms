@@ -10,6 +10,7 @@ import {
   getSubmissionForTask,
   getUpcomingSessions,
   getStudentBadges,
+  getPendingRemainingPayment,
 } from "@/lib/data";
 import {
   BADGE_LABELS,
@@ -79,11 +80,13 @@ export default async function DashboardPage() {
     }
   }
 
-  const [announcements, upcomingSessions, badges] = await Promise.all([
-    getAnnouncements(3),
-    premium ? getUpcomingSessions(userId, 2) : Promise.resolve([]),
-    getStudentBadges(userId),
-  ]);
+  const [announcements, upcomingSessions, badges, remainingPayment] =
+    await Promise.all([
+      getAnnouncements(3),
+      premium ? getUpcomingSessions(userId, 2) : Promise.resolve([]),
+      getStudentBadges(userId),
+      getPendingRemainingPayment(userId),
+    ]);
 
   const earnedBadgeKeys = new Set(badges.map((badge) => badge.key));
   const displayBadges = Object.entries(BADGE_LABELS).slice(0, 6);
@@ -109,6 +112,28 @@ export default async function DashboardPage() {
             variant={planPillVariant(profile.plan)}
           />
         </div>
+
+        {remainingPayment && (
+          <Card className="border-accent-amber/40 bg-accent-amber/5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-display text-lg font-semibold">
+                  Remaining balance due
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  ${(remainingPayment.amount / 100).toFixed(0)} remaining on your{" "}
+                  {planLabel(profile.plan, true)} plan.
+                </p>
+              </div>
+              <Link
+                href="/payment?mode=remaining"
+                className="rounded-lg bg-scalex-red px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              >
+                Pay remaining balance
+              </Link>
+            </div>
+          </Card>
+        )}
 
         <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard
@@ -272,10 +297,10 @@ export default async function DashboardPage() {
                   ))}
                 </ul>
                 <Link
-                  href="/sessions"
+                  href="/payment?mode=upgrade"
                   className="inline-block text-sm font-medium text-scalex-red hover:underline"
                 >
-                  See Premium sessions →
+                  Upgrade to Premium →
                 </Link>
               </div>
             )}

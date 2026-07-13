@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { writeAuditLog } from "@scalex/db";
+import { assertLeadTransition, writeAuditLog } from "@scalex/db";
 import type { LeadStage } from "@scalex/db/types";
 import { requireAdminProfile, requireFeature } from "@/lib/auth";
 import { getServiceDb, LEAD_STAGES } from "@/lib/admin-db";
@@ -61,6 +61,15 @@ export async function updateLeadStageAction(formData: FormData) {
   requireFeature(profile.role, "crm");
 
   const db = getServiceDb();
+  let currentQuery = db.from("leads").select("stage").eq("id", leadId);
+  if (profile.role === "sales") {
+    currentQuery = currentQuery.eq("assigned_sales_id", userId);
+  }
+  const { data: current, error: fetchError } = await currentQuery.maybeSingle();
+  if (fetchError || !current) throw new Error(fetchError?.message ?? "Lead not found");
+
+  assertLeadTransition(current.stage as LeadStage, stage);
+
   let query = db.from("leads").update({ stage }).eq("id", leadId);
   if (profile.role === "sales") {
     query = query.eq("assigned_sales_id", userId);
@@ -74,7 +83,7 @@ export async function updateLeadStageAction(formData: FormData) {
     action: "lead.stage_changed",
     targetType: "lead",
     targetId: leadId,
-    metadata: { stage },
+    metadata: { from: current.stage, stage },
   });
 
   revalidatePath("/crm");

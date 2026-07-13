@@ -72,13 +72,15 @@ export default async function SessionsPage() {
                 </li>
               ))}
             </ul>
-            <p className="mt-6 text-sm text-muted">
-              Contact ScaleX support or your sales advisor to upgrade to the
-              Premium Launch Program.
-            </p>
+            <Link
+              href="/payment?mode=upgrade"
+              className="mt-6 inline-block rounded-lg bg-scalex-red px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            >
+              Upgrade now
+            </Link>
             <Link
               href="/dashboard"
-              className="mt-4 inline-block text-sm font-medium text-scalex-red hover:underline"
+              className="mt-4 ml-4 inline-block text-sm font-medium text-scalex-red hover:underline"
             >
               Back to dashboard →
             </Link>

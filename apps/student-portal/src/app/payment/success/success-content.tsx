@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@scalex/ui";
 import { AuthShell } from "@/components/auth-shell";
+import { trackEvent } from "@/lib/analytics";
 
 export default function PaymentSuccessContent() {
   const router = useRouter();
@@ -34,6 +35,7 @@ export default function PaymentSuccessContent() {
         }
         setActivated(true);
         setAuthenticated(Boolean(data.authenticated));
+        trackEvent("payment_success");
         router.refresh();
       } catch {
         setError("Network error while activating account");

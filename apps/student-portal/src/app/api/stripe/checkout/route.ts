@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
-import { createClient } from "@scalex/db/server";
+import { createClient, createServiceClient } from "@scalex/db/server";
 import { siteUrl } from "@/lib/site";
 
 function getStripe() {
@@ -16,6 +16,37 @@ function parsePlan(value: string | null | undefined): "standard" | "premium" {
   return value === "premium" ? "premium" : "standard";
 }
 
+type CheckoutMode = "first_payment" | "remaining" | "upgrade";
+
+function parseMode(value: string | null): CheckoutMode {
+  if (value === "remaining" || value === "upgrade") return value;
+  return "first_payment";
+}
+
+async function getPlanSettings(planType: "standard" | "premium") {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("payment_plan_settings")
+    .select("*")
+    .eq("is_active", true)
+    .eq("plan_type", planType)
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error(
+      error?.message ??
+        `No active ${planType} payment plan configured. Ask an admin to set pricing in Settings.`
+    );
+  }
+
+  return data as {
+    total_cents: number;
+    first_payment_percent: number;
+    remaining_percent: number;
+  };
+}
+
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
@@ -28,62 +59,92 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
+    const mode = parseMode(searchParams.get("mode"));
     const requestedPlan = parsePlan(searchParams.get("plan"));
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("plan")
+      .select("plan, status")
       .eq("id", user.id)
       .maybeSingle();
 
-    const planType = parsePlan(
+    const profilePlan = parsePlan(
       (profile as { plan?: string | null } | null)?.plan ?? requestedPlan
     );
-    const planLabel =
-      planType === "premium" ? "Premium Launch Program" : "Standard";
+    const profileStatus = (profile as { status?: string } | null)?.status;
 
-    let { data: plan, error: planError } = await supabase
-      .from("payment_plan_settings")
-      .select("*")
-      .eq("is_active", true)
-      .eq("plan_type", planType)
-      .limit(1)
-      .maybeSingle();
+    let paymentType: "first_payment" | "remaining" | "installment" =
+      "first_payment";
+    let amount = 0;
+    let planType: "standard" | "premium" = profilePlan;
+    let productName = "";
+    let productDescription = "";
+    let metadataExtra: Record<string, string> = {};
 
-    if (planError || !plan) {
-      const fallback = await supabase
-        .from("payment_plan_settings")
-        .select("*")
-        .eq("is_active", true)
-        .limit(1)
-        .maybeSingle();
-      plan = fallback.data;
-      planError = fallback.error;
-    }
+    if (mode === "upgrade") {
+      if (profilePlan === "premium") {
+        return NextResponse.json(
+          { error: "You are already on Premium" },
+          { status: 400 }
+        );
+      }
+      if (profileStatus !== "active") {
+        return NextResponse.json(
+          { error: "Complete first payment before upgrading" },
+          { status: 400 }
+        );
+      }
 
-    const planData = plan as {
-      total_cents: number;
-      first_payment_percent: number;
-    } | null;
+      const [standard, premium] = await Promise.all([
+        getPlanSettings("standard"),
+        getPlanSettings("premium"),
+      ]);
+      amount = Math.max(0, premium.total_cents - standard.total_cents);
+      if (amount <= 0) {
+        return NextResponse.json(
+          { error: "Premium upgrade amount is not configured" },
+          { status: 500 }
+        );
+      }
+      paymentType = "installment";
+      planType = "premium";
+      productName = "ScaleX LaunchPad — Upgrade to Premium";
+      productDescription = "Upgrade from Standard to Premium Launch Program";
+      metadataExtra = { checkout_mode: "upgrade" };
+    } else if (mode === "remaining") {
+      if (profileStatus !== "active") {
+        return NextResponse.json(
+          { error: "Account must be active to pay remaining balance" },
+          { status: 400 }
+        );
+      }
 
-    if (planError || !planData) {
-      return NextResponse.json(
-        { error: planError?.message ?? "No payment plan" },
-        { status: 500 }
+      const settings = await getPlanSettings(profilePlan);
+      amount = Math.round(
+        (settings.total_cents * settings.remaining_percent) / 100
       );
+      paymentType = "remaining";
+      planType = profilePlan;
+      productName = `ScaleX LaunchPad — Remaining balance (${profilePlan === "premium" ? "Premium" : "Standard"})`;
+      productDescription = `${settings.remaining_percent}% remaining payment`;
+      metadataExtra = { checkout_mode: "remaining" };
+    } else {
+      planType = profilePlan;
+      const settings = await getPlanSettings(planType);
+      amount = Math.round(
+        (settings.total_cents * settings.first_payment_percent) / 100
+      );
+      paymentType = "first_payment";
+      productName = `ScaleX LaunchPad — ${planType === "premium" ? "Premium Launch Program" : "Standard"}`;
+      productDescription = `${settings.first_payment_percent}% first payment`;
+      metadataExtra = { checkout_mode: "first_payment" };
     }
 
-    const firstAmount = Math.round(
-      (planData.total_cents * planData.first_payment_percent) / 100
-    );
-
-    // Reuse an existing pending first payment to avoid piling up duplicate rows
-    // each time the student re-opens checkout (idempotency).
     const { data: existing } = await supabase
       .from("payments")
       .select("id, amount")
       .eq("student_id", user.id)
-      .eq("type", "first_payment")
+      .eq("type", paymentType)
       .eq("status", "pending")
       .order("created_at", { ascending: false })
       .limit(1)
@@ -91,10 +152,10 @@ export async function GET(request: Request) {
 
     let paymentData = existing as { id: string; amount?: number } | null;
 
-    if (paymentData && paymentData.amount !== firstAmount) {
+    if (paymentData && paymentData.amount !== amount) {
       await supabase
         .from("payments")
-        .update({ amount: firstAmount } as never)
+        .update({ amount } as never)
         .eq("id", paymentData.id);
     }
 
@@ -103,8 +164,8 @@ export async function GET(request: Request) {
         .from("payments")
         .insert({
           student_id: user.id,
-          amount: firstAmount,
-          type: "first_payment",
+          amount,
+          type: paymentType,
           status: "pending",
         } as never)
         .select()
@@ -129,10 +190,10 @@ export async function GET(request: Request) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `ScaleX LaunchPad — ${planLabel}`,
-              description: `${planData.first_payment_percent}% first payment`,
+              name: productName,
+              description: productDescription,
             },
-            unit_amount: firstAmount,
+            unit_amount: amount,
           },
           quantity: 1,
         },
@@ -141,6 +202,7 @@ export async function GET(request: Request) {
         student_id: user.id,
         payment_id: paymentData.id,
         plan_type: planType,
+        ...metadataExtra,
       },
       success_url: `${siteUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/payment/cancel`,

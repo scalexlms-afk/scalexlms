@@ -12,7 +12,8 @@ import {
   formatStatus,
 } from "@/lib/format";
 import { planLabel, planPillVariant } from "@scalex/db";
-import { assignMentorAction, updateStudentPlanAction } from "../actions";
+import { assignMentorAction, updateStudentPlanAction, logMentorCallAction, replyToStudentAction } from "../actions";
+import { Field, TextArea } from "@/components/field";
 import { Button, Card, DataTable, ProgressBar, StatusPill } from "@scalex/ui";
 
 export default async function StudentDetailPage({
@@ -268,9 +269,7 @@ export default async function StudentDetailPage({
             </h2>
             <div className="mt-4 space-y-3">
               {detail.messages.length === 0 ? (
-                <p className="text-sm text-muted">
-                  No messages yet.
-                </p>
+                <p className="text-sm text-muted">No messages yet.</p>
               ) : (
                 detail.messages.map((msg) => (
                   <div
@@ -286,31 +285,110 @@ export default async function StudentDetailPage({
                 ))
               )}
             </div>
+            <form action={replyToStudentAction} className="mt-4 space-y-3">
+              <input type="hidden" name="studentId" value={id} />
+              <TextArea label="Reply" name="content" rows={3} required />
+              <Button type="submit">Send message</Button>
+            </form>
           </Card>
 
           <Card>
-            <h2 className="font-display text-lg font-semibold">Activity</h2>
+            <h2 className="font-display text-lg font-semibold">
+              Mentor calls
+            </h2>
             <div className="mt-4 space-y-3">
-              {detail.activity.length === 0 ? (
-                <p className="text-sm text-muted">
-                  No audit activity yet.
-                </p>
+              {detail.mentorCalls.length === 0 ? (
+                <p className="text-sm text-muted">No calls logged yet.</p>
               ) : (
-                detail.activity.map((entry) => (
+                detail.mentorCalls.map((call) => (
                   <div
-                    key={entry.id}
+                    key={call.id}
                     className="rounded-lg border border-line bg-surface-3 p-3"
                   >
-                    <p className="text-sm font-medium">{entry.action}</p>
-                    <p className="text-xs text-subtle">
-                      {formatDateTime(entry.created_at)}
+                    <p className="text-sm font-medium">
+                      {formatDateTime(call.scheduled_at as string)}
                     </p>
+                    <p className="text-xs text-subtle">
+                      {(call.mentor as { name: string } | null)?.name ?? "Mentor"}{" "}
+                      · {formatStatus(call.status as string)}
+                      {call.duration_minutes
+                        ? ` · ${call.duration_minutes} min`
+                        : ""}
+                    </p>
+                    {call.notes && (
+                      <p className="mt-1 text-sm text-muted">
+                        {call.notes as string}
+                      </p>
+                    )}
                   </div>
                 ))
               )}
             </div>
+            {detail.student.plan === "premium" && (
+              <form action={logMentorCallAction} className="mt-4 space-y-3">
+                <input type="hidden" name="studentId" value={id} />
+                <Field
+                  label="Scheduled at"
+                  name="scheduled_at"
+                  type="datetime-local"
+                  required
+                />
+                <Field
+                  label="Duration (minutes)"
+                  name="duration_minutes"
+                  type="number"
+                />
+                <div>
+                  <label
+                    htmlFor="callStatus"
+                    className="mb-1.5 block text-sm font-medium text-muted"
+                  >
+                    Status
+                  </label>
+                  <select
+                    id="callStatus"
+                    name="status"
+                    defaultValue="completed"
+                    className="w-full rounded-lg border border-line bg-surface-3 px-3.5 py-2.5 text-sm"
+                  >
+                    <option value="scheduled">Scheduled</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="no_show">No show</option>
+                  </select>
+                </div>
+                <TextArea label="Notes" name="notes" rows={2} />
+                <Button type="submit">Log call</Button>
+              </form>
+            )}
+            {detail.student.plan !== "premium" && (
+              <p className="mt-3 text-xs text-subtle">
+                Call logging is available for Premium students.
+              </p>
+            )}
           </Card>
         </div>
+
+        <Card>
+          <h2 className="font-display text-lg font-semibold">Activity</h2>
+          <div className="mt-4 space-y-3">
+            {detail.activity.length === 0 ? (
+              <p className="text-sm text-muted">No audit activity yet.</p>
+            ) : (
+              detail.activity.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="rounded-lg border border-line bg-surface-3 p-3"
+                >
+                  <p className="text-sm font-medium">{entry.action}</p>
+                  <p className="text-xs text-subtle">
+                    {formatDateTime(entry.created_at)}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </Card>
       </div>
     </AdminShell>
   );

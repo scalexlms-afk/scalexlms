@@ -556,6 +556,7 @@ export type Database = {
       }
       live_sessions: {
         Row: {
+          audience: Database["public"]["Enums"]["session_audience"]
           created_at: string
           description: string | null
           host_id: string
@@ -568,6 +569,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          audience?: Database["public"]["Enums"]["session_audience"]
           created_at?: string
           description?: string | null
           host_id: string
@@ -580,6 +582,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          audience?: Database["public"]["Enums"]["session_audience"]
           created_at?: string
           description?: string | null
           host_id?: string
@@ -595,6 +598,57 @@ export type Database = {
           {
             foreignKeyName: "live_sessions_host_id_fkey"
             columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mentor_calls: {
+        Row: {
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          mentor_id: string
+          notes: string | null
+          scheduled_at: string
+          status: Database["public"]["Enums"]["mentor_call_status"]
+          student_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          mentor_id: string
+          notes?: string | null
+          scheduled_at: string
+          status?: Database["public"]["Enums"]["mentor_call_status"]
+          student_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          mentor_id?: string
+          notes?: string | null
+          scheduled_at?: string
+          status?: Database["public"]["Enums"]["mentor_call_status"]
+          student_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentor_calls_mentor_id_fkey"
+            columns: ["mentor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentor_calls_student_id_fkey"
+            columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1064,6 +1118,47 @@ export type Database = {
           },
         ]
       }
+      support_tickets: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          priority: Database["public"]["Enums"]["ticket_priority"]
+          status: Database["public"]["Enums"]["ticket_status"]
+          student_id: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          status?: Database["public"]["Enums"]["ticket_status"]
+          student_id: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          priority?: Database["public"]["Enums"]["ticket_priority"]
+          status?: Database["public"]["Enums"]["ticket_status"]
+          student_id?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           accepted_formats: Database["public"]["Enums"]["submission_format"][]
@@ -1151,11 +1246,13 @@ export type Database = {
         | "enrolled"
       lesson_content_type: "video" | "pdf" | "text" | "link"
       live_session_type: "batch_class" | "masterclass" | "qa" | "case_study"
+      mentor_call_status: "scheduled" | "completed" | "cancelled" | "no_show"
       payment_status: "pending" | "paid" | "overdue" | "refunded"
       payment_type: "first_payment" | "remaining" | "installment"
       plan_type: "standard" | "premium"
       post_status: "pending_approval" | "approved" | "rejected"
       review_decision: "approved" | "revision_required"
+      session_audience: "all_premium" | "selected"
       student_level:
         | "beginner_seller"
         | "research_expert"
@@ -1168,6 +1265,8 @@ export type Database = {
         | "under_review"
         | "approved"
         | "revision_required"
+      ticket_priority: "normal" | "high"
+      ticket_status: "open" | "in_progress" | "resolved" | "closed"
       user_role: "super_admin" | "instructor" | "mentor" | "sales" | "student"
       user_status: "active" | "inactive" | "suspended"
     }
@@ -1316,11 +1415,13 @@ export const Constants = {
       ],
       lesson_content_type: ["video", "pdf", "text", "link"],
       live_session_type: ["batch_class", "masterclass", "qa", "case_study"],
+      mentor_call_status: ["scheduled", "completed", "cancelled", "no_show"],
       payment_status: ["pending", "paid", "overdue", "refunded"],
       payment_type: ["first_payment", "remaining", "installment"],
       plan_type: ["standard", "premium"],
       post_status: ["pending_approval", "approved", "rejected"],
       review_decision: ["approved", "revision_required"],
+      session_audience: ["all_premium", "selected"],
       student_level: [
         "beginner_seller",
         "research_expert",
@@ -1335,6 +1436,8 @@ export const Constants = {
         "approved",
         "revision_required",
       ],
+      ticket_priority: ["normal", "high"],
+      ticket_status: ["open", "in_progress", "resolved", "closed"],
       user_role: ["super_admin", "instructor", "mentor", "sales", "student"],
       user_status: ["active", "inactive", "suspended"],
     },
