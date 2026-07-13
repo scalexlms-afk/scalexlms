@@ -285,11 +285,17 @@ export default async function StudentDetailPage({
                 ))
               )}
             </div>
-            <form action={replyToStudentAction} className="mt-4 space-y-3">
-              <input type="hidden" name="studentId" value={id} />
-              <TextArea label="Reply" name="content" rows={3} required />
-              <Button type="submit">Send message</Button>
-            </form>
+            {detail.student.plan === "premium" ? (
+              <form action={replyToStudentAction} className="mt-4 space-y-3">
+                <input type="hidden" name="studentId" value={id} />
+                <TextArea label="Reply" name="content" rows={3} required />
+                <Button type="submit">Send message</Button>
+              </form>
+            ) : (
+              <p className="mt-4 text-sm text-muted">
+                Direct messaging is available for Premium students only.
+              </p>
+            )}
           </Card>
 
           <Card>

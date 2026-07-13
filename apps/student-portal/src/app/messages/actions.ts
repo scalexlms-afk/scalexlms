@@ -1,17 +1,28 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@scalex/db/server";
-import { createNotification } from "@scalex/db";
+import { createNotification, isPremiumPlan } from "@scalex/db";
 import { requireStudentProfile } from "@/lib/auth";
 
 export async function sendMentorMessageAction(formData: FormData) {
   const { userId, profile } = await requireStudentProfile();
   const content = (formData.get("content") as string)?.trim();
 
-  if (!content) throw new Error("Message required");
+  if (!content) {
+    redirect("/messages?error=" + encodeURIComponent("Message required"));
+  }
+
+  if (!isPremiumPlan(profile.plan)) {
+    redirect("/messages?error=" + encodeURIComponent("Mentor messaging is a Premium feature"));
+  }
+
   if (!profile.mentor_id) {
-    throw new Error("No mentor assigned yet");
+    redirect(
+      "/messages?error=" +
+        encodeURIComponent("No mentor is assigned yet. Open a support ticket instead.")
+    );
   }
 
   const supabase = await createClient();
@@ -21,7 +32,9 @@ export async function sendMentorMessageAction(formData: FormData) {
     content,
   } as never);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    redirect("/messages?error=" + encodeURIComponent(error.message));
+  }
 
   await createNotification({
     userId: profile.mentor_id,
@@ -32,4 +45,5 @@ export async function sendMentorMessageAction(formData: FormData) {
   });
 
   revalidatePath("/messages");
+  redirect("/messages?sent=1");
 }

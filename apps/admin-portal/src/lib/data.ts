@@ -550,6 +550,7 @@ export async function getSupportTickets(scope: AdminScope) {
     .select(
       `
       id, subject, body, status, priority, created_at, updated_at, student_id,
+      staff_reply, staff_reply_at, staff_replied_by,
       student:profiles!student_id(name, email, plan)
     `
     )
@@ -567,6 +568,158 @@ export async function getSupportTickets(scope: AdminScope) {
     return [];
   }
   return data ?? [];
+}
+
+export type MentorInboxThread = {
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  plan: string | null;
+  lastMessage: {
+    id: string;
+    content: string;
+    created_at: string;
+    sender_id: string;
+    fromStudent: boolean;
+  } | null;
+};
+
+export async function getMentorMessageInbox(
+  scope: AdminScope
+): Promise<MentorInboxThread[]> {
+  const db = getServiceDb();
+  const scopedStudentIds = await getScopedStudentIds(scope);
+
+  let studentsQuery = db
+    .from("profiles")
+    .select("id, name, email, plan")
+    .eq("role", "student")
+    .eq("plan", "premium")
+    .eq("status", "active")
+    .order("name", { ascending: true });
+
+  if (scopedStudentIds) {
+    if (scopedStudentIds.length === 0) return [];
+    studentsQuery = studentsQuery.in("id", scopedStudentIds);
+  }
+
+  const { data: students, error } = await studentsQuery;
+  if (error) {
+    console.error("getMentorMessageInbox students:", error.message);
+    return [];
+  }
+
+  const studentRows = (students ?? []) as {
+    id: string;
+    name: string;
+    email: string;
+    plan: string | null;
+  }[];
+  if (studentRows.length === 0) return [];
+
+  const studentIds = studentRows.map((s) => s.id);
+
+  // Mentors: only threads with themselves. Admins: any messages with these students.
+  let messagesQuery = db
+    .from("messages")
+    .select("id, content, created_at, sender_id, recipient_id")
+    .order("created_at", { ascending: false })
+    .limit(300);
+
+  if (scope.role === "mentor") {
+    messagesQuery = messagesQuery.or(
+      `sender_id.eq.${scope.userId},recipient_id.eq.${scope.userId}`
+    );
+  } else {
+    messagesQuery = messagesQuery.or(
+      `sender_id.in.(${studentIds.join(",")}),recipient_id.in.(${studentIds.join(",")})`
+    );
+  }
+
+  const { data: messages, error: msgError } = await messagesQuery;
+  if (msgError) {
+    console.error("getMentorMessageInbox messages:", msgError.message);
+  }
+
+  const rows = (messages ?? []) as {
+    id: string;
+    content: string;
+    created_at: string;
+    sender_id: string;
+    recipient_id: string;
+  }[];
+
+  return studentRows
+    .map((student) => {
+      const thread = rows.filter((m) => {
+        const involvesStudent =
+          m.sender_id === student.id || m.recipient_id === student.id;
+        if (!involvesStudent) return false;
+        if (scope.role === "mentor") {
+          return (
+            m.sender_id === scope.userId || m.recipient_id === scope.userId
+          );
+        }
+        return true;
+      });
+      const last = thread[0] ?? null;
+      return {
+        studentId: student.id,
+        studentName: student.name,
+        studentEmail: student.email,
+        plan: student.plan,
+        lastMessage: last
+          ? {
+              id: last.id,
+              content: last.content,
+              created_at: last.created_at,
+              sender_id: last.sender_id,
+              fromStudent: last.sender_id === student.id,
+            }
+          : null,
+      };
+    })
+    .sort((a, b) => {
+      const at = a.lastMessage?.created_at ?? "";
+      const bt = b.lastMessage?.created_at ?? "";
+      if (at || bt) return bt.localeCompare(at);
+      return a.studentName.localeCompare(b.studentName);
+    });
+}
+
+export async function getConversationWithStudent(
+  studentId: string,
+  staffId: string,
+  limit = 40
+) {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("messages")
+    .select(
+      "id, content, created_at, sender_id, recipient_id, sender:profiles!sender_id(name)"
+    )
+    .or(
+      `and(sender_id.eq.${studentId},recipient_id.eq.${staffId}),and(sender_id.eq.${staffId},recipient_id.eq.${studentId})`
+    )
+    .order("created_at", { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.error("getConversationWithStudent:", error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
+/** Resolve which staff id to use for the conversation thread. */
+export async function getStudentMentorId(studentId: string) {
+  const db = getServiceDb();
+  const { data } = await db
+    .from("profiles")
+    .select("mentor_id")
+    .eq("id", studentId)
+    .maybeSingle();
+  return (data as { mentor_id?: string | null } | null)?.mentor_id ?? null;
 }
 
 export async function getActiveStudentsForSessions() {

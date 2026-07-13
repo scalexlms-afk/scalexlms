@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
+import { TextArea } from "@/components/field";
 import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { getSupportTickets } from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
@@ -23,7 +25,8 @@ export default async function AdminSupportPage() {
             Support tickets
           </h1>
           <p className="mt-1 text-muted">
-            Premium tickets are marked high priority.
+            Premium tickets are high priority. Reply so the student sees your
+            response in their portal.
           </p>
         </div>
 
@@ -39,6 +42,8 @@ export default async function AdminSupportPage() {
                 email: string;
                 plan: string | null;
               } | null;
+              const staffReply = (ticket as { staff_reply?: string | null })
+                .staff_reply;
               return (
                 <Card key={ticket.id}>
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -64,31 +69,59 @@ export default async function AdminSupportPage() {
                         />
                       </div>
                     </div>
-                    <p className="text-xs text-subtle">
-                      {formatDateTime(ticket.created_at as string)}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-xs text-subtle">
+                        {formatDateTime(ticket.created_at as string)}
+                      </p>
+                      {ticket.student_id && (
+                        <Link
+                          href={`/students/${ticket.student_id}`}
+                          className="mt-1 inline-block text-xs font-medium text-scalex-red hover:underline"
+                        >
+                          Open student →
+                        </Link>
+                      )}
+                    </div>
                   </div>
                   <p className="mt-3 whitespace-pre-wrap text-sm text-muted">
                     {ticket.body as string}
                   </p>
+                  {staffReply && (
+                    <div className="mt-3 rounded-lg border border-line bg-surface-3 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+                        Your previous reply
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap text-sm">
+                        {staffReply}
+                      </p>
+                    </div>
+                  )}
                   <form
                     action={updateTicketStatusAction}
-                    className="mt-4 flex flex-wrap items-end gap-2"
+                    className="mt-4 space-y-3"
                   >
                     <input type="hidden" name="ticketId" value={ticket.id} />
-                    <select
-                      name="status"
-                      defaultValue={ticket.status as string}
-                      className="rounded-lg border border-line bg-surface-3 px-3 py-2 text-sm"
-                    >
-                      <option value="open">Open</option>
-                      <option value="in_progress">In progress</option>
-                      <option value="resolved">Resolved</option>
-                      <option value="closed">Closed</option>
-                    </select>
-                    <Button type="submit" className="!px-3 !py-2 text-sm">
-                      Update status
-                    </Button>
+                    <TextArea
+                      label="Reply to student"
+                      name="reply"
+                      rows={3}
+                      placeholder="Optional — student will see this on their Support page"
+                    />
+                    <div className="flex flex-wrap items-end gap-2">
+                      <select
+                        name="status"
+                        defaultValue={ticket.status as string}
+                        className="rounded-lg border border-line bg-surface-3 px-3 py-2 text-sm"
+                      >
+                        <option value="open">Open</option>
+                        <option value="in_progress">In progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="closed">Closed</option>
+                      </select>
+                      <Button type="submit" className="!px-3 !py-2 text-sm">
+                        Save update
+                      </Button>
+                    </div>
                   </form>
                 </Card>
               );

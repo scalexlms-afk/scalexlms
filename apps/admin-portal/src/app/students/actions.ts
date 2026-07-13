@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { normalizePlan, writeAuditLog, createNotification } from "@scalex/db";
 import { requireAdminProfile, requireFeature } from "@/lib/auth";
 import { canAssignMentor, canManageFinance, getServiceDb } from "@/lib/admin-db";
@@ -133,6 +134,7 @@ export async function logMentorCallAction(formData: FormData) {
 export async function replyToStudentAction(formData: FormData) {
   const studentId = formData.get("studentId") as string;
   const content = (formData.get("content") as string)?.trim();
+  const redirectTo = (formData.get("redirectTo") as string) || `/students/${studentId}`;
 
   if (!studentId || !content) throw new Error("Message required");
 
@@ -140,6 +142,32 @@ export async function replyToStudentAction(formData: FormData) {
   requireFeature(profile.role, "student_management");
 
   const db = getServiceDb();
+  const { data: student } = await db
+    .from("profiles")
+    .select("id, role, plan, mentor_id, status")
+    .eq("id", studentId)
+    .maybeSingle();
+
+  const studentRow = student as {
+    id: string;
+    role: string;
+    plan: string | null;
+    mentor_id: string | null;
+    status: string;
+  } | null;
+
+  if (!studentRow || studentRow.role !== "student") {
+    throw new Error("Student not found");
+  }
+
+  if (profile.role === "mentor" && studentRow.mentor_id !== userId) {
+    throw new Error("You can only message your assigned students");
+  }
+
+  if (studentRow.plan !== "premium") {
+    throw new Error("Direct mentor messaging is for Premium students only");
+  }
+
   const { error } = await db.from("messages").insert({
     sender_id: userId,
     recipient_id: studentId,
@@ -164,4 +192,9 @@ export async function replyToStudentAction(formData: FormData) {
   });
 
   revalidatePath(`/students/${studentId}`);
+  revalidatePath("/messages");
+
+  if (redirectTo.startsWith("/messages")) {
+    redirect(`/messages?student=${studentId}&sent=1`);
+  }
 }

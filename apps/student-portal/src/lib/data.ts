@@ -1,4 +1,4 @@
-import { createClient } from "@scalex/db/server";
+import { createClient, createServiceClient } from "@scalex/db/server";
 import type {
   Course,
   Milestone,
@@ -176,6 +176,8 @@ export async function ensureEnrollment(studentId: string, courseId: string) {
   const existing = await getEnrollment(studentId, courseId);
   if (existing) return existing;
 
+  // Prefer the caller's session for plan lookup; insert with service role so
+  // admin-activated / test students without a paid payment row can enroll.
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("profiles")
@@ -187,9 +189,13 @@ export async function ensureEnrollment(studentId: string, courseId: string) {
       ? "premium"
       : "standard";
 
-  const { data, error } = await supabase
+  const service = createServiceClient();
+  const { data, error } = await service
     .from("enrollments")
-    .insert({ student_id: studentId, course_id: courseId, plan } as never)
+    .upsert(
+      { student_id: studentId, course_id: courseId, plan } as never,
+      { onConflict: "student_id,course_id" }
+    )
     .select()
     .single();
 
