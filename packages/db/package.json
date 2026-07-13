@@ -11,7 +11,8 @@
     "./middleware": "./src/middleware.ts",
     "./rbac": "./src/rbac.ts",
     "./media": "./src/media.ts",
-    "./types": "./src/database.types.ts"
+    "./types": "./src/database.types.ts",
+    "./plans": "./src/plans.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

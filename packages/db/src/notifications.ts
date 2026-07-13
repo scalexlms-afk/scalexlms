@@ -1,4 +1,4 @@
-import { createServiceClient } from "./server";
+import { createServiceClient } from "./service";
 import type { Json } from "./database.types";
 
 export interface CreateNotificationInput {

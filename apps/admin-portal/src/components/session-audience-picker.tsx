@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { planLabel } from "@scalex/db";
+
+function planShortLabel(plan: string | null): string {
+  return plan === "premium" ? "Premium" : "Standard";
+}
 
 type StudentOption = {
   id: string;
@@ -86,7 +89,7 @@ export function SessionAudiencePicker({
                       {student.name}
                     </span>
                     <span className="block truncate text-xs text-muted">
-                      {student.email} · {planLabel(student.plan, true)}
+                      {student.email} · {planShortLabel(student.plan)}
                     </span>
                   </span>
                 </label>
