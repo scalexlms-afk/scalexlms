@@ -2,10 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@scalex/db/server";
+import { isPremiumPlan } from "@scalex/db";
 import { requireStudentProfile } from "@/lib/auth";
 
 export async function registerForSessionAction(formData: FormData) {
-  const { userId } = await requireStudentProfile();
+  const { userId, profile } = await requireStudentProfile();
+
+  if (!isPremiumPlan(profile.plan)) {
+    throw new Error("Live sessions require the Premium Launch Program");
+  }
+
   const sessionId = formData.get("sessionId");
 
   if (typeof sessionId !== "string" || !sessionId) {

@@ -767,6 +767,7 @@ export type Database = {
           id: string
           is_active: boolean
           plan_key: string
+          plan_type: Database["public"]["Enums"]["plan_type"]
           remaining_percent: number
           total_cents: number
           updated_at: string
@@ -777,6 +778,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           plan_key: string
+          plan_type?: Database["public"]["Enums"]["plan_type"]
           remaining_percent: number
           total_cents: number
           updated_at?: string
@@ -787,6 +789,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           plan_key?: string
+          plan_type?: Database["public"]["Enums"]["plan_type"]
           remaining_percent?: number
           total_cents?: number
           updated_at?: string

@@ -11,7 +11,16 @@ import {
   getUpcomingSessions,
   getStudentBadges,
 } from "@/lib/data";
-import { BADGE_LABELS, LEVEL_LABELS, submissionStatusLabel, submissionStatusVariant } from "@scalex/db";
+import {
+  BADGE_LABELS,
+  LEVEL_LABELS,
+  isPremiumPlan,
+  planLabel,
+  planPillVariant,
+  PLAN_FEATURES,
+  submissionStatusLabel,
+  submissionStatusVariant,
+} from "@scalex/db";
 import { Card, KpiCard, ProgressBar, StatusPill, BadgeMedallion } from "@scalex/ui";
 import Link from "next/link";
 
@@ -30,6 +39,7 @@ function formatSessionTime(value: string) {
 export default async function DashboardPage() {
   const { userId, profile } = await requireStudentProfile();
   const course = await getPublishedCourse();
+  const premium = isPremiumPlan(profile.plan);
 
   let completionPercent = 0;
   let currentStage = "Foundation";
@@ -71,29 +81,36 @@ export default async function DashboardPage() {
 
   const [announcements, upcomingSessions, badges] = await Promise.all([
     getAnnouncements(3),
-    getUpcomingSessions(userId, 2),
+    premium ? getUpcomingSessions(userId, 2) : Promise.resolve([]),
     getStudentBadges(userId),
   ]);
 
   const earnedBadgeKeys = new Set(badges.map((badge) => badge.key));
   const displayBadges = Object.entries(BADGE_LABELS).slice(0, 6);
+  const planFeatures = PLAN_FEATURES[premium ? "premium" : "standard"];
 
   return (
     <PortalShell activePath="/dashboard">
       <div className="space-y-8">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-            Dashboard
-          </p>
-          <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
-            Welcome back, {profile.name}
-          </h1>
-          <p className="mt-1 text-muted">
-            Keep building momentum on your Amazon journey.
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+              Dashboard
+            </p>
+            <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
+              Welcome back, {profile.name}
+            </h1>
+            <p className="mt-1 text-muted">
+              Keep building momentum on your Amazon journey.
+            </p>
+          </div>
+          <StatusPill
+            label={planLabel(profile.plan)}
+            variant={planPillVariant(profile.plan)}
+          />
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard
             label="Overall Completion"
             value={`${Math.round(completionPercent)}%`}
@@ -138,6 +155,16 @@ export default async function DashboardPage() {
                 />
               </svg>
             }
+          />
+          <KpiCard
+            label="Your Plan"
+            value={planLabel(profile.plan, true)}
+            delta={
+              premium
+                ? "Live mentorship included"
+                : "Self-paced + AI Mentor"
+            }
+            iconColor="bg-accent-amber/15 text-accent-amber"
           />
         </div>
 
@@ -205,31 +232,70 @@ export default async function DashboardPage() {
           </Card>
 
           <Card>
-            <h2 className="font-display text-lg font-semibold">Upcoming Class</h2>
-            {upcomingSessions.length === 0 ? (
-              <p className="mt-2 text-sm text-muted">
-                No upcoming sessions scheduled.
-              </p>
+            <h2 className="font-display text-lg font-semibold">
+              {premium ? "Upcoming Class" : "Live Sessions"}
+            </h2>
+            {premium ? (
+              upcomingSessions.length === 0 ? (
+                <p className="mt-2 text-sm text-muted">
+                  No upcoming sessions scheduled.
+                </p>
+              ) : (
+                <div className="mt-3 space-y-3">
+                  {upcomingSessions.map((session) => (
+                    <div key={session.id}>
+                      <p className="text-sm font-medium text-foreground">
+                        {session.title}
+                      </p>
+                      <p className="text-xs text-subtle">
+                        {formatSessionTime(session.scheduled_at)}
+                      </p>
+                    </div>
+                  ))}
+                  <Link
+                    href="/sessions"
+                    className="inline-block text-sm font-medium text-scalex-red hover:underline"
+                  >
+                    View all sessions →
+                  </Link>
+                </div>
+              )
             ) : (
               <div className="mt-3 space-y-3">
-                {upcomingSessions.map((session) => (
-                  <div key={session.id}>
-                    <p className="text-sm font-medium text-foreground">
-                      {session.title}
-                    </p>
-                    <p className="text-xs text-subtle">
-                      {formatSessionTime(session.scheduled_at)}
-                    </p>
-                  </div>
-                ))}
+                <p className="text-sm text-muted">
+                  Live classes, workshops, and mentor calls are included in the
+                  Premium Launch Program.
+                </p>
+                <ul className="space-y-1 text-xs text-subtle">
+                  {PLAN_FEATURES.premium.slice(1).map((feature) => (
+                    <li key={feature}>• {feature}</li>
+                  ))}
+                </ul>
                 <Link
                   href="/sessions"
                   className="inline-block text-sm font-medium text-scalex-red hover:underline"
                 >
-                  View all sessions →
+                  See Premium sessions →
                 </Link>
               </div>
             )}
+          </Card>
+
+          <Card>
+            <h2 className="font-display text-lg font-semibold">
+              Included in your plan
+            </h2>
+            <ul className="mt-3 space-y-2">
+              {planFeatures.map((feature) => (
+                <li
+                  key={feature}
+                  className="flex items-start gap-2 text-sm text-muted"
+                >
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-scalex-red" />
+                  {feature}
+                </li>
+              ))}
+            </ul>
           </Card>
 
           <Card className="md:col-span-2">
@@ -263,9 +329,7 @@ export default async function DashboardPage() {
             <h2 className="font-display text-lg font-semibold">Announcements</h2>
             <div className="mt-4 space-y-3">
               {announcements.length === 0 ? (
-                <p className="text-sm text-muted">
-                  No announcements yet.
-                </p>
+                <p className="text-sm text-muted">No announcements yet.</p>
               ) : (
                 announcements.map((a) => (
                   <div
@@ -273,9 +337,7 @@ export default async function DashboardPage() {
                     className="border-b border-line pb-3 last:border-0 last:pb-0"
                   >
                     <p className="text-sm font-medium">{a.title}</p>
-                    <p className="mt-1 text-xs text-muted">
-                      {a.content}
-                    </p>
+                    <p className="mt-1 text-xs text-muted">{a.content}</p>
                   </div>
                 ))
               )}

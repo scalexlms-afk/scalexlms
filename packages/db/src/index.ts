@@ -3,4 +3,5 @@ export * from "./database.types";
 export * from "./rbac";
 export * from "./notifications";
 export * from "./submissions";
+export * from "./plans";
 export { createClient as createBrowserClient } from "./client";

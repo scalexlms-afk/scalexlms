@@ -14,12 +14,31 @@ export const metadata: Metadata = pageMetadata({
   path: "/register",
 });
 
+const PLANS = {
+  standard: {
+    label: "Standard",
+    summary: "Self-paced curriculum, AI Mentor, community, and support tickets.",
+  },
+  premium: {
+    label: "Premium Launch Program",
+    summary:
+      "Everything in Standard plus live classes, mentor calls, and launch support.",
+  },
+} as const;
+
+type PlanKey = keyof typeof PLANS;
+
+function parsePlan(value: string | undefined): PlanKey {
+  return value === "premium" ? "premium" : "standard";
+}
+
 export default async function RegisterPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; plan?: string }>;
 }) {
   const params = await searchParams;
+  const selectedPlan = parsePlan(params.plan);
 
   return (
     <AuthShell
@@ -43,6 +62,42 @@ export default async function RegisterPage({
       )}
 
       <form action={registerAction} className="mt-6 space-y-4">
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-medium text-foreground">
+            Choose your plan
+          </legend>
+          {(Object.keys(PLANS) as PlanKey[]).map((planKey) => {
+            const plan = PLANS[planKey];
+            const selected = selectedPlan === planKey;
+            return (
+              <label
+                key={planKey}
+                className={`flex cursor-pointer gap-3 rounded-xl border p-3 transition-colors ${
+                  selected
+                    ? "border-scalex-red/50 bg-scalex-red/10"
+                    : "border-line bg-surface-3 hover:border-line-strong"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="plan"
+                  value={planKey}
+                  defaultChecked={selected}
+                  className="mt-1 accent-[var(--color-scalex-red)]"
+                />
+                <span>
+                  <span className="block font-semibold text-foreground">
+                    {plan.label}
+                  </span>
+                  <span className="mt-1 block text-xs leading-relaxed text-muted">
+                    {plan.summary}
+                  </span>
+                </span>
+              </label>
+            );
+          })}
+        </fieldset>
+
         <Field label="Full Name" name="name" type="text" required />
         <Field label="Email" name="email" type="email" required />
         <Field

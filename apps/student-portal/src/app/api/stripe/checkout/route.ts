@@ -12,7 +12,11 @@ function getStripe() {
   });
 }
 
-export async function GET() {
+function parsePlan(value: string | null | undefined): "standard" | "premium" {
+  return value === "premium" ? "premium" : "standard";
+}
+
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
     const {
@@ -23,12 +27,39 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: plan, error: planError } = await supabase
+    const { searchParams } = new URL(request.url);
+    const requestedPlan = parsePlan(searchParams.get("plan"));
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("plan")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const planType = parsePlan(
+      (profile as { plan?: string | null } | null)?.plan ?? requestedPlan
+    );
+    const planLabel =
+      planType === "premium" ? "Premium Launch Program" : "Standard";
+
+    let { data: plan, error: planError } = await supabase
       .from("payment_plan_settings")
       .select("*")
       .eq("is_active", true)
+      .eq("plan_type", planType)
       .limit(1)
-      .single();
+      .maybeSingle();
+
+    if (planError || !plan) {
+      const fallback = await supabase
+        .from("payment_plan_settings")
+        .select("*")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+      plan = fallback.data;
+      planError = fallback.error;
+    }
 
     const planData = plan as {
       total_cents: number;
@@ -50,7 +81,7 @@ export async function GET() {
     // each time the student re-opens checkout (idempotency).
     const { data: existing } = await supabase
       .from("payments")
-      .select("id")
+      .select("id, amount")
       .eq("student_id", user.id)
       .eq("type", "first_payment")
       .eq("status", "pending")
@@ -58,7 +89,14 @@ export async function GET() {
       .limit(1)
       .maybeSingle();
 
-    let paymentData = existing as { id: string } | null;
+    let paymentData = existing as { id: string; amount?: number } | null;
+
+    if (paymentData && paymentData.amount !== firstAmount) {
+      await supabase
+        .from("payments")
+        .update({ amount: firstAmount } as never)
+        .eq("id", paymentData.id);
+    }
 
     if (!paymentData) {
       const { data: payment, error: paymentError } = await supabase
@@ -91,8 +129,8 @@ export async function GET() {
           price_data: {
             currency: "usd",
             product_data: {
-              name: "ScaleX LaunchPad — First Payment",
-              description: `${planData.first_payment_percent}% enrollment fee`,
+              name: `ScaleX LaunchPad — ${planLabel}`,
+              description: `${planData.first_payment_percent}% first payment`,
             },
             unit_amount: firstAmount,
           },
@@ -102,6 +140,7 @@ export async function GET() {
       metadata: {
         student_id: user.id,
         payment_id: paymentData.id,
+        plan_type: planType,
       },
       success_url: `${siteUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/payment/cancel`,

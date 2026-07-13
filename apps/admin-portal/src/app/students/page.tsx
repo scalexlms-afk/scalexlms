@@ -2,7 +2,8 @@ import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
 import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { getStudents } from "@/lib/data";
-import { formatDate, formatPercent, formatStatus } from "@/lib/format";
+import { formatDate, formatStatus } from "@/lib/format";
+import { planLabel, planPillVariant } from "@scalex/db";
 import { DataTable, ProgressBar, StatusPill } from "@scalex/ui";
 
 export default async function StudentsPage() {
@@ -23,7 +24,7 @@ export default async function StudentsPage() {
           </h1>
           <p className="mt-1 text-muted">
             {profile.role === "mentor"
-              ? "Your assigned students and their progress."
+              ? "Your assigned students, their plan, and progress."
               : "Academy roster with plan, stage, and completion."}
           </p>
         </div>
@@ -55,7 +56,12 @@ export default async function StudentsPage() {
             {
               key: "plan",
               header: "Plan",
-              render: (row) => formatStatus(row.plan ?? "—"),
+              render: (row) => (
+                <StatusPill
+                  label={planLabel(row.plan, true)}
+                  variant={planPillVariant(row.plan)}
+                />
+              ),
             },
             {
               key: "stage",

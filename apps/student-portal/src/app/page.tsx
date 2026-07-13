@@ -402,6 +402,7 @@ export default function HomePage() {
                 "Templates and task sheets",
                 "Community and support tickets",
               ]}
+              href="/register?plan=standard"
             />
             <Plan
               name="Premium Launch Program"
@@ -413,6 +414,7 @@ export default function HomePage() {
                 "Priority review and launch support",
               ]}
               featured
+              href="/register?plan=premium"
             />
           </div>
         </section>
@@ -468,11 +470,13 @@ function Plan({
   description,
   features,
   featured = false,
+  href,
 }: {
   name: string;
   description: string;
   features: string[];
   featured?: boolean;
+  href: string;
 }) {
   return (
     <article
@@ -503,7 +507,7 @@ function Plan({
           </li>
         ))}
       </ul>
-      <Link href="/register" prefetch={false} className="mt-10">
+      <Link href={href} prefetch={false} className="mt-10">
         <Button
           variant={featured ? "secondary" : "primary"}
           className={`w-full whitespace-nowrap !rounded-full !py-3.5 ${

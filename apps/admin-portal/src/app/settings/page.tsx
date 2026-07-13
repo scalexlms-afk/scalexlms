@@ -7,6 +7,12 @@ import {
   getRecentAuditLogs,
 } from "@/lib/data";
 import { formatCurrency, formatDateTime, formatStatus } from "@/lib/format";
+import {
+  PLAN_FEATURES,
+  planLabel,
+  normalizePlan,
+  type PaymentPlanSetting,
+} from "@scalex/db";
 import { updatePaymentPlanAction, updateUserRoleAction } from "./actions";
 import { Button, Card, DataTable } from "@scalex/ui";
 
@@ -88,48 +94,71 @@ export default async function SettingsPage() {
           <h2 className="font-display text-lg font-semibold">
             Payment Plan Settings
           </h2>
+          <p className="mt-1 text-sm text-muted">
+            Configure pricing for Standard and Premium Launch Program. Students
+            see dashboard features based on the plan they purchase.
+          </p>
           <div className="mt-4 space-y-4">
-            {planSettings.map((plan) => (
-              <form
-                key={plan.id}
-                action={updatePaymentPlanAction}
-                className="grid gap-3 rounded-xl border border-line bg-surface-3 p-4 sm:grid-cols-4"
-              >
-                <input type="hidden" name="planId" value={plan.id} />
-                <div>
-                  <p className="text-xs text-subtle">Plan Key</p>
-                  <p className="font-medium">{plan.plan_key}</p>
-                </div>
-                <Field
-                  label="Total (cents)"
-                  name="totalCents"
-                  type="number"
-                  defaultValue={String(plan.total_cents)}
-                />
-                <Field
-                  label="First %"
-                  name="firstPercent"
-                  type="number"
-                  defaultValue={String(plan.first_payment_percent)}
-                />
-                <Field
-                  label="Remaining %"
-                  name="remainingPercent"
-                  type="number"
-                  defaultValue={String(plan.remaining_percent)}
-                />
-                <div className="sm:col-span-4">
-                  <p className="text-xs text-muted">
-                    Current: {formatCurrency(plan.total_cents)} ·{" "}
-                    {plan.first_payment_percent}% first /{" "}
-                    {plan.remaining_percent}% remaining
-                  </p>
-                  <Button type="submit" className="mt-2">
-                    Update plan
-                  </Button>
-                </div>
-              </form>
-            ))}
+            {(planSettings as PaymentPlanSetting[]).map((plan) => {
+              const planType = normalizePlan(plan.plan_type);
+              return (
+                <form
+                  key={plan.id}
+                  action={updatePaymentPlanAction}
+                  className="grid gap-3 rounded-xl border border-line bg-surface-3 p-4 sm:grid-cols-4"
+                >
+                  <input type="hidden" name="planId" value={plan.id} />
+                  <div className="sm:col-span-4">
+                    <p className="text-xs text-subtle">Plan tier</p>
+                    <p className="font-display text-lg font-semibold">
+                      {planLabel(planType)}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-subtle">
+                      Key: {plan.plan_key}
+                    </p>
+                    <ul className="mt-3 grid gap-1 sm:grid-cols-2">
+                      {PLAN_FEATURES[planType].map((feature) => (
+                        <li
+                          key={feature}
+                          className="flex items-start gap-2 text-xs text-muted"
+                        >
+                          <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-scalex-red" />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <Field
+                    label="Total (cents)"
+                    name="totalCents"
+                    type="number"
+                    defaultValue={String(plan.total_cents)}
+                  />
+                  <Field
+                    label="First %"
+                    name="firstPercent"
+                    type="number"
+                    defaultValue={String(plan.first_payment_percent)}
+                  />
+                  <Field
+                    label="Remaining %"
+                    name="remainingPercent"
+                    type="number"
+                    defaultValue={String(plan.remaining_percent)}
+                  />
+                  <div className="sm:col-span-4">
+                    <p className="text-xs text-muted">
+                      Current: {formatCurrency(plan.total_cents)} ·{" "}
+                      {plan.first_payment_percent}% first /{" "}
+                      {plan.remaining_percent}% remaining
+                    </p>
+                    <Button type="submit" className="mt-2">
+                      Update {planLabel(planType, true)} pricing
+                    </Button>
+                  </div>
+                </form>
+              );
+            })}
           </div>
         </Card>
 

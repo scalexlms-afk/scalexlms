@@ -4,9 +4,11 @@ import {
   Logo,
   NotificationBell,
   ThemeToggle,
+  StatusPill,
 } from "@scalex/ui";
 import type { NavGroup } from "@scalex/ui";
 import { createClient } from "@scalex/db/server";
+import { planLabel, planPillVariant } from "@scalex/db";
 import { redirect } from "next/navigation";
 import { getNotifications } from "@/lib/data";
 import { markNotificationRead } from "@/app/notifications/actions";
@@ -101,11 +103,19 @@ export async function PortalShell({
   if (!user) redirect("/login");
 
   const [{ data: profile }, notifications] = await Promise.all([
-    supabase.from("profiles").select("name, email").eq("id", user.id).single(),
+    supabase
+      .from("profiles")
+      .select("name, email, plan")
+      .eq("id", user.id)
+      .single(),
     getNotifications(user.id),
   ]);
 
-  const profileData = profile as { name: string; email: string } | null;
+  const profileData = profile as {
+    name: string;
+    email: string;
+    plan: string | null;
+  } | null;
 
   const groups = navGroups.map((g) => ({
     ...g,
@@ -129,6 +139,12 @@ export async function PortalShell({
               <p className="truncate text-xs text-muted">
                 {profileData?.email}
               </p>
+              <div className="mt-2">
+                <StatusPill
+                  label={planLabel(profileData?.plan, true)}
+                  variant={planPillVariant(profileData?.plan)}
+                />
+              </div>
               <form action="/auth/signout" method="post" className="mt-3">
                 <button
                   type="submit"

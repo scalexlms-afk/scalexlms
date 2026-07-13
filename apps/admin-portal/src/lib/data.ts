@@ -107,7 +107,7 @@ export async function getDashboardStats(scope: AdminScope) {
     (async () => {
       let query = db
         .from("profiles")
-        .select("id, status, created_at", { count: "exact" })
+        .select("id, status, plan, created_at", { count: "exact" })
         .eq("role", "student");
       if (scopedStudentIds) {
         if (scopedStudentIds.length === 0) return { students: [], count: 0 };
@@ -145,6 +145,10 @@ export async function getDashboardStats(scope: AdminScope) {
   const students = studentsQuery.students;
   const totalStudents = studentsQuery.count;
   const activeStudents = students.filter((s) => s.status === "active").length;
+  const premiumStudents = students.filter((s) => s.plan === "premium").length;
+  const standardStudents = students.filter(
+    (s) => s.plan === "standard" || !s.plan
+  ).length;
   const totalRevenue = paymentsQuery.reduce((sum, p) => sum + p.amount, 0);
   const completionRate =
     enrollmentsQuery.length > 0
@@ -176,6 +180,8 @@ export async function getDashboardStats(scope: AdminScope) {
     upcomingSessions,
     activeStudents,
     totalStudents,
+    premiumStudents,
+    standardStudents,
     totalRevenue,
     completionRate,
     momGrowth,
@@ -567,7 +573,10 @@ export async function getLeads(scope: AdminScope): Promise<LeadRow[]> {
   }
 
   const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("getLeads:", error.message);
+    return [];
+  }
   return (data ?? []) as LeadRow[];
 }
 
@@ -578,7 +587,7 @@ export type PaymentRow = {
   status: string;
   paid_at: string | null;
   created_at: string;
-  student: { name: string; email: string } | null;
+  student: { name: string; email: string; plan: string | null } | null;
 };
 
 export async function getPayments(scope: AdminScope): Promise<PaymentRow[]> {
@@ -590,7 +599,7 @@ export async function getPayments(scope: AdminScope): Promise<PaymentRow[]> {
     .select(
       `
       id, amount, type, status, paid_at, created_at,
-      student:profiles!student_id(name, email)
+      student:profiles!student_id(name, email, plan)
     `
     )
     .order("created_at", { ascending: false });
@@ -605,7 +614,10 @@ export async function getPayments(scope: AdminScope): Promise<PaymentRow[]> {
   }
 
   const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("getPayments:", error.message);
+    return [];
+  }
   return (data ?? []) as PaymentRow[];
 }
 
@@ -615,7 +627,10 @@ export async function getExpenses() {
     .from("expenses")
     .select("*, creator:profiles!created_by(name)")
     .order("incurred_at", { ascending: false });
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("getExpenses:", error.message);
+    return [];
+  }
   return data ?? [];
 }
 
@@ -625,7 +640,10 @@ export async function getPaymentPlanSettings() {
     .from("payment_plan_settings")
     .select("*")
     .order("plan_key", { ascending: true });
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("getPaymentPlanSettings:", error.message);
+    return [];
+  }
   return data ?? [];
 }
 
@@ -670,7 +688,10 @@ export async function getAdminUsers() {
     .select("id, name, email, role, status, created_at")
     .neq("role", "student")
     .order("role", { ascending: true });
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("getAdminUsers:", error.message);
+    return [];
+  }
   return data ?? [];
 }
 
@@ -681,7 +702,10 @@ export async function getRecentAuditLogs(limit = 20) {
     .select("id, action, target_type, target_id, created_at, actor:profiles!actor_id(name)")
     .order("created_at", { ascending: false })
     .limit(limit);
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("getRecentAuditLogs:", error.message);
+    return [];
+  }
   return data ?? [];
 }
 
@@ -695,7 +719,12 @@ export type PendingSubmission = {
   content: Record<string, unknown>;
   submitted_at: string | null;
   student_id: string;
-  student: { name: string; email: string; mentor_id: string | null } | null;
+  student: {
+    name: string;
+    email: string;
+    mentor_id: string | null;
+    plan: string | null;
+  } | null;
   task: {
     title: string;
     milestone: { order_index: number; title: string } | null;
@@ -718,7 +747,7 @@ export async function getPendingSubmissions(
       content,
       submitted_at,
       student_id,
-      student:profiles!student_id(name, email, mentor_id),
+      student:profiles!student_id(name, email, mentor_id, plan),
       task:tasks(title, milestone:milestones(order_index, title))
     `
     )

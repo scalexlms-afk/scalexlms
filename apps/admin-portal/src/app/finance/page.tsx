@@ -12,6 +12,7 @@ import {
   formatDate,
   formatStatus,
 } from "@/lib/format";
+import { planLabel, planPillVariant } from "@scalex/db";
 import { createExpenseAction, deleteExpenseAction } from "./actions";
 import { Button, Card, DataTable, KpiCard, StatusPill } from "@scalex/ui";
 
@@ -32,7 +33,6 @@ export default async function FinancePage() {
     ["pending", "overdue"].includes(p.status)
   ).length;
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const plan = planSettings[0];
 
   return (
     <AdminShell activePath="/finance">
@@ -63,13 +63,18 @@ export default async function FinancePage() {
               iconColor="bg-accent-purple/15 text-accent-purple"
             />
           )}
-          {plan && (
-            <KpiCard
-              label="Payment Plan"
-              value={`${plan.first_payment_percent}/${plan.remaining_percent}`}
-              delta={`${formatCurrency(plan.total_cents)} total`}
-            />
-          )}
+          {canManageFinance(profile.role) &&
+            planSettings.map((p) => (
+              <KpiCard
+                key={p.id}
+                label={planLabel(
+                  (p as { plan_type?: string }).plan_type,
+                  true
+                )}
+                value={`${p.first_payment_percent}/${p.remaining_percent}`}
+                delta={`${formatCurrency(p.total_cents)} total`}
+              />
+            ))}
         </div>
 
         <Card>
@@ -83,7 +88,19 @@ export default async function FinancePage() {
                 {
                   key: "student",
                   header: "Student",
-                  render: (row) => row.student?.name ?? "—",
+                  render: (row) => (
+                    <div>
+                      <p>{row.student?.name ?? "—"}</p>
+                      {row.student?.plan && (
+                        <div className="mt-1">
+                          <StatusPill
+                            label={planLabel(row.student.plan, true)}
+                            variant={planPillVariant(row.student.plan)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ),
                 },
                 {
                   key: "type",

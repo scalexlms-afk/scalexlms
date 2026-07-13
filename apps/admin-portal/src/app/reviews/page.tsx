@@ -6,6 +6,8 @@ import { reviewSubmissionAction } from "./actions";
 import {
   submissionStatusLabel,
   submissionStatusVariant,
+  planLabel,
+  planPillVariant,
   type SubmissionStatus,
 } from "@scalex/db";
 import { Button, Card, StatusPill } from "@scalex/ui";
@@ -67,8 +69,14 @@ export default async function ReviewsPage() {
                         ? ` · ${submission.student.email}`
                         : ""}
                     </p>
+                    <div className="mt-2">
+                      <StatusPill
+                        label={planLabel(submission.student?.plan, true)}
+                        variant={planPillVariant(submission.student?.plan)}
+                      />
+                    </div>
                     {submission.task?.milestone?.title && (
-                      <p className="mt-0.5 text-xs text-subtle">
+                      <p className="mt-1 text-xs text-subtle">
                         Milestone: {submission.task.milestone.title}
                       </p>
                     )}

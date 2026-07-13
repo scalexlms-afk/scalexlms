@@ -42,6 +42,8 @@ export async function registerAction(formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const plan =
+    formData.get("plan") === "premium" ? "premium" : "standard";
 
   const supabase = await createClient();
 
@@ -55,7 +57,9 @@ export async function registerAction(formData: FormData) {
     });
 
     if (createError) {
-      redirect(`/register?error=${encodeURIComponent(createError.message)}`);
+      redirect(
+        `/register?plan=${plan}&error=${encodeURIComponent(createError.message)}`
+      );
     }
   } else {
     const { error: signUpError } = await supabase.auth.signUp({
@@ -65,7 +69,9 @@ export async function registerAction(formData: FormData) {
     });
 
     if (signUpError) {
-      redirect(`/register?error=${encodeURIComponent(signUpError.message)}`);
+      redirect(
+        `/register?plan=${plan}&error=${encodeURIComponent(signUpError.message)}`
+      );
     }
   }
 
@@ -76,10 +82,19 @@ export async function registerAction(formData: FormData) {
 
   if (signInError) {
     redirect(
-      `/register?error=${encodeURIComponent(
+      `/register?plan=${plan}&error=${encodeURIComponent(
         `${signInError.message} — If you just registered, turn off "Confirm email" in Supabase → Authentication → Providers → Email.`
       )}`
     );
+  }
+
+  // Service role can set plan (self-update trigger locks plan for students).
+  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const admin = createServiceClient();
+    await admin
+      .from("profiles")
+      .update({ plan } as never)
+      .eq("id", data.user.id);
   }
 
   await redirectAfterAuth(supabase, data.user.id, "/payment");

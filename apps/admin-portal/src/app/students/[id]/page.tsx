@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminShell } from "@/components/admin-shell";
 import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
-import { canAssignMentor } from "@/lib/admin-db";
+import { canAssignMentor, canManageFinance } from "@/lib/admin-db";
 import { getMentors, getStudentDetail } from "@/lib/data";
 import {
   formatCurrency,
@@ -11,7 +11,8 @@ import {
   formatPercent,
   formatStatus,
 } from "@/lib/format";
-import { assignMentorAction } from "../actions";
+import { planLabel, planPillVariant } from "@scalex/db";
+import { assignMentorAction, updateStudentPlanAction } from "../actions";
 import { Button, Card, DataTable, ProgressBar, StatusPill } from "@scalex/ui";
 
 export default async function StudentDetailPage({
@@ -65,7 +66,21 @@ export default async function StudentDetailPage({
             <dl className="mt-4 grid gap-3 sm:grid-cols-2 text-sm">
               <div>
                 <dt className="text-subtle">Plan</dt>
-                <dd>{formatStatus(detail.student.plan ?? "—")}</dd>
+                <dd className="mt-1">
+                  <StatusPill
+                    label={planLabel(detail.student.plan)}
+                    variant={planPillVariant(detail.student.plan)}
+                  />
+                </dd>
+              </div>
+              <div>
+                <dt className="text-subtle">Enrollment Plan</dt>
+                <dd className="mt-1">
+                  <StatusPill
+                    label={planLabel(enrollment?.plan)}
+                    variant={planPillVariant(enrollment?.plan)}
+                  />
+                </dd>
               </div>
               <div>
                 <dt className="text-subtle">Stage</dt>
@@ -125,6 +140,40 @@ export default async function StudentDetailPage({
                 </div>
                 <Button type="submit" className="w-full">
                   Save assignment
+                </Button>
+              </form>
+            </Card>
+          )}
+
+          {canManageFinance(profile.role) && (
+            <Card>
+              <h2 className="font-display text-lg font-semibold">
+                Student Plan
+              </h2>
+              <p className="mt-1 text-xs text-muted">
+                Controls dashboard features (live sessions for Premium).
+              </p>
+              <form action={updateStudentPlanAction} className="mt-4 space-y-3">
+                <input type="hidden" name="studentId" value={id} />
+                <div>
+                  <label
+                    htmlFor="plan"
+                    className="mb-1.5 block text-sm font-medium text-muted"
+                  >
+                    Plan
+                  </label>
+                  <select
+                    id="plan"
+                    name="plan"
+                    defaultValue={detail.student.plan ?? "standard"}
+                    className="w-full rounded-lg border border-line bg-surface-3 px-3.5 py-2.5 text-sm"
+                  >
+                    <option value="standard">Standard</option>
+                    <option value="premium">Premium Launch Program</option>
+                  </select>
+                </div>
+                <Button type="submit" className="w-full">
+                  Update plan
                 </Button>
               </form>
             </Card>

@@ -58,7 +58,7 @@ export default async function AdminDashboardPage() {
           </p>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
           {showFinance && (
             <KpiCard
               label="Total Revenue"
@@ -87,6 +87,12 @@ export default async function AdminDashboardPage() {
                 label="Active Students"
                 value={String(stats.activeStudents)}
                 iconColor="bg-accent-green/15 text-accent-green"
+              />
+              <KpiCard
+                label="Premium"
+                value={String(stats.premiumStudents)}
+                delta={`${stats.standardStudents} Standard`}
+                iconColor="bg-scalex-red/15 text-scalex-red"
               />
               <KpiCard
                 label="Completion Rate"

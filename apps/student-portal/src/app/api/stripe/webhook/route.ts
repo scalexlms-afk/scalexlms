@@ -12,7 +12,8 @@ function getStripe() {
 async function activateStudentPayment(
   studentId: string,
   paymentId: string,
-  stripeSessionId: string
+  stripeSessionId: string,
+  planType: "standard" | "premium" = "standard"
 ) {
   const supabase = createServiceClient();
 
@@ -41,7 +42,7 @@ async function activateStudentPayment(
 
   await supabase
     .from("profiles")
-    .update({ status: "active" } as never)
+    .update({ status: "active", plan: planType } as never)
     .eq("id", studentId);
 
   const { data: course } = await supabase
@@ -56,7 +57,7 @@ async function activateStudentPayment(
       {
         student_id: studentId,
         course_id: (course as { id: string }).id,
-        plan: "standard",
+        plan: planType,
       } as never,
       { onConflict: "student_id,course_id" }
     );
@@ -91,7 +92,9 @@ export async function POST(request: Request) {
     const paymentId = session.metadata?.payment_id;
 
     if (studentId && paymentId) {
-      await activateStudentPayment(studentId, paymentId, session.id);
+      const planType =
+        session.metadata?.plan_type === "premium" ? "premium" : "standard";
+      await activateStudentPayment(studentId, paymentId, session.id, planType);
     }
   }
 

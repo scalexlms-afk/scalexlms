@@ -14,7 +14,8 @@ function getStripe() {
 async function activateStudentPayment(
   studentId: string,
   paymentId: string,
-  stripeSessionId: string
+  stripeSessionId: string,
+  planType: "standard" | "premium" = "standard"
 ) {
   const supabase = createServiceClient();
 
@@ -43,7 +44,7 @@ async function activateStudentPayment(
 
   await supabase
     .from("profiles")
-    .update({ status: "active" } as never)
+    .update({ status: "active", plan: planType } as never)
     .eq("id", studentId);
 
   const { data: course } = await supabase
@@ -58,7 +59,7 @@ async function activateStudentPayment(
       {
         student_id: studentId,
         course_id: (course as { id: string }).id,
-        plan: "standard",
+        plan: planType,
       } as never,
       { onConflict: "student_id,course_id" }
     );
@@ -88,6 +89,8 @@ export async function GET(request: Request) {
 
     const studentId = session.metadata?.student_id;
     const paymentId = session.metadata?.payment_id;
+    const planType =
+      session.metadata?.plan_type === "premium" ? "premium" : "standard";
 
     if (!studentId || !paymentId) {
       return NextResponse.json({ error: "Invalid session metadata" }, { status: 400 });
@@ -106,7 +109,7 @@ export async function GET(request: Request) {
       );
     }
 
-    await activateStudentPayment(studentId, paymentId, session.id);
+    await activateStudentPayment(studentId, paymentId, session.id, planType);
 
     return NextResponse.json({
       activated: true,

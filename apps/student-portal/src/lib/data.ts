@@ -177,9 +177,19 @@ export async function ensureEnrollment(studentId: string, courseId: string) {
   if (existing) return existing;
 
   const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("plan")
+    .eq("id", studentId)
+    .maybeSingle();
+  const plan =
+    (profile as { plan?: string | null } | null)?.plan === "premium"
+      ? "premium"
+      : "standard";
+
   const { data, error } = await supabase
     .from("enrollments")
-    .insert({ student_id: studentId, course_id: courseId } as never)
+    .insert({ student_id: studentId, course_id: courseId, plan } as never)
     .select()
     .single();
 
@@ -224,16 +234,45 @@ export async function getLessonById(lessonId: string) {
     | null;
 }
 
+export type PaymentPlanSettings = {
+  id: string;
+  plan_key: string;
+  plan_type: "standard" | "premium";
+  total_cents: number;
+  first_payment_percent: number;
+  remaining_percent: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export async function getPaymentPlan() {
+  return getPaymentPlanByType("standard");
+}
+
+export async function getPaymentPlanByType(
+  planType: "standard" | "premium" = "standard"
+): Promise<PaymentPlanSettings | null> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("payment_plan_settings")
     .select("*")
     .eq("is_active", true)
+    .eq("plan_type", planType)
+    .limit(1)
+    .maybeSingle();
+
+  if (data) return data as PaymentPlanSettings;
+
+  // Fallback if plan_type column is not yet available in older environments.
+  const { data: fallback } = await supabase
+    .from("payment_plan_settings")
+    .select("*")
+    .eq("is_active", true)
     .order("created_at", { ascending: true })
     .limit(1)
-    .single();
-  return data;
+    .maybeSingle();
+  return (fallback as PaymentPlanSettings | null) ?? null;
 }
 
 export async function getTaskByMilestoneId(
