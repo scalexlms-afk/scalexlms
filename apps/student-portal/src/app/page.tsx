@@ -16,6 +16,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { Button, Logo, ThemeToggle } from "@scalex/ui";
 import { LandingJsonLd } from "@/components/landing-json-ld";
+import { LandingFaq } from "@/components/landing-faq";
 import { LandingMotion } from "@/components/landing-motion";
 import { MentorFeedbackCarousel } from "@/components/mentor-feedback-carousel";
 import { pageMetadata } from "@/lib/seo";
@@ -136,6 +137,12 @@ export default function HomePage() {
               </a>
               <a href="#plans" className="transition-colors hover:text-foreground">
                 Plans
+              </a>
+              <Link href="/blog" className="transition-colors hover:text-foreground">
+                Blog
+              </Link>
+              <a href="#faq" className="transition-colors hover:text-foreground">
+                FAQ
               </a>
             </nav>
             <div className="flex items-center gap-2">
@@ -419,6 +426,8 @@ export default function HomePage() {
           </div>
         </section>
 
+        <LandingFaq />
+
         <section className="px-4 pb-8 sm:px-6 lg:px-8">
           <div className="metallic-red relative mx-auto flex min-h-[70dvh] max-w-7xl items-center justify-center overflow-hidden rounded-[var(--radius-card)] border border-white/15 px-6 py-24 text-center text-white">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.22),transparent_48%)]" />
@@ -451,6 +460,12 @@ export default function HomePage() {
             </a>
             <a href="#roadmap" className="hover:text-foreground">
               Roadmap
+            </a>
+            <Link href="/blog" className="hover:text-foreground">
+              Blog
+            </Link>
+            <a href="#faq" className="hover:text-foreground">
+              FAQ
             </a>
             <Link href="/login" prefetch={false} className="hover:text-foreground">
               Sign in

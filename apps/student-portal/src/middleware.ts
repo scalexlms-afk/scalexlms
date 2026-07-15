@@ -10,10 +10,12 @@ const PUBLIC_ROUTES = [
   "/auth/callback",
   "/unauthorized",
   "/",
+  "/blog",
 ];
 const SEO_ROUTES = [
   "/robots.txt",
   "/sitemap.xml",
+  "/llms.txt",
   "/icon",
   "/apple-icon",
   "/opengraph-image",
@@ -142,6 +144,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|api/stripe/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|llms.txt|api/stripe/webhook|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
