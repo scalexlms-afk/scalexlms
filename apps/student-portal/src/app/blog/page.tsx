@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@scalex/ui";
+import { BlogIndexJsonLd } from "@/components/blog-index-json-ld";
 import { getAllPosts } from "@/lib/blog";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
-  title: "LMS Scalability & EdTech Infrastructure Blog",
+  title: "Amazon FBA Guides & Private Label Blog",
   description:
-    "Technical guides on scaling learning management systems to 100k users, enterprise LMS architecture, and scaling laws for digital learning.",
+    "Practical Amazon FBA private label guides: beginner systems, product research, and launch checklists from ScaleX LaunchPad.",
   path: "/blog",
 });
 
@@ -25,27 +26,31 @@ export default function BlogIndexPage() {
 
   return (
     <main className="min-h-screen bg-surface text-foreground">
+      <BlogIndexJsonLd posts={posts} />
       <header className="border-b border-line px-4 py-6">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <Link href="/" aria-label="ScaleXLMS home">
+          <Link href="/" aria-label="ScaleX LaunchPad home">
             <Logo size="sm" />
           </Link>
-          <Link
-            href="/"
-            className="text-sm font-medium text-muted hover:text-foreground"
-          >
-            ← Home
-          </Link>
+          <div className="flex items-center gap-4 text-sm font-medium">
+            <Link href="/register" className="text-accent hover:underline">
+              Start now
+            </Link>
+            <Link href="/" className="text-muted hover:text-foreground">
+              ← Home
+            </Link>
+          </div>
         </div>
       </header>
 
       <div className="mx-auto max-w-3xl px-4 py-12">
         <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-          LMS Scalability & EdTech Infrastructure
+          Amazon FBA Guides
         </h1>
         <p className="mt-4 text-lg text-muted">
-          Authoritative technical guides on enterprise learning management,
-          auto-scaling infrastructure, and scaling laws for digital learning.
+          Practical private label guides on product research, launch readiness,
+          and the beginner systems behind ScaleX LaunchPad&apos;s 8-milestone
+          roadmap.
         </p>
 
         <div className="mt-12 space-y-8">

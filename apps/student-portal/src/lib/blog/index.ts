@@ -1,12 +1,12 @@
 import type { BlogPost } from "./types";
-import { enterpriseArchitecturePost } from "./posts/enterprise-architecture";
-import { scaleLms100kPost } from "./posts/scale-lms-100k";
-import { scalingLawsPost } from "./posts/scaling-laws";
+import { fbaBeginnersGuidePost } from "./posts/fba-beginners-guide";
+import { fbaLaunchChecklistPost } from "./posts/fba-launch-checklist";
+import { productResearchPost } from "./posts/product-research";
 
 const allPosts: BlogPost[] = [
-  scaleLms100kPost,
-  enterpriseArchitecturePost,
-  scalingLawsPost,
+  fbaBeginnersGuidePost,
+  productResearchPost,
+  fbaLaunchChecklistPost,
 ];
 
 export function getAllPosts(): BlogPost[] {

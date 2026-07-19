@@ -10,11 +10,11 @@ export function LandingFaq() {
     <section id="faq" className="px-4 py-20">
       <div className="mx-auto max-w-3xl">
         <h2 className="font-display text-center text-3xl font-bold text-foreground sm:text-4xl">
-          LMS Scalability FAQ
+          Amazon FBA FAQ
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-center text-muted">
-          Authoritative answers on enterprise learning management, EdTech
-          infrastructure, and scaling laws for digital learning.
+          Straight answers on private label, the 8-milestone roadmap, mentorship,
+          and how ScaleX LaunchPad gets you from beginner to launch.
         </p>
         <div className="mt-10 divide-y divide-line rounded-2xl border border-line bg-surface-raised">
           {landingFaqItems.map((item, index) => {

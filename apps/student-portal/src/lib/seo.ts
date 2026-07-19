@@ -7,6 +7,13 @@ import {
   siteUrl,
 } from "./site";
 
+const ogImage = {
+  url: "/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: defaultTitle,
+};
+
 export const rootMetadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
@@ -15,18 +22,17 @@ export const rootMetadata: Metadata = {
   },
   description: siteDescription,
   keywords: [
-    "LMS scalability",
-    "enterprise learning management",
-    "EdTech infrastructure",
-    "auto-scaling LMS",
-    "digital learning scaling",
     "Amazon FBA",
+    "private label",
+    "ecommerce education",
+    "Amazon seller course",
+    "product research",
+    "Amazon FBA mentorship",
     "ScaleX LaunchPad",
-    "ScaleXLMS",
   ],
-  authors: [{ name: "ScaleX" }],
-  creator: "ScaleX",
-  publisher: "ScaleX",
+  authors: [{ name: "ScaleX LaunchPad" }],
+  creator: "ScaleX LaunchPad",
+  publisher: "ScaleX LaunchPad",
   alternates: {
     canonical: "/",
   },
@@ -37,11 +43,13 @@ export const rootMetadata: Metadata = {
     siteName,
     title: defaultTitle,
     description: siteDescription,
+    images: [ogImage],
   },
   twitter: {
     card: "summary_large_image",
     title: defaultTitle,
     description: siteDescription,
+    images: ["/twitter-image"],
   },
   robots: {
     index: true,
@@ -75,10 +83,12 @@ export function pageMetadata({
       title: `${title} | ${siteName}`,
       description,
       url,
+      images: [ogImage],
     },
     twitter: {
       title: `${title} | ${siteName}`,
       description,
+      images: ["/twitter-image"],
     },
     robots: index
       ? { index: true, follow: true }

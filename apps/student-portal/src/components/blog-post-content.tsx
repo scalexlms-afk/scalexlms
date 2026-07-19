@@ -115,6 +115,27 @@ export function BlogPostContent({ post }: { post: BlogPost }) {
         </section>
       )}
 
+      <aside className="mt-12 rounded-xl border border-line bg-surface-raised p-6">
+        <h2 className="font-display text-lg font-semibold text-foreground">
+          Ready to execute, not just read?
+        </h2>
+        <p className="mt-2 text-sm text-muted">
+          ScaleX LaunchPad turns these guides into mentor-approved milestones —
+          from product hunting sheets to launch checklists.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-4 text-sm font-medium">
+          <Link href="/register" className="text-accent hover:underline">
+            Start now →
+          </Link>
+          <Link href="/#roadmap" className="text-muted hover:text-foreground">
+            See the 8-milestone roadmap
+          </Link>
+          <Link href="/#plans" className="text-muted hover:text-foreground">
+            Compare plans
+          </Link>
+        </div>
+      </aside>
+
       <footer className="mt-12 border-t border-line pt-8">
         <p className="text-sm text-muted">
           Next refresh due:{" "}

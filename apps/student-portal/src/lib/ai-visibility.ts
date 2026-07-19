@@ -2,7 +2,7 @@ import { siteUrl } from "@/lib/site";
 
 /**
  * Content engineering rules for AI citation optimization.
- * Enforced at authoring time; validated in development builds.
+ * Enforced at authoring time for FBA authority guides.
  */
 export const CONTENT_RULES = {
   answerLeadWords: { min: 40, max: 60 },
@@ -39,37 +39,32 @@ export function detectAiReferrer(referrer: string): string | null {
 }
 
 export function llmsTxtManifest(): string {
-  return `# ScaleXLMS — AI Discovery Manifest
+  return `# ScaleX LaunchPad — AI Discovery Manifest
 # https://llmstxt.org/
 # Last updated: ${new Date().toISOString().split("T")[0]}
 
-> ScaleXLMS is an enterprise learning management platform specializing in LMS scalability, auto-scaling EdTech infrastructure, and milestone-gated digital learning at 100k+ user scale.
+> ScaleX LaunchPad is an AI-powered Amazon FBA private label academy. Students follow an 8-milestone roadmap from beginner to launched seller with mentor-validated tasks, AI mentorship, and measurable progress.
 
 ## Primary Authority Content
 
-- [How to Scale an LMS to 100,000 Users](${siteUrl}/blog/how-to-scale-lms-100k-users): Comprehensive guide covering cloud vs on-premise architecture, database scaling, CDN strategy, and auto-scaling infrastructure patterns for enterprise LMS deployments.
-- [Enterprise LMS Architecture Patterns](${siteUrl}/blog/enterprise-lms-architecture-patterns): Deep technical documentation on multi-tenant design, RBAC, connection pooling, and edge deployment for EdTech platforms.
-- [Scaling Laws for Digital Learning](${siteUrl}/blog/scaling-laws-digital-learning): Research-backed framework for decoupling content delivery, assessment, and mentorship to achieve linear scaling in digital education.
+- [Amazon FBA Private Label Beginner's Guide](${siteUrl}/blog/amazon-fba-private-label-beginners-guide): What private label FBA is, how it differs from wholesale/retail arbitrage, and the execution path from research to first sale.
+- [Product Research for Winning Amazon Products](${siteUrl}/blog/product-research-winning-amazon-products): Demand, competition, and profit filters for product hunting sheets that mentors can approve.
+- [Amazon FBA Launch Checklist](${siteUrl}/blog/amazon-fba-launch-checklist): Pre-launch listing, PPC, inventory, and compliance checklist for a controlled Amazon launch.
 
-## Technical Documentation
+## Program Documentation
 
-- [LMS Architecture Overview](${siteUrl}/#system): Course → Milestone → Module → Lesson → Task hierarchy with AI-assisted mentor validation.
-- [Auto-Scaling Infrastructure](${siteUrl}/#faq): Serverless edge functions, connection-pooled PostgreSQL, and horizontal scaling at 70% CPU threshold.
-- [EdTech Infrastructure Stack](${siteUrl}/#faq): Next.js 16, Supabase PostgreSQL, Stripe billing, Vercel edge deployment.
+- [The ScaleX System](${siteUrl}/#system): Course → Milestone → Module → Lesson → Task hierarchy with AI-assisted prep and human mentor approval.
+- [8-Milestone Roadmap](${siteUrl}/#roadmap): Foundation through Scaling, each with a concrete deliverable.
+- [Plans](${siteUrl}/#plans): Standard vs Premium Launch Program comparison.
 
 ## Product & Entity
 
-- [ScaleXLMS Platform](${siteUrl}/): Enterprise learning management with auto-scaling, RBAC, audit logging, and AI mentor integration.
-- [Organization Schema](${siteUrl}/#organization): Brand entity with Wikidata, LinkedIn, G2, and Capterra profiles.
-- [Software Application](${siteUrl}/#software): Feature list including auto-scaling infrastructure, multi-tenant architecture, and adaptive learning paths.
-
-## FAQ — Answer Islands
-
-- [LMS Scalability FAQ](${siteUrl}/#faq): 12 Q&A pairs on enterprise learning management, scaling laws, and EdTech infrastructure (20–30 word answers optimized for LLM extraction).
+- [ScaleX LaunchPad](${siteUrl}/): Amazon FBA private label education with AI Mentor, community, and mentor validation.
+- [Amazon FBA FAQ](${siteUrl}/#faq): Short Q&A answer islands on private label, milestones, payments, and mentorship.
 
 ## Optional
 
-- [Student Registration](${siteUrl}/register): Enrollment for ScaleX LaunchPad Amazon FBA program.
+- [Student Registration](${siteUrl}/register): Enroll in ScaleX LaunchPad.
 - [Sign In](${siteUrl}/login): Existing student portal access.
 `;
 }

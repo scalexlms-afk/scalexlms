@@ -1,15 +1,19 @@
-import { brandEntity, softwareProduct } from "@/lib/brand";
+import { brandEntity, brandKnowsAbout, softwareProduct } from "@/lib/brand";
 import { landingFaqItems } from "@/lib/structured-data/faq";
-import { siteDescription, siteName, siteTagline, siteUrl } from "@/lib/site";
+import { siteDescription, siteName, siteUrl } from "@/lib/site";
 
 type SchemaNode = Record<string, unknown>;
 
-export function buildLandingSchemaGraph(): { "@context": string; "@graph": SchemaNode[] } {
+export function buildLandingSchemaGraph(): {
+  "@context": string;
+  "@graph": SchemaNode[];
+} {
   const orgId = `${siteUrl}/#organization`;
   const websiteId = `${siteUrl}/#website`;
   const softwareId = `${siteUrl}/#software`;
   const faqId = `${siteUrl}/#faq`;
   const courseId = `${siteUrl}/#course`;
+  const logoUrl = `${siteUrl}${brandEntity.logoPath}`;
 
   const organization: SchemaNode = {
     "@type": "Organization",
@@ -22,14 +26,16 @@ export function buildLandingSchemaGraph(): { "@context": string; "@graph": Schem
     slogan: brandEntity.tagline,
     foundingDate: brandEntity.foundingDate,
     email: brandEntity.contactEmail,
-    sameAs: [...brandEntity.sameAs],
-    knowsAbout: [
-      "Learning Management Systems",
-      "LMS scalability",
-      "Enterprise learning management",
-      "EdTech infrastructure",
-      "Digital learning scaling laws",
-    ],
+    knowsAbout: [...brandKnowsAbout],
+    logo: {
+      "@type": "ImageObject",
+      "@id": `${siteUrl}/#logo`,
+      url: logoUrl,
+      contentUrl: logoUrl,
+      caption: brandEntity.name,
+    },
+    image: logoUrl,
+    ...(brandEntity.sameAs.length > 0 ? { sameAs: [...brandEntity.sameAs] } : {}),
   };
 
   const website: SchemaNode = {
@@ -42,6 +48,16 @@ export function buildLandingSchemaGraph(): { "@context": string; "@graph": Schem
     inLanguage: "en-US",
   };
 
+  const courseOffers = softwareProduct.priceSpecification.plans.map((plan) => ({
+    "@type": "Offer",
+    name: plan.name,
+    price: (plan.priceMinor / 100).toFixed(2),
+    priceCurrency: softwareProduct.priceSpecification.currency,
+    description: plan.description,
+    url: `${siteUrl}/register`,
+    availability: "https://schema.org/InStock",
+  }));
+
   const software: SchemaNode = {
     "@type": "SoftwareApplication",
     "@id": softwareId,
@@ -51,15 +67,8 @@ export function buildLandingSchemaGraph(): { "@context": string; "@graph": Schem
     softwareRequirements: softwareProduct.softwareRequirements,
     featureList: softwareProduct.featureList.join(", "),
     description:
-      "Enterprise-grade learning management platform with auto-scaling infrastructure, AI-assisted mentorship, and milestone-gated curricula for EdTech at scale.",
-    offers: softwareProduct.priceSpecification.plans.map((plan) => ({
-      "@type": "Offer",
-      name: plan.name,
-      price: (plan.priceMinor / 100).toFixed(2),
-      priceCurrency: softwareProduct.priceSpecification.currency,
-      description: plan.description,
-      url: `${siteUrl}/register`,
-    })),
+      "Learning platform for ScaleX LaunchPad — Amazon FBA private label academy with AI Mentor, mentor-validated tasks, and an 8-milestone roadmap.",
+    offers: courseOffers,
     provider: { "@id": orgId },
     url: siteUrl,
   };
@@ -92,12 +101,13 @@ export function buildLandingSchemaGraph(): { "@context": string; "@graph": Schem
       "Brand development",
       "Amazon product launch",
     ],
+    offers: courseOffers,
     url: siteUrl,
     inLanguage: "en-US",
   };
 
   return {
     "@context": "https://schema.org",
-    "@graph": [organization, website, software, faq, course],
+    "@graph": [organization, website, course, software, faq],
   };
 }

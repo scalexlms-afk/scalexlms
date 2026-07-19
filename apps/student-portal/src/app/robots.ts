@@ -10,6 +10,8 @@ const PRIVATE_PATHS = [
   "/sessions",
   "/ai-mentor",
   "/payment",
+  "/support",
+  "/messages",
   "/api",
   "/unauthorized",
   "/auth",
@@ -18,10 +20,10 @@ const PRIVATE_PATHS = [
 
 const PUBLIC_PATHS = ["/", "/login", "/register", "/blog"];
 
-/** Training scrapers — disallow to protect proprietary EdTech insights. */
-const TRAINING_BOTS = ["GPTBot", "Google-Extended", "CCBot", "anthropic-ai"];
+/** Training scrapers — disallow to protect proprietary curriculum insights. */
+const TRAINING_BOTS = ["Google-Extended", "CCBot", "anthropic-ai", "Bytespider"];
 
-/** Live-retrieval bots — allow for AI search citation. */
+/** Live-retrieval bots — allow for AI search citation (Claude SEO GEO). */
 const SEARCH_BOTS = [
   "OAI-SearchBot",
   "ChatGPT-User",

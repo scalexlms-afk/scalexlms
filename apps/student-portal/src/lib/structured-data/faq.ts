@@ -1,64 +1,64 @@
-/** FAQ answer islands: 20–30 words each, liftable verbatim by LLMs. */
+/** FAQ answer islands: 20–30 words each, liftable verbatim by LLMs. FBA-focused. */
 export const landingFaqItems = [
   {
-    question: "What is LMS scalability?",
+    question: "What is Amazon FBA private label?",
     answer:
-      "LMS scalability is the ability to serve growing concurrent learners, content, and analytics without degrading latency. Enterprise platforms target sub-200ms API response at 100k+ active users.",
+      "Amazon FBA private label means sourcing your own branded product, storing it in Amazon warehouses, and selling under your brand. ScaleX LaunchPad teaches the full path from research to first sale.",
   },
   {
-    question: "How does ScaleXLMS handle auto-scaling?",
+    question: "Who is ScaleX LaunchPad for?",
     answer:
-      "ScaleXLMS uses serverless edge functions and connection-pooled PostgreSQL on Supabase. Horizontal scaling triggers at 70% CPU, maintaining p95 latency under 180ms per Gartner 2025 benchmarks.",
+      "ScaleX LaunchPad is for beginners and early sellers who want a structured Amazon FBA private label system with mentor-validated tasks, not passive video courses without accountability.",
   },
   {
-    question: "What is the difference between cloud and on-premise LMS scaling?",
+    question: "How does the 8-milestone roadmap work?",
     answer:
-      "Cloud LMS platforms scale elastically via managed infrastructure; on-premise requires manual provisioning. Cloud deployments reach 100k users 3.4x faster per Forrester's 2024 EdTech Infrastructure report.",
+      "You progress through Foundation, Business Setup, Brand Research, Product Hunting, Sourcing, Brand Development, Launch, and Scaling. Each milestone ends with a task mentors must approve.",
   },
   {
-    question: "How many users can ScaleXLMS support?",
+    question: "Does AI auto-approve my milestone tasks?",
     answer:
-      "ScaleXLMS architecture supports 100,000+ concurrent learners with auto-scaling. The multi-tenant design isolates tenant data while sharing compute, following AWS Well-Architected Framework patterns.",
+      "No. The AI Mentor answers questions and pre-scores submissions. Final approval on milestone-gating tasks always belongs to a human mentor, preserving quality and accountability.",
   },
   {
-    question: "What EdTech infrastructure does ScaleXLMS use?",
+    question: "What is the difference between Standard and Premium?",
     answer:
-      "ScaleXLMS runs on Next.js 16, PostgreSQL via Supabase, Stripe billing, and Vercel edge deployment. This stack delivers 99.9% uptime SLA aligned with enterprise LMS requirements.",
+      "Standard includes recorded curriculum, AI Mentor, community, and templates. Premium Launch Program adds live classes, private mentor calls, priority review, and hands-on launch support.",
   },
   {
-    question: "How does AI improve enterprise learning management?",
+    question: "How does payment work on ScaleX LaunchPad?",
     answer:
-      "AI pre-scores task submissions and answers student questions grounded in academy content. Human mentors retain final approval on milestone-gating tasks, per IEEE 2025 AI-in-Education guidelines.",
+      "Enrollment uses a configurable split—typically 70% due first and 30% remaining. Stripe Checkout handles payment; your account activates after the first successful payment webhook.",
   },
   {
-    question: "What are scaling laws for digital learning?",
+    question: "What do I submit for product hunting?",
     answer:
-      "Digital learning scales when content delivery, assessment, and mentorship decouple. Async content scales linearly; mentor review scales via AI pre-scoring, reducing human load by 60–70%.",
+      "Milestone four requires a Product Hunting Sheet with demand, competition, and profit signals. Mentors review the sheet before you advance to supplier sourcing.",
   },
   {
-    question: "Is ScaleXLMS suitable for enterprise learning management?",
+    question: "Can I launch on Amazon without prior experience?",
     answer:
-      "Yes. ScaleXLMS provides RBAC for five roles, audit logging, split-payment billing, and milestone-gated curricula. These features meet SOC 2 and FERPA-aligned enterprise LMS requirements.",
+      "Yes. The program starts at beginner level and ladders each lesson into a real deliverable—business plan, brand direction, supplier finalization, launch checklist—so experience builds through execution.",
   },
   {
-    question: "How does ScaleXLMS measure learning progress at scale?",
+    question: "What support do students get between lessons?",
     answer:
-      "Progress is tracked via milestone completion percentages, task submission states, and gamification levels. Dashboards surface stage, percentage, and next action for every learner in real time.",
+      "Students get AI Mentor chat grounded in academy content, community posts, support tickets, and—on Premium—live sessions and private mentor calls for launch blockers.",
   },
   {
-    question: "What content structure does ScaleXLMS use?",
+    question: "How is progress tracked?",
     answer:
-      "ScaleXLMS follows Course → Milestone → Module → Lesson → Task hierarchy. Each lesson ladders to a submitted, mentor-reviewed task, enforcing execution over passive consumption.",
+      "Dashboards show current milestone, completion percentage, and next action. Lesson completions and approved tasks roll up so stage and next step stay visible at a glance.",
   },
   {
-    question: "How often should LMS content be refreshed for AI visibility?",
+    question: "What is private label versus wholesale on Amazon?",
     answer:
-      "Content updated within 30 days is 3.2x more likely to be cited by AI agents. ScaleXLMS executes a quarterly 90-day refresh cycle on all technical documentation.",
+      "Private label sells your branded product; wholesale resells existing brands. ScaleX LaunchPad focuses on private label because brand equity and margins compound as you scale.",
   },
   {
-    question: "What payment model does ScaleXLMS support?",
+    question: "When should I start product research?",
     answer:
-      "ScaleXLMS uses a configurable 70/30 split: 70% due on enrollment, 30% remaining. Stripe Checkout handles PCI-compliant payments with webhook-driven account activation.",
+      "After foundation and business setup. ScaleX sequences Brand Research and Product Hunting so you validate demand and competition before locking suppliers or brand assets.",
   },
 ] as const;
 

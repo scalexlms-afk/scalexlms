@@ -291,7 +291,7 @@ export default function HomePage() {
                 >
                   <Image
                     src={mode.image}
-                    alt=""
+                    alt={mode.title}
                     fill
                     sizes="(max-width: 768px) 100vw, 35vw"
                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
@@ -351,7 +351,7 @@ export default function HomePage() {
                     <Image
                       data-scale-media
                       src={chapter.image}
-                      alt=""
+                      alt={`${chapter.title} — Amazon FBA roadmap chapter`}
                       fill
                       sizes="(max-width: 1024px) 100vw, 55vw"
                       className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
@@ -423,6 +423,50 @@ export default function HomePage() {
               featured
               href="/register?plan=premium"
             />
+          </div>
+        </section>
+
+        <section id="guides" className="px-4 py-16 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="font-display text-3xl font-bold text-foreground sm:text-4xl">
+              Amazon FBA guides
+            </h2>
+            <p className="mt-4 text-muted">
+              Free practical reading that mirrors the LaunchPad milestones —
+              then enroll when you are ready to submit real work.
+            </p>
+            <ul className="mt-8 space-y-3 text-left text-sm sm:text-base">
+              <li>
+                <Link
+                  href="/blog/amazon-fba-private-label-beginners-guide"
+                  className="font-medium text-accent hover:underline"
+                >
+                  Amazon FBA Private Label: A Beginner&apos;s Guide
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/blog/product-research-winning-amazon-products"
+                  className="font-medium text-accent hover:underline"
+                >
+                  Product Research for Winning Amazon Products
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/blog/amazon-fba-launch-checklist"
+                  className="font-medium text-accent hover:underline"
+                >
+                  Amazon FBA Launch Checklist
+                </Link>
+              </li>
+            </ul>
+            <Link
+              href="/blog"
+              className="mt-8 inline-block text-sm font-medium text-muted hover:text-foreground"
+            >
+              View all guides →
+            </Link>
           </div>
         </section>
 

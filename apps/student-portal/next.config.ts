@@ -4,6 +4,23 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@scalex/ui", "@scalex/db"],
   poweredByHeader: false,
   compress: true,
+  redirects: async () => [
+    {
+      source: "/blog/how-to-scale-lms-100k-users",
+      destination: "/blog/amazon-fba-private-label-beginners-guide",
+      permanent: true,
+    },
+    {
+      source: "/blog/enterprise-lms-architecture-patterns",
+      destination: "/blog/product-research-winning-amazon-products",
+      permanent: true,
+    },
+    {
+      source: "/blog/scaling-laws-digital-learning",
+      destination: "/blog/amazon-fba-launch-checklist",
+      permanent: true,
+    },
+  ],
   headers: async () => [
     {
       source: "/llms.txt",

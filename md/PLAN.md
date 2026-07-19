@@ -242,6 +242,12 @@ One-time hardening + visual pass layered on the existing app (see
   chart colors. Diverged from plan by re-pointing legacy tokens in light mode
   (safety net) rather than migrating every raw `-dark` class.
 
+## SEO / AI Discovery (Claude SEO Cursor pass)
+
+- [x] Cursor skill `.cursor/skills/claude-seo/SKILL.md` (AgriciDaniel/claude-seo methodology)
+- [x] Audit log `md/SEO-AUDIT.md` — FBA entity realign (not enterprise LMS)
+- [x] FBA blog cluster, FAQ answer islands, `llms.txt`, robots/sitemap/schema hygiene
+
 ## Suggested Success Metrics per Phase
 
 | Phase | Primary metric |
