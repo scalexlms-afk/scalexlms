@@ -113,6 +113,22 @@ export function PortalChrome({
 
   const activeGroups = withActiveGroups(groups, pathname);
 
+  const sidebarToggle = (
+    <button
+      type="button"
+      aria-label={open ? "Close sidebar" : "Open sidebar"}
+      aria-pressed={open}
+      onClick={() => setOpen((value) => !value)}
+      className="flex h-9 w-9 items-center justify-center rounded-full border border-line glass-strong metallic-edge text-foreground transition-colors hover:border-line-strong"
+    >
+      <SidebarSimple
+        weight={open ? "fill" : "regular"}
+        className="h-5 w-5"
+        aria-hidden
+      />
+    </button>
+  );
+
   return (
     <div className="relative flex min-h-screen bg-surface">
       <div
@@ -120,41 +136,32 @@ export function PortalChrome({
         aria-hidden
       />
 
-      {open ? (
-        <div className="relative z-10 hidden md:block">
+      <div
+        className={`relative z-10 hidden shrink-0 md:flex md:flex-col ${open ? "w-64" : "w-auto"}`}
+      >
+        <div className="sticky top-0 z-30 flex h-14 shrink-0 items-center px-4">
+          {sidebarToggle}
+        </div>
+        {open ? (
           <NavSidebar
             groups={activeGroups}
             brand={<Logo size="md" showTagline />}
             footer={footer}
             linkComponent={PortalNavLink}
+            className="min-h-[calc(100vh-3.5rem)] border-t-0"
           />
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       <div className="relative flex min-w-0 flex-1 flex-col">
         <header className="pointer-events-none sticky top-0 z-20 flex h-14 items-center justify-end gap-2 px-4">
-          <div className="pointer-events-auto mr-auto flex items-center gap-2">
-            <div className="md:hidden">
-              <MobileNav
-                groups={activeGroups}
-                brand={<Logo size="sm" />}
-                footer={footer}
-                linkComponent={PortalNavLink}
-              />
-            </div>
-            <button
-              type="button"
-              aria-label={open ? "Close sidebar" : "Open sidebar"}
-              aria-pressed={open}
-              onClick={() => setOpen((value) => !value)}
-              className="hidden h-9 w-9 items-center justify-center rounded-full border border-line glass-strong metallic-edge text-foreground transition-colors hover:border-line-strong md:flex"
-            >
-              <SidebarSimple
-                weight={open ? "fill" : "regular"}
-                className="h-5 w-5"
-                aria-hidden
-              />
-            </button>
+          <div className="pointer-events-auto mr-auto flex items-center gap-2 md:hidden">
+            <MobileNav
+              groups={activeGroups}
+              brand={<Logo size="sm" />}
+              footer={footer}
+              linkComponent={PortalNavLink}
+            />
           </div>
           <div className="pointer-events-auto rounded-full border border-line glass-strong p-0.5 metallic-edge shadow-[0_14px_38px_-24px_rgba(0,0,0,0.85)]">
             <ThemeToggle />
