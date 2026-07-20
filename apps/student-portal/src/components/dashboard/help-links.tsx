@@ -1,4 +1,9 @@
 import Link from "next/link";
+import {
+  Robot,
+  UserCircle,
+  UsersThree,
+} from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@scalex/ui";
 
 export function HelpLinks({ premium }: { premium: boolean }) {
@@ -15,17 +20,7 @@ export function HelpLinks({ premium }: { premium: boolean }) {
       href: "/ai-mentor",
       cta: "Chat →",
       iconClass: "bg-accent-purple/15 text-accent-purple",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-          <rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.8" />
-          <path
-            d="M9 15V9h2.2c1.4 0 2.3.8 2.3 2s-.9 2-2.3 2H10.2"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
+      icon: <Robot weight="duotone" className="h-5 w-5" />,
     },
     {
       title: "Book a Mentor",
@@ -33,16 +28,7 @@ export function HelpLinks({ premium }: { premium: boolean }) {
       href: mentorHref,
       cta: mentorCta,
       iconClass: "bg-accent-amber/15 text-accent-amber",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-          <path
-            d="M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM5 19a7 7 0 0 1 14 0"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
+      icon: <UserCircle weight="duotone" className="h-5 w-5" />,
     },
     {
       title: "Community",
@@ -50,16 +36,7 @@ export function HelpLinks({ premium }: { premium: boolean }) {
       href: "/community",
       cta: "Go now →",
       iconClass: "bg-accent-green/15 text-accent-green",
-      icon: (
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-          <path
-            d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm8 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM4 18v-1a4 4 0 0 1 4-4h0a4 4 0 0 1 4 4v1M12 18v-1a4 4 0 0 1 4-4h0"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </svg>
-      ),
+      icon: <UsersThree weight="duotone" className="h-5 w-5" />,
     },
   ];
 
@@ -70,7 +47,7 @@ export function HelpLinks({ premium }: { premium: boolean }) {
         {items.map((item) => (
           <Card key={item.title} interactive className="flex flex-col">
             <span
-              className={`flex h-10 w-10 items-center justify-center rounded-xl ${item.iconClass}`}
+              className={`flex h-10 w-10 items-center justify-center rounded-xl metallic-edge ${item.iconClass}`}
             >
               {item.icon}
             </span>

@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Check, Gift } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@scalex/ui";
+import { academyEyebrowMutedClass } from "@/components/academy-cta";
 import type { DashboardMilestone } from "@/lib/dashboard";
 
 export function JourneyProgress({
@@ -25,7 +27,9 @@ export function JourneyProgress({
         </div>
 
         {milestones.length === 0 ? (
-          <p className="text-sm text-muted">Roadmap will appear once a course is published.</p>
+          <p className="text-sm text-muted">
+            Roadmap will appear once a course is published.
+          </p>
         ) : (
           <ol className="relative space-y-0">
             {milestones.map((ms, index) => {
@@ -65,21 +69,12 @@ export function JourneyProgress({
       </Card>
 
       <Card className="flex flex-col">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Next Unlock
-        </p>
+        <p className={academyEyebrowMutedClass}>Next Unlock</p>
         {nextMilestone ? (
           <>
             <div className="mt-4 flex items-start gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-purple/15 text-accent-purple">
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-                  <path
-                    d="M4 10h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8Zm2-4h12l2 4H4l2-4Z"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-scalex-red/15 text-scalex-red metallic-edge">
+                <Gift weight="duotone" className="h-5 w-5" />
               </span>
               <div className="min-w-0">
                 <h3 className="font-display text-xl font-bold text-foreground">
@@ -109,7 +104,8 @@ export function JourneyProgress({
               You&apos;re at the final stage
             </h3>
             <p className="mt-2 text-sm text-muted">
-              Finish your current milestone task to complete the program pathway.
+              Finish your current milestone task to complete the program
+              pathway.
             </p>
             <Link
               href="/roadmap"
@@ -128,15 +124,7 @@ function Node({ status }: { status: DashboardMilestone["status"] }) {
   if (status === "completed") {
     return (
       <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-accent-green bg-accent-green/15 text-accent-green">
-        <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden>
-          <path
-            d="m3.5 8 3 3 6-6"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <Check weight="bold" className="h-3 w-3" />
       </span>
     );
   }

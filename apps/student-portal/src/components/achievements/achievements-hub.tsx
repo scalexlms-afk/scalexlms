@@ -1,6 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  Buildings,
+  Lock,
+  MagnifyingGlass,
+  Package,
+  Rocket,
+  Storefront,
+  Truck,
+} from "@phosphor-icons/react";
 import type {
   AchievementCategory,
   AchievementItem,
@@ -138,7 +147,7 @@ function AchievementCard({
     <button
       type="button"
       onClick={onSelect}
-      className={`relative rounded-[var(--radius-card)] border bg-surface-1 p-4 text-left metallic-edge transition-colors hover:bg-surface-2 ${border}`}
+      className={`relative rounded-[var(--radius-card)] border bg-surface-2 p-4 text-left metallic-edge transition-colors hover:bg-surface-3 ${border}`}
     >
       {item.state === "completed" ? (
         <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent-green text-[10px] font-bold text-white">
@@ -146,12 +155,12 @@ function AchievementCard({
         </span>
       ) : item.state === "locked" ? (
         <span className="absolute right-2 top-2 text-subtle" aria-hidden>
-          <LockIcon />
+          <Lock weight="bold" className="h-4 w-4" />
         </span>
       ) : null}
 
       <span
-        className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl border bg-surface-2 ${accent}`}
+        className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl border bg-surface-3/60 metallic-edge ${accent}`}
       >
         <CategoryGlyph category={item.category} />
       </span>
@@ -196,78 +205,24 @@ function formatShortDate(iso: string) {
   });
 }
 
-function LockIcon() {
-  return (
-    <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" aria-hidden>
-      <rect
-        x="3"
-        y="7"
-        width="10"
-        height="7"
-        rx="1.5"
-        stroke="currentColor"
-        strokeWidth="1.4"
-      />
-      <path
-        d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 function CategoryGlyph({
   category,
 }: {
   category: Exclude<AchievementCategory, "all">;
 }) {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-      {category === "business_setup" ? (
-        <path
-          d="M4 19h16M6 19V9l6-4 6 4v10M10 19v-5h4v5"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-      ) : category === "product_research" ? (
-        <path
-          d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm10 2-4.3-4.3"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      ) : category === "supplier_sourcing" ? (
-        <path
-          d="M3 7h13l3 5v6H3V7Zm13 0V5H8v2m-2 8h.01M16 15h.01"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-      ) : category === "brand_listing" ? (
-        <path
-          d="M4 7h16v12H4V7Zm4-3h8v3H8V4Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-      ) : category === "launch_sales" ? (
-        <path
-          d="M4 18V6l8 4 8-4v12l-8 4-8-4Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-      ) : (
-        <path
-          d="M12 3v18m0-18 7 4v5c0 4-3 7-7 9-4-2-7-5-7-9V7l7-4Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-      )}
-    </svg>
-  );
+  const className = "h-5 w-5";
+  switch (category) {
+    case "business_setup":
+      return <Buildings weight="duotone" className={className} />;
+    case "product_research":
+      return <MagnifyingGlass weight="duotone" className={className} />;
+    case "supplier_sourcing":
+      return <Truck weight="duotone" className={className} />;
+    case "brand_listing":
+      return <Storefront weight="duotone" className={className} />;
+    case "launch_sales":
+      return <Rocket weight="duotone" className={className} />;
+    case "scaling":
+      return <Package weight="duotone" className={className} />;
+  }
 }

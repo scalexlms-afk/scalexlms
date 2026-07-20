@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Announcement } from "@scalex/db/types";
 import { PLAN_FEATURES } from "@scalex/db";
 import { Card } from "@scalex/ui";
+import { AcademyCtaLink } from "@/components/academy-cta";
 import type { LiveSession } from "@/lib/data";
 
 function formatSessionTime(value: string) {
@@ -66,12 +67,12 @@ export function LiveAndAnnouncements({
                   </p>
                 )}
               </div>
-              <Link
+              <AcademyCtaLink
                 href={next.meeting_url || "/sessions"}
-                className="inline-flex rounded-xl bg-scalex-red px-4 py-2.5 text-sm font-semibold text-white hover:bg-scalex-red-dark"
+                className="!px-4 !py-2.5"
               >
                 Join Class →
-              </Link>
+              </AcademyCtaLink>
             </div>
           ) : (
             <p className="text-sm text-muted">

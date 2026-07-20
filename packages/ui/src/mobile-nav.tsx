@@ -32,13 +32,13 @@ export function MobileNav({ groups, brand, footer }: MobileNavProps) {
         aria-label="Open navigation menu"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-foreground transition-colors hover:bg-surface-3"
+        className="flex h-9 w-9 items-center justify-center rounded-lg border border-line metallic-edge text-foreground transition-colors hover:bg-surface-3"
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
           <path
-            d="M4 6h16M4 12h16M4 18h16"
+            d="M4 7h16M4 12h16M4 17h16"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="1.8"
             strokeLinecap="round"
           />
         </svg>
@@ -51,7 +51,7 @@ export function MobileNav({ groups, brand, footer }: MobileNavProps) {
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <aside className="relative flex h-full w-72 max-w-[80%] flex-col border-r border-line bg-surface shadow-2xl animate-fade-up">
+          <aside className="relative flex h-full w-72 max-w-[80%] flex-col border-r border-line metallic-graphite metallic-edge shadow-2xl animate-fade-up">
             <div className="flex items-center justify-between border-b border-line px-5 py-5">
               {brand}
               <button
@@ -62,9 +62,9 @@ export function MobileNav({ groups, brand, footer }: MobileNavProps) {
               >
                 <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
                   <path
-                    d="M6 6l12 12M18 6L6 18"
+                    d="M7 7l10 10M17 7 7 17"
                     stroke="currentColor"
-                    strokeWidth="2"
+                    strokeWidth="1.8"
                     strokeLinecap="round"
                   />
                 </svg>
@@ -73,7 +73,7 @@ export function MobileNav({ groups, brand, footer }: MobileNavProps) {
             <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
               {groups.map((group) => (
                 <div key={group.title}>
-                  <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-subtle">
+                  <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">
                     {group.title}
                   </p>
                   <ul className="space-y-1">

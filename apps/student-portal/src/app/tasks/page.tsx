@@ -79,7 +79,7 @@ export default async function TasksHubPage() {
             </div>
           </>
         ) : (
-          <div className="rounded-[var(--radius-card)] border border-dashed border-line bg-surface-1 px-6 py-12 text-center">
+          <div className="rounded-[var(--radius-card)] border border-dashed border-line bg-surface-2 px-6 py-12 text-center metallic-edge">
             <p className="font-display text-lg font-semibold text-foreground">
               No tasks yet
             </p>

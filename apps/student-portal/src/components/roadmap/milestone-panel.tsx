@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AcademyCtaLink } from "@/components/academy-cta";
 import { ProgressBar } from "@scalex/ui";
 import type { RoadmapLessonItem, RoadmapMilestoneItem } from "@/lib/roadmap";
 
@@ -92,12 +93,12 @@ export function MilestonePanel({
             {milestone.task.title}
           </p>
           {milestone.unlocked ? (
-            <Link
+            <AcademyCtaLink
               href={`/tasks/${milestone.id}`}
-              className="mt-3 inline-flex rounded-lg bg-scalex-red px-4 py-2 text-sm font-semibold text-white hover:bg-scalex-red-dark"
+              className="mt-3 !px-4 !py-2"
             >
               Continue Task →
-            </Link>
+            </AcademyCtaLink>
           ) : (
             <p className="mt-2 text-sm text-subtle">
               Unlock previous milestone to start this task.

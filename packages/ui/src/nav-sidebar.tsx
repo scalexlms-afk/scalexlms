@@ -40,10 +40,10 @@ export function NavItemRow({
   const isPrimary = item.emphasis === "primary" && !item.active;
   const rowClass = `group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
     item.active
-      ? "bg-gradient-to-r from-scalex-red/15 to-transparent text-foreground"
+      ? "bg-gradient-to-r from-scalex-red/20 via-scalex-red/5 to-transparent text-foreground"
       : isPrimary
-        ? "text-foreground hover:bg-surface-3"
-        : "text-muted hover:bg-surface-3 hover:text-foreground"
+        ? "text-foreground hover:bg-surface-3/80"
+        : "text-muted hover:bg-surface-3/80 hover:text-foreground"
   }`;
 
   const iconClass = item.active
@@ -95,14 +95,14 @@ export function NavItemRow({
 
 export function NavSidebar({ groups, brand, footer }: NavSidebarProps) {
   return (
-    <aside className="flex h-full w-64 flex-col bg-surface border-r border-line">
+    <aside className="flex h-full w-64 flex-col border-r border-line metallic-graphite metallic-edge">
       {brand && (
         <div className="border-b border-line px-5 py-6">{brand}</div>
       )}
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
         {groups.map((group) => (
           <div key={group.title}>
-            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-subtle">
+            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">
               {group.title}
             </p>
             <ul className="space-y-1">
