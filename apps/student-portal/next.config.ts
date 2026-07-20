@@ -4,6 +4,12 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@scalex/ui", "@scalex/db"],
   poweredByHeader: false,
   compress: true,
+  experimental: {
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+  },
   redirects: async () => [
     {
       source: "/blog/how-to-scale-lms-100k-users",

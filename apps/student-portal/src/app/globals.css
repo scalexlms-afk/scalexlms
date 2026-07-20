@@ -9,32 +9,11 @@ body {
   font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
 }
 
-.academy-page {
-  animation: academy-enter 180ms ease-out both;
-}
-
 .academy-page-heading {
   letter-spacing: -0.035em;
   line-height: 1.08;
   text-wrap: balance;
   text-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
-}
-
-@keyframes academy-enter {
-  from {
-    opacity: 0.92;
-    transform: translateY(2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .academy-page {
-    animation: none;
-  }
 }
 
 @keyframes marquee {

@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useState,
+  type MouseEventHandler,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { SidebarSimple } from "@phosphor-icons/react";
 import {
   Logo,
@@ -14,6 +19,32 @@ import {
 } from "@scalex/ui";
 
 const SIDEBAR_STORAGE_KEY = "scalex-sidebar-open";
+
+const ACADEMY_ROUTES = [
+  "/dashboard",
+  "/continue-learning",
+  "/roadmap",
+  "/tasks",
+  "/achievements",
+] as const;
+
+function PortalNavLink({
+  href,
+  className,
+  onClick,
+  children,
+}: {
+  href: string;
+  className?: string;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
+  children: ReactNode;
+}) {
+  return (
+    <Link href={href} className={className} onClick={onClick} prefetch>
+      {children}
+    </Link>
+  );
+}
 
 function isItemActive(activePath: string, item: NavItem) {
   if (item.kind === "action") return false;
@@ -58,8 +89,15 @@ export function PortalChrome({
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(true);
   const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    for (const route of ACADEMY_ROUTES) {
+      router.prefetch(route);
+    }
+  }, [router]);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(SIDEBAR_STORAGE_KEY);
@@ -88,7 +126,7 @@ export function PortalChrome({
             groups={activeGroups}
             brand={<Logo size="md" showTagline />}
             footer={footer}
-            linkComponent={Link}
+            linkComponent={PortalNavLink}
           />
         </div>
       ) : null}
@@ -101,7 +139,7 @@ export function PortalChrome({
                 groups={activeGroups}
                 brand={<Logo size="sm" />}
                 footer={footer}
-                linkComponent={Link}
+                linkComponent={PortalNavLink}
               />
             </div>
             <button
@@ -117,11 +155,6 @@ export function PortalChrome({
                 aria-hidden
               />
             </button>
-            {!open ? (
-              <div className="hidden md:block">
-                <Logo size="sm" />
-              </div>
-            ) : null}
           </div>
           <div className="pointer-events-auto rounded-full border border-line glass-strong p-0.5 metallic-edge shadow-[0_14px_38px_-24px_rgba(0,0,0,0.85)]">
             <ThemeToggle />
