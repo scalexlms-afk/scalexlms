@@ -1,20 +1,21 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PortalShell } from "@/components/portal-shell";
+import { ReviewTimeline } from "@/components/tasks/review-timeline";
+import { TaskSubmitForm } from "@/components/tasks/task-submit-form";
 import { requireStudentProfile } from "@/lib/auth";
 import {
   getTaskByMilestoneId,
   getSubmissionForTask,
   isMilestoneUnlocked,
 } from "@/lib/data";
+import { buildReviewTimeline } from "@/lib/tasks-hub";
 import { createClient } from "@scalex/db/server";
 import {
   submissionStatusLabel,
   submissionStatusVariant,
 } from "@scalex/db";
-import { Card, Button, StatusPill } from "@scalex/ui";
-import { inputClasses } from "@/components/field";
-import { submitTaskAction } from "../actions";
+import { Card, StatusPill } from "@scalex/ui";
 
 function SubmissionContent({
   content,
@@ -47,6 +48,13 @@ function SubmissionContent({
       </p>
     );
   }
+  if (typeof content.comments === "string" && content.comments) {
+    return (
+      <p className="whitespace-pre-wrap text-sm text-foreground">
+        {content.comments}
+      </p>
+    );
+  }
   return (
     <pre className="overflow-x-auto text-xs text-muted">
       {JSON.stringify(content, null, 2)}
@@ -54,7 +62,7 @@ function SubmissionContent({
   );
 }
 
-export default async function TaskPage({
+export default async function TaskDetailPage({
   params,
 }: {
   params: Promise<{ milestoneId: string }>;
@@ -80,25 +88,35 @@ export default async function TaskPage({
   const latestReview = submission?.reviews?.[0];
   const canSubmit =
     unlocked && (status === "not_started" || status === "revision_required");
+  const hasAiNotes = Boolean(
+    submission?.ai_notes || submission?.ai_score != null
+  );
+  const hasMentorReview = Boolean(latestReview);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const courseTitle = (milestone as any).courses?.title as string | undefined;
+  const milestoneTitle = (milestone as { title: string }).title;
 
   return (
-    <PortalShell activePath="/roadmap">
+    <PortalShell activePath="/tasks">
       <div className="mx-auto max-w-3xl space-y-6">
         <div>
-          <Link
-            href="/roadmap"
-            className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-scalex-red"
-          >
-            ← Back to Roadmap
-          </Link>
-          {courseTitle && (
+          <p className="text-xs text-muted">
+            <Link href="/dashboard" className="hover:text-foreground">
+              Dashboard
+            </Link>
+            <span className="mx-1.5 text-subtle">›</span>
+            <Link href="/tasks" className="hover:text-foreground">
+              Tasks
+            </Link>
+            <span className="mx-1.5 text-subtle">›</span>
+            <span className="text-foreground">{task.title}</span>
+          </p>
+          {courseTitle ? (
             <p className="mt-4 text-xs font-medium uppercase tracking-wider text-subtle">
-              {courseTitle} · {(milestone as { title: string }).title}
+              {courseTitle} · {milestoneTitle}
             </p>
-          )}
+          ) : null}
           <div className="mt-1 flex items-start justify-between gap-4">
             <h1 className="font-display text-2xl font-bold md:text-3xl">
               {task.title}
@@ -108,55 +126,68 @@ export default async function TaskPage({
               variant={submissionStatusVariant(status)}
             />
           </div>
-          {task.description && (
+          {task.description ? (
             <p className="mt-3 text-muted">{task.description}</p>
-          )}
+          ) : null}
         </div>
 
-        {!unlocked && (
+        {!unlocked ? (
           <Card className="border-accent-amber/30 bg-accent-amber/5">
             <p className="text-sm text-accent-amber">
               This milestone task is locked. Complete and get approval on the
               previous milestone task to unlock it.
             </p>
           </Card>
-        )}
+        ) : null}
 
-        {submission && status !== "not_started" && (
+        <ReviewTimeline
+          stages={buildReviewTimeline(status, hasAiNotes, hasMentorReview)}
+        />
+
+        {submission && status !== "not_started" ? (
           <Card>
-            <h2 className="font-display text-lg font-semibold">Your submission</h2>
+            <h2 className="font-display text-lg font-semibold">
+              Your submission
+            </h2>
             <div className="mt-3">
               <SubmissionContent content={submission.content} />
             </div>
-            {submission.submitted_at && (
+            {typeof submission.content?.comments === "string" &&
+            submission.content.comments &&
+            submission.content.type !== "text" ? (
+              <p className="mt-3 whitespace-pre-wrap text-sm text-muted">
+                Comments: {String(submission.content.comments)}
+              </p>
+            ) : null}
+            {submission.submitted_at ? (
               <p className="mt-2 text-xs text-subtle">
                 Submitted {new Date(submission.submitted_at).toLocaleString()}
               </p>
-            )}
-            {submission.ai_score != null && (
+            ) : null}
+            {submission.ai_score != null ? (
               <p className="mt-3 text-sm text-muted">
                 AI pre-score:{" "}
                 <span className="font-medium text-foreground">
                   {Math.round(submission.ai_score)}/100
                 </span>
               </p>
-            )}
-            {submission.ai_notes && (
+            ) : null}
+            {submission.ai_notes ? (
               <div className="mt-3 rounded-lg bg-surface-3 p-3">
                 <p className="text-xs font-semibold uppercase tracking-wider text-subtle">
                   AI feedback
                 </p>
-                <p className="mt-1 text-sm text-muted">
-                  {submission.ai_notes}
-                </p>
+                <p className="mt-1 text-sm text-muted">{submission.ai_notes}</p>
               </div>
-            )}
+            ) : null}
           </Card>
-        )}
+        ) : null}
 
-        {latestReview && (
+        {latestReview ? (
           <Card>
-            <h2 className="font-display text-lg font-semibold">Mentor feedback</h2>
+            <h2 className="font-display text-lg font-semibold">
+              Mentor feedback
+            </h2>
             <div className="mt-2">
               <StatusPill
                 label={
@@ -169,97 +200,29 @@ export default async function TaskPage({
                 }
               />
             </div>
-            {latestReview.feedback && (
+            {latestReview.feedback ? (
               <p className="mt-3 whitespace-pre-wrap text-sm text-muted">
                 {latestReview.feedback}
               </p>
-            )}
+            ) : null}
             <p className="mt-2 text-xs text-subtle">
               Reviewed {new Date(latestReview.reviewed_at).toLocaleString()}
             </p>
           </Card>
-        )}
+        ) : null}
 
-        {canSubmit && (
-          <Card>
-            <h2 className="font-display text-lg font-semibold">
-              {status === "revision_required" ? "Resubmit task" : "Submit task"}
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              Accepted formats: {task.accepted_formats.join(", ")}
-            </p>
-
-            <div className="mt-6 space-y-8">
-              {task.accepted_formats.includes("text") && (
-                <form action={submitTaskAction} className="space-y-3">
-                  <input type="hidden" name="milestoneId" value={milestoneId} />
-                  <input type="hidden" name="submissionType" value="text" />
-                  <label className="block text-sm font-medium text-muted">
-                    Text response
-                  </label>
-                  <textarea
-                    name="text"
-                    rows={5}
-                    required
-                    className={inputClasses}
-                    placeholder="Describe your work…"
-                  />
-                  <Button type="submit">Submit text</Button>
-                </form>
-              )}
-
-              {task.accepted_formats.includes("link") && (
-                <form action={submitTaskAction} className="space-y-3">
-                  <input type="hidden" name="milestoneId" value={milestoneId} />
-                  <input type="hidden" name="submissionType" value="link" />
-                  <label className="block text-sm font-medium text-muted">
-                    Link submission
-                  </label>
-                  <input
-                    name="link"
-                    type="url"
-                    required
-                    className={inputClasses}
-                    placeholder="https://…"
-                  />
-                  <Button type="submit">Submit link</Button>
-                </form>
-              )}
-
-              {(task.accepted_formats.includes("pdf") ||
-                task.accepted_formats.includes("image") ||
-                task.accepted_formats.includes("excel")) && (
-                <form action={submitTaskAction} className="space-y-3">
-                  <input type="hidden" name="milestoneId" value={milestoneId} />
-                  <input type="hidden" name="submissionType" value="file" />
-                  <label className="block text-sm font-medium text-muted">
-                    File upload
-                  </label>
-                  <input
-                    name="file"
-                    type="file"
-                    required
-                    accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx,.csv"
-                    className="block w-full text-sm text-muted file:mr-3 file:rounded-lg file:border-0 file:bg-scalex-red file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
-                  />
-                  <Button type="submit">Upload & submit</Button>
-                </form>
-              )}
-            </div>
-          </Card>
-        )}
-
-        {unlocked && !canSubmit && status !== "not_started" && (
-          <Card>
-            <p className="text-sm text-muted">
-              Your submission is{" "}
-              <span className="text-foreground">
-                {submissionStatusLabel(status).toLowerCase()}
-              </span>
-              . You&apos;ll be notified when your mentor completes their review.
-            </p>
-          </Card>
-        )}
+        <TaskSubmitForm
+          milestoneId={milestoneId}
+          acceptedFormats={task.accepted_formats}
+          canSubmit={canSubmit}
+          lockedMessage={
+            !unlocked
+              ? "This milestone task is locked."
+              : status === "approved"
+                ? "This task was approved. No further submission needed."
+                : "Your submission is under review. You'll be notified when your mentor finishes."
+          }
+        />
       </div>
     </PortalShell>
   );

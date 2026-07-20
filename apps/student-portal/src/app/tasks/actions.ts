@@ -57,6 +57,12 @@ export async function submitTaskAction(formData: FormData) {
     throw new Error("Submission cannot be updated in its current status");
   }
 
+  const commentsRaw = formData.get("comments");
+  const comments =
+    typeof commentsRaw === "string" && commentsRaw.trim()
+      ? commentsRaw.trim()
+      : null;
+
   let content: Record<string, unknown> = { type: submissionType };
 
   if (submissionType === "text") {
@@ -84,6 +90,10 @@ export async function submitTaskAction(formData: FormData) {
     content = { type: "file", file_path: path, file_name: file.name };
   } else {
     throw new Error("Invalid submission type");
+  }
+
+  if (comments) {
+    content = { ...content, comments };
   }
 
   const submittedAt = new Date().toISOString();
@@ -166,6 +176,8 @@ export async function submitTaskAction(formData: FormData) {
   }
 
   revalidatePath(`/tasks/${milestoneId}`);
+  revalidatePath("/tasks");
   revalidatePath("/dashboard");
   revalidatePath("/roadmap");
+  revalidatePath("/continue-learning");
 }
