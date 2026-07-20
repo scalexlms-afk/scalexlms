@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { FileArrowUp } from "@phosphor-icons/react";
 import { Button, Card } from "@scalex/ui";
 import { inputClasses } from "@/components/field";
 import { submitTaskAction } from "@/app/tasks/actions";
@@ -123,6 +124,9 @@ export function TaskSubmitForm({
               accept=".pdf,.png,.jpg,.jpeg,.xls,.xlsx,.csv"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
+            <span className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-scalex-red/10 text-scalex-red metallic-edge">
+              <FileArrowUp weight="duotone" className="h-6 w-6" aria-hidden />
+            </span>
             <p className="text-sm font-medium text-foreground">
               {file ? file.name : "Drag & drop your file here"}
             </p>

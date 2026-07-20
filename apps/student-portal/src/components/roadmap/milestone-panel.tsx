@@ -1,4 +1,12 @@
 import Link from "next/link";
+import {
+  Check,
+  Gift,
+  Lock,
+  Play,
+  Robot,
+  UserCircle,
+} from "@phosphor-icons/react/dist/ssr";
 import { AcademyCtaLink } from "@/components/academy-cta";
 import { ProgressBar } from "@scalex/ui";
 import type { RoadmapLessonItem, RoadmapMilestoneItem } from "@/lib/roadmap";
@@ -14,17 +22,10 @@ export function MilestonePanel({
 }) {
   return (
     <div className="mt-4 space-y-5 border-t border-line pt-5">
-      <div className="rounded-xl border border-line bg-surface-3/40 p-4">
+      <div className="rounded-xl border border-line bg-surface-3/40 p-4 metallic-edge">
         <div className="flex items-start gap-2">
           <span className="mt-0.5 text-scalex-red" aria-hidden>
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
-              <path
-                d="M4 10h16v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8Zm2-4h12l2 4H4l2-4Z"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <Gift weight="duotone" className="h-4 w-4" />
           </span>
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-subtle">
@@ -112,12 +113,14 @@ export function MilestonePanel({
           href={askAiHref}
           className="inline-flex items-center gap-2 rounded-xl border border-accent-purple/40 bg-accent-purple/10 px-4 py-2 text-sm font-semibold text-accent-purple hover:bg-accent-purple/15"
         >
+          <Robot weight="duotone" className="h-4 w-4" aria-hidden />
           Ask AI
         </Link>
         <Link
           href={mentorHref}
           className="inline-flex items-center gap-2 rounded-xl border border-line px-4 py-2 text-sm font-semibold text-foreground hover:bg-surface-3"
         >
+          <UserCircle weight="duotone" className="h-4 w-4" aria-hidden />
           Book Mentor Call
         </Link>
       </div>
@@ -129,37 +132,20 @@ function LessonIcon({ status }: { status: RoadmapLessonItem["status"] }) {
   if (status === "completed") {
     return (
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-green/15 text-accent-green">
-        <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" aria-hidden>
-          <path
-            d="m3.5 8 3 3 6-6"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <Check weight="bold" className="h-3.5 w-3.5" aria-hidden />
       </span>
     );
   }
   if (status === "locked") {
     return (
       <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-3 text-subtle">
-        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" aria-hidden>
-          <path
-            d="M8 11V8a4 4 0 1 1 8 0v3M7 11h10v9H7v-9Z"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <Lock weight="bold" className="h-3.5 w-3.5" aria-hidden />
       </span>
     );
   }
   return (
     <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-scalex-red/15 text-scalex-red">
-      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden>
-        <path d="M9 7.5v9l8-4.5-8-4.5Z" />
-      </svg>
+      <Play weight="fill" className="h-3.5 w-3.5" aria-hidden />
     </span>
   );
 }

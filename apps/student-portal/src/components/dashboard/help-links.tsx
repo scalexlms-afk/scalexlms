@@ -45,7 +45,12 @@ export function HelpLinks({ premium }: { premium: boolean }) {
       <h2 className="mb-4 font-display text-lg font-semibold">Need a hand?</h2>
       <div className="grid gap-4 sm:grid-cols-3">
         {items.map((item) => (
-          <Card key={item.title} interactive className="flex flex-col">
+          <Card
+            key={item.title}
+            variant="glass"
+            interactive
+            className="flex flex-col"
+          >
             <span
               className={`flex h-10 w-10 items-center justify-center rounded-xl metallic-edge ${item.iconClass}`}
             >

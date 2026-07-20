@@ -12,6 +12,7 @@ import {
   academyEyebrowClass,
   academyEyebrowMutedClass,
 } from "@/components/academy-cta";
+import { AcademyHeroBackdrop } from "@/components/academy-hero-backdrop";
 
 export function MissionHero({
   title,
@@ -27,7 +28,8 @@ export function MissionHero({
   continueHref: string;
 }) {
   return (
-    <Card className="relative overflow-hidden border-scalex-red/25 bg-gradient-to-br from-scalex-red/15 via-surface-2 to-surface-2">
+    <Card className="relative overflow-hidden border-scalex-red/25">
+      <AcademyHeroBackdrop src="/landing/pillar-research.png" />
       <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check, Robot } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@scalex/ui";
 
 export function TaskOverview({
@@ -36,9 +37,7 @@ export function TaskOverview({
             {requirements.map((item) => (
               <li key={item} className="flex items-start gap-2 text-sm text-foreground">
                 <span className="mt-0.5 text-accent-green" aria-hidden>
-                  <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none">
-                    <path d="m3 8 3.5 3.5L13 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <Check weight="bold" className="h-4 w-4" />
                 </span>
                 {item}
               </li>
@@ -48,7 +47,12 @@ export function TaskOverview({
       </Card>
 
       <Card>
-        <h2 className="font-display text-lg font-semibold">AI Task Assistant</h2>
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-purple/15 text-accent-purple metallic-edge">
+            <Robot weight="duotone" className="h-4 w-4" aria-hidden />
+          </span>
+          <h2 className="font-display text-lg font-semibold">AI Task Assistant</h2>
+        </div>
         <p className="mt-1 text-sm text-muted">
           Get help preparing a strong submission
         </p>

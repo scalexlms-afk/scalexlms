@@ -1,4 +1,10 @@
 import Link from "next/link";
+import type { Icon } from "@phosphor-icons/react";
+import {
+  FileText,
+  Robot,
+  UsersThree,
+} from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@scalex/ui";
 import type { ContinueResource } from "@/lib/continue-learning";
 import type { CommunityPost } from "@/lib/data";
@@ -15,7 +21,7 @@ export function SidePanels({
   return (
     <div className="grid gap-5 lg:grid-cols-3">
       <Card>
-        <h2 className="font-display text-lg font-semibold">Resources</h2>
+        <PanelTitle icon={FileText}>Resources</PanelTitle>
         {resources.length === 0 ? (
           <div className="mt-3 space-y-2">
             <p className="text-sm text-muted">
@@ -53,7 +59,7 @@ export function SidePanels({
       </Card>
 
       <Card>
-        <h2 className="font-display text-lg font-semibold">AI Mentor</h2>
+        <PanelTitle icon={Robot}>AI Mentor</PanelTitle>
         <p className="mt-1 text-sm text-muted">Suggested questions for this stage</p>
         <ul className="mt-4 space-y-2">
           {aiPrompts.map((prompt) => (
@@ -76,7 +82,7 @@ export function SidePanels({
       </Card>
 
       <Card>
-        <h2 className="font-display text-lg font-semibold">Community Help</h2>
+        <PanelTitle icon={UsersThree}>Community Help</PanelTitle>
         <p className="mt-1 text-sm text-muted">Recent questions from students</p>
         {communityPosts.length === 0 ? (
           <p className="mt-4 text-sm text-muted">
@@ -105,6 +111,23 @@ export function SidePanels({
           Ask in Community →
         </Link>
       </Card>
+    </div>
+  );
+}
+
+function PanelTitle({
+  icon: Icon,
+  children,
+}: {
+  icon: Icon;
+  children: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-scalex-red/10 text-scalex-red metallic-edge">
+        <Icon weight="duotone" className="h-4 w-4" aria-hidden />
+      </span>
+      <h2 className="font-display text-lg font-semibold">{children}</h2>
     </div>
   );
 }

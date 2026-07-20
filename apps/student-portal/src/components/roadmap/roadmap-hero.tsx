@@ -4,6 +4,7 @@ import {
   AcademyCtaLink,
   academyEyebrowMutedClass,
 } from "@/components/academy-cta";
+import { AcademyHeroBackdrop } from "@/components/academy-hero-backdrop";
 
 export function RoadmapHero({
   currentStage,
@@ -23,7 +24,8 @@ export function RoadmapHero({
   continueHref: string;
 }) {
   return (
-    <Card className="relative overflow-hidden border-scalex-red/25 bg-gradient-to-br from-scalex-red/15 via-surface-2 to-surface-2">
+    <Card className="relative overflow-hidden border-scalex-red/25">
+      <AcademyHeroBackdrop src="/landing/pillar-ai.png" />
       <div className="relative z-10 grid gap-6 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
         <div className="min-w-0">
           <p className={academyEyebrowMutedClass}>Your Business Journey</p>

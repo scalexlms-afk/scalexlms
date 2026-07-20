@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Info } from "@phosphor-icons/react/dist/ssr";
 import { PortalShell } from "@/components/portal-shell";
 import { LessonRoadmap } from "@/components/continue-learning/lesson-roadmap";
 import { MissionHero } from "@/components/continue-learning/mission-hero";
@@ -17,17 +17,10 @@ export default async function ContinueLearningPage() {
 
   return (
     <PortalShell activePath="/continue-learning">
-      <div className="space-y-8">
+      <div className="academy-page space-y-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs text-muted">
-              <Link href="/dashboard" className="hover:text-foreground">
-                Dashboard
-              </Link>
-              <span className="mx-1.5 text-subtle">›</span>
-              <span className="text-foreground">Continue Learning</span>
-            </p>
-            <h1 className="mt-2 font-display text-2xl font-bold md:text-3xl">
+            <h1 className="academy-page-heading font-display text-2xl font-bold md:text-3xl">
               Continue Your Business
             </h1>
             <p className="mt-1 max-w-2xl text-muted">
@@ -37,12 +30,9 @@ export default async function ContinueLearningPage() {
           </div>
           <a
             href="#how-it-works"
-            className="inline-flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-3"
+            className="inline-flex items-center gap-2 rounded-xl border border-line glass px-3 py-2 text-sm font-medium text-foreground metallic-edge transition-colors hover:border-line-strong"
           >
-            <svg viewBox="0 0 24 24" className="h-4 w-4 text-muted" fill="none" aria-hidden>
-              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M12 10v6M12 7.5h.01" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
+            <Info weight="duotone" className="h-4 w-4 text-muted" aria-hidden />
             How it works
           </a>
         </div>

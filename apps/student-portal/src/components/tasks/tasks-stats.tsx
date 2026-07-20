@@ -39,7 +39,7 @@ export function TasksStats({ stats }: { stats: TasksHubStats }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
-        <Card key={item.label} className="!p-4">
+        <Card key={item.label} variant="glass" className="!p-4">
           <div className="flex items-center gap-3">
             <span
               className={`flex h-10 w-10 items-center justify-center rounded-xl metallic-edge ${item.iconClass}`}

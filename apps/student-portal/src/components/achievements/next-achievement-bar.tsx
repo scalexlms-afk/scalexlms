@@ -38,16 +38,16 @@ export function NextAchievementBar({
               </span>
               <span>{pct}%</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-full bg-surface-3">
+            <div className="h-2 overflow-hidden rounded-full bg-line">
               <div
-                className="h-full rounded-full bg-scalex-red transition-all"
+                className="h-full rounded-full bg-gradient-to-r from-scalex-red-dark to-scalex-red shadow-[0_0_12px_-2px_rgba(227,30,36,0.6)] transition-all"
                 style={{ width: `${Math.max(pct, 4)}%` }}
               />
             </div>
           </div>
         </div>
         <span
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-scalex-red/15 text-scalex-red metallic-edge"
+          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-scalex-red/15 text-scalex-red metallic-edge"
           aria-hidden
         >
           <Gift weight="duotone" className="h-7 w-7" />

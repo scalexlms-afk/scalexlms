@@ -1,6 +1,7 @@
 import { RocketLaunch } from "@phosphor-icons/react/dist/ssr";
 import { Card, ProgressBar } from "@scalex/ui";
 import { academyEyebrowMutedClass } from "@/components/academy-cta";
+import { AcademyHeroBackdrop } from "@/components/academy-hero-backdrop";
 
 export function StageHero({
   stageTitle,
@@ -14,7 +15,8 @@ export function StageHero({
   completionPercent: number;
 }) {
   return (
-    <Card className="relative overflow-hidden metallic-graphite">
+    <Card className="relative overflow-hidden border-scalex-red/20">
+      <AcademyHeroBackdrop />
       <div className="relative z-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0 flex-1">
           <p className={academyEyebrowMutedClass}>Business Stage</p>

@@ -1,3 +1,4 @@
+import { Check, Circle } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@scalex/ui";
 import type { DashboardMilestone } from "@/lib/dashboard";
 
@@ -61,20 +62,20 @@ function TimelineNode({
   if (status === "completed") {
     return (
       <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-green text-[10px] font-bold text-white">
-        ✓
+        <Check weight="bold" className="h-3 w-3" aria-hidden />
       </span>
     );
   }
   if (status === "current") {
     return (
       <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-scalex-red bg-scalex-red/15 text-[10px] font-bold text-scalex-red ring-4 ring-scalex-red/15">
-        ●
+        <Circle weight="fill" className="h-2 w-2" aria-hidden />
       </span>
     );
   }
   return (
     <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-line bg-surface-3 text-[10px] font-bold text-subtle">
-      ○
+      <Circle weight="regular" className="h-2.5 w-2.5" aria-hidden />
     </span>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import { Card, StatusPill } from "@scalex/ui";
 import type { HubTaskItem } from "@/lib/tasks-hub";
 
@@ -31,7 +32,7 @@ export function CompletedTasks({ items }: { items: HubTaskItem[] }) {
           <Card key={item.milestoneId} className="!p-4">
             <div className="flex items-start justify-between gap-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-green/15 text-accent-green">
-                ✓
+                <CheckCircle weight="duotone" className="h-4 w-4" aria-hidden />
               </span>
               <StatusPill label="Approved" variant="approved" />
             </div>

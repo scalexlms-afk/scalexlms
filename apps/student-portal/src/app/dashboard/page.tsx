@@ -18,9 +18,9 @@ export default async function DashboardPage() {
 
   return (
     <PortalShell activePath="/dashboard">
-      <div className="space-y-8">
+      <div className="academy-page space-y-8">
         <div>
-          <h1 className="font-display text-2xl font-bold md:text-3xl">
+          <h1 className="academy-page-heading font-display text-2xl font-bold md:text-3xl">
             Welcome back, {data.firstName}!
           </h1>
           <p className="mt-1 text-muted">

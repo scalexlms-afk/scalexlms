@@ -38,12 +38,12 @@ export function NavItemRow({
   onNavigate?: () => void;
 }) {
   const isPrimary = item.emphasis === "primary" && !item.active;
-  const rowClass = `group relative flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+  const rowClass = `group relative flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
     item.active
-      ? "bg-gradient-to-r from-scalex-red/20 via-scalex-red/5 to-transparent text-foreground"
+      ? "border-scalex-red/20 bg-gradient-to-r from-scalex-red/22 via-scalex-red/8 to-transparent text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
       : isPrimary
-        ? "text-foreground hover:bg-surface-3/80"
-        : "text-muted hover:bg-surface-3/80 hover:text-foreground"
+        ? "border-transparent text-foreground hover:border-line hover:bg-surface-3/65"
+        : "border-transparent text-muted hover:border-line hover:bg-surface-3/65 hover:text-foreground"
   }`;
 
   const iconClass = item.active
@@ -57,7 +57,17 @@ export function NavItemRow({
       {item.active && (
         <span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-scalex-red" />
       )}
-      {item.icon && <span className={iconClass}>{item.icon}</span>}
+      {item.icon && (
+        <span
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
+            item.active
+              ? "bg-scalex-red/15"
+              : "bg-white/[0.025] group-hover:bg-white/[0.05]"
+          } ${iconClass}`}
+        >
+          {item.icon}
+        </span>
+      )}
       <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
       {item.pillBadge && (
         <span
@@ -95,11 +105,15 @@ export function NavItemRow({
 
 export function NavSidebar({ groups, brand, footer }: NavSidebarProps) {
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-line metallic-graphite metallic-edge">
+    <aside className="relative flex h-full w-64 flex-col overflow-hidden border-r border-line bg-surface/90 backdrop-blur-xl metallic-edge">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_25%_0%,rgba(227,30,36,0.15),transparent_68%)]"
+        aria-hidden
+      />
       {brand && (
-        <div className="border-b border-line px-5 py-6">{brand}</div>
+        <div className="relative border-b border-line px-5 py-6">{brand}</div>
       )}
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+      <nav className="relative flex-1 space-y-6 overflow-y-auto px-3 py-5">
         {groups.map((group) => (
           <div key={group.title}>
             <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">
@@ -116,7 +130,9 @@ export function NavSidebar({ groups, brand, footer }: NavSidebarProps) {
         ))}
       </nav>
       {footer && (
-        <div className="border-t border-line px-5 py-4">{footer}</div>
+        <div className="relative border-t border-line bg-surface/35 px-5 py-4 backdrop-blur-sm">
+          {footer}
+        </div>
       )}
     </aside>
   );

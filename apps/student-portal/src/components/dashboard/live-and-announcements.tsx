@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Megaphone } from "@phosphor-icons/react/dist/ssr";
 import type { Announcement } from "@scalex/db/types";
 import { PLAN_FEATURES } from "@scalex/db";
 import { Card } from "@scalex/ui";
@@ -114,20 +115,8 @@ export function LiveAndAnnouncements({
                 className="border-b border-line pb-4 last:border-0 last:pb-0"
               >
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-scalex-red/10 text-scalex-red">
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
-                      <path
-                        d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v2M8 22h8"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M12 3a4 4 0 0 1 4 4v5H8V7a4 4 0 0 1 4-4Z"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                      />
-                    </svg>
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-scalex-red/10 text-scalex-red metallic-edge">
+                    <Megaphone weight="duotone" className="h-4 w-4" aria-hidden />
                   </span>
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">

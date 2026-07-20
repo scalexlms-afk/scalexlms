@@ -123,7 +123,7 @@ export function JourneyProgress({
 function Node({ status }: { status: DashboardMilestone["status"] }) {
   if (status === "completed") {
     return (
-      <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-accent-green bg-accent-green/15 text-accent-green">
+      <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-scalex-red bg-scalex-red text-white">
         <Check weight="bold" className="h-3 w-3" />
       </span>
     );

@@ -6,6 +6,7 @@ import {
   StatusPill,
 } from "@scalex/ui";
 import type { NavGroup, NavItem } from "@scalex/ui";
+import Image from "next/image";
 import {
   Bell,
   ChatCircle,
@@ -86,9 +87,12 @@ function SidebarFooter({
     <div className="space-y-3">
       <div className="flex items-center gap-3">
         {avatarUrl ? (
-          <img
+          <Image
             src={avatarUrl}
             alt=""
+            width={40}
+            height={40}
+            unoptimized
             className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-line"
           />
         ) : (
@@ -109,12 +113,12 @@ function SidebarFooter({
         variant={planPillVariant(plan)}
       />
 
-      <div className="rounded-xl border border-line bg-surface-2/80 px-3 py-3 metallic-edge">
+      <div className="rounded-[var(--radius-card)] border border-line px-3 py-3 metallic-graphite metallic-edge">
         <p className="text-sm font-semibold text-foreground">Program Access</p>
         <p className="mt-0.5 text-xs text-muted">{accessLabel}</p>
         <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-line">
           <div
-            className="h-full rounded-full bg-scalex-red transition-[width] duration-500"
+            className="h-full rounded-full bg-gradient-to-r from-scalex-red-dark to-scalex-red shadow-[0_0_12px_-2px_rgba(227,30,36,0.6)] transition-[width] duration-500"
             style={{
               width: `${Math.min(100, Math.max(0, accessElapsedPercent))}%`,
             }}
@@ -273,7 +277,11 @@ export async function PortalShell({
   );
 
   return (
-    <div className="flex min-h-screen bg-surface">
+    <div className="relative flex min-h-screen overflow-hidden bg-surface">
+      <div
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_72%_-8%,rgba(227,30,36,0.12),transparent_32%),radial-gradient(circle_at_105%_72%,rgba(227,30,36,0.055),transparent_28%)]"
+        aria-hidden
+      />
       <div className="sticky top-0 hidden h-screen shrink-0 md:block">
         <NavSidebar
           groups={groups}
@@ -282,22 +290,24 @@ export async function PortalShell({
         />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line glass-strong px-4 py-3">
-          <div className="flex items-center gap-3 md:hidden">
+      <div className="relative flex min-w-0 flex-1 flex-col">
+        <header className="pointer-events-none sticky top-0 z-20 flex h-14 items-center justify-end gap-2 px-4">
+          {/* Mobile-only menu control — sidebar is hidden below md */}
+          <div className="pointer-events-auto mr-auto md:hidden">
             <MobileNav
               groups={groups}
               brand={<Logo size="sm" />}
               footer={footer}
             />
-            <Logo size="sm" />
           </div>
-          <div className="ml-auto flex items-center gap-3">
+          <div className="pointer-events-auto rounded-full border border-line glass-strong p-0.5 metallic-edge shadow-[0_14px_38px_-24px_rgba(0,0,0,0.85)]">
             <ThemeToggle />
           </div>
         </header>
 
-        <main className="flex-1 p-4 md:p-8">{children}</main>
+        <main className="relative z-10 flex-1 p-4 pt-2 md:p-8 md:pt-2">
+          {children}
+        </main>
       </div>
     </div>
   );

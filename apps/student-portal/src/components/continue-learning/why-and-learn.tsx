@@ -1,5 +1,9 @@
 import Link from "next/link";
-import { Check, Crosshair } from "@phosphor-icons/react/dist/ssr";
+import {
+  ArrowRight,
+  Check,
+  Crosshair,
+} from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@scalex/ui";
 import { academyEyebrowClass } from "@/components/academy-cta";
 
@@ -20,7 +24,11 @@ export function WhyAndLearn({
         <div className="mt-5 rounded-xl border border-line bg-surface-3/50 p-4 metallic-edge">
           <p className={academyEyebrowClass}>Completing this step unlocks</p>
           <div className="mt-2 flex items-center gap-2">
-            <span className="text-scalex-red">→</span>
+            <ArrowRight
+              weight="bold"
+              className="h-4 w-4 text-scalex-red"
+              aria-hidden
+            />
             <p className="font-semibold text-foreground">{unlocksLabel}</p>
           </div>
         </div>

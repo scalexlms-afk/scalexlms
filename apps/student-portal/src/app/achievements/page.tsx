@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { PortalShell } from "@/components/portal-shell";
 import { AchievementsFooterCta } from "@/components/achievements/achievements-footer-cta";
 import { AchievementsHub } from "@/components/achievements/achievements-hub";
@@ -20,16 +19,9 @@ export default async function AchievementsPage() {
 
   return (
     <PortalShell activePath="/achievements">
-      <div className="space-y-8">
+      <div className="academy-page space-y-8">
         <div>
-          <p className="text-xs text-muted">
-            <Link href="/dashboard" className="hover:text-foreground">
-              Dashboard
-            </Link>
-            <span className="mx-1.5 text-subtle">›</span>
-            <span className="text-foreground">Achievements</span>
-          </p>
-          <h1 className="mt-2 font-display text-2xl font-bold md:text-3xl">
+          <h1 className="academy-page-heading font-display text-2xl font-bold md:text-3xl">
             Your Achievements
           </h1>
           <p className="mt-1 max-w-2xl text-muted">

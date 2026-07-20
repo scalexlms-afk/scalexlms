@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { List, X } from "@phosphor-icons/react";
 import { NavItemRow, type NavGroup } from "./nav-sidebar";
 
 interface MobileNavProps {
@@ -32,16 +33,9 @@ export function MobileNav({ groups, brand, footer }: MobileNavProps) {
         aria-label="Open navigation menu"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="flex h-9 w-9 items-center justify-center rounded-lg border border-line metallic-edge text-foreground transition-colors hover:bg-surface-3"
+        className="flex h-9 w-9 items-center justify-center rounded-full border border-line glass-strong metallic-edge text-foreground transition-colors hover:border-line-strong"
       >
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-          <path
-            d="M4 7h16M4 12h16M4 17h16"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </svg>
+        <List weight="bold" className="h-5 w-5" aria-hidden />
       </button>
 
       {open && (
@@ -51,26 +45,23 @@ export function MobileNav({ groups, brand, footer }: MobileNavProps) {
             onClick={() => setOpen(false)}
             aria-hidden
           />
-          <aside className="relative flex h-full w-72 max-w-[80%] flex-col border-r border-line metallic-graphite metallic-edge shadow-2xl animate-fade-up">
-            <div className="flex items-center justify-between border-b border-line px-5 py-5">
+          <aside className="relative flex h-full w-72 max-w-[80%] flex-col overflow-hidden border-r border-line bg-surface/95 backdrop-blur-xl metallic-edge shadow-2xl animate-fade-up">
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_25%_0%,rgba(227,30,36,0.16),transparent_68%)]"
+              aria-hidden
+            />
+            <div className="relative flex items-center justify-between border-b border-line px-5 py-5">
               {brand}
               <button
                 type="button"
                 aria-label="Close navigation menu"
                 onClick={() => setOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-3 hover:text-foreground"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-line text-muted metallic-edge transition-colors hover:bg-surface-3 hover:text-foreground"
               >
-                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
-                  <path
-                    d="M7 7l10 10M17 7 7 17"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                  />
-                </svg>
+                <X weight="bold" className="h-4 w-4" aria-hidden />
               </button>
             </div>
-            <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+            <nav className="relative flex-1 space-y-6 overflow-y-auto px-3 py-5">
               {groups.map((group) => (
                 <div key={group.title}>
                   <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">
@@ -90,7 +81,7 @@ export function MobileNav({ groups, brand, footer }: MobileNavProps) {
               ))}
             </nav>
             {footer && (
-              <div className="border-t border-line px-5 py-4">
+              <div className="relative border-t border-line bg-surface/35 px-5 py-4">
                 {footer}
               </div>
             )}

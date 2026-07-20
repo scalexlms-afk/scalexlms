@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Card } from "@scalex/ui";
+import { academyEyebrowClass } from "@/components/academy-cta";
 import type { AchievementItem } from "@/lib/achievements";
 
 export function AchievementDetail({
@@ -23,9 +24,7 @@ export function AchievementDetail({
   return (
     <Card className="space-y-4">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-subtle">
-          Achievement Details
-        </p>
+        <p className={academyEyebrowClass}>Achievement Details</p>
         <h2 className="mt-1 font-display text-xl font-bold text-foreground">
           {achievement.title}
         </h2>
@@ -44,13 +43,9 @@ export function AchievementDetail({
           <span>Progress</span>
           <span>{achievement.progressPercent}%</span>
         </div>
-        <div className="h-2 overflow-hidden rounded-full bg-surface-3">
+        <div className="h-2 overflow-hidden rounded-full bg-line">
           <div
-            className={`h-full rounded-full ${
-              achievement.state === "completed"
-                ? "bg-accent-green"
-                : "bg-accent-amber"
-            }`}
+            className="h-full rounded-full bg-gradient-to-r from-scalex-red-dark to-scalex-red shadow-[0_0_12px_-2px_rgba(227,30,36,0.6)]"
             style={{ width: `${achievement.progressPercent}%` }}
           />
         </div>
@@ -73,9 +68,7 @@ export function AchievementDetail({
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-subtle">
-        {label}
-      </p>
+      <p className={academyEyebrowClass}>{label}</p>
       <p className="mt-1 text-sm text-foreground">{value}</p>
     </div>
   );

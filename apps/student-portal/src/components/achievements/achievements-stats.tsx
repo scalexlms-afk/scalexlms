@@ -12,7 +12,7 @@ import type { AchievementsStats } from "@/lib/achievements";
 export function AchievementsStatsRow({ stats }: { stats: AchievementsStats }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <Card className="!p-4">
+      <Card variant="glass" className="!p-4">
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-scalex-red/15 text-scalex-red metallic-edge">
             <Trophy weight="duotone" className="h-5 w-5" />
@@ -30,9 +30,9 @@ export function AchievementsStatsRow({ stats }: { stats: AchievementsStats }) {
                 <span>Business Progress</span>
                 <span>{stats.businessProgressPercent}%</span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-surface-3">
+              <div className="h-1.5 overflow-hidden rounded-full bg-line">
                 <div
-                  className="h-full rounded-full bg-scalex-red"
+                  className="h-full rounded-full bg-gradient-to-r from-scalex-red-dark to-scalex-red shadow-[0_0_12px_-2px_rgba(227,30,36,0.6)]"
                   style={{ width: `${stats.businessProgressPercent}%` }}
                 />
               </div>
@@ -78,7 +78,7 @@ function StatCard({
   hint?: string;
 }) {
   return (
-    <Card className="!p-4">
+    <Card variant="glass" className="!p-4">
       <div className="flex items-center gap-3">
         <span
           className={`flex h-10 w-10 items-center justify-center rounded-xl metallic-edge ${iconClass}`}

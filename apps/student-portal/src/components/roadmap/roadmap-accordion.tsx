@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CaretDown, Check, Lock } from "@phosphor-icons/react";
 import { Card, StatusPill } from "@scalex/ui";
 import type { RoadmapMilestoneItem } from "@/lib/roadmap";
 import { MilestonePanel } from "./milestone-panel";
@@ -79,19 +80,10 @@ export function RoadmapAccordion({
                   </p>
                 </div>
                 <span className="mt-1 shrink-0 text-muted" aria-hidden>
-                  <svg
-                    viewBox="0 0 24 24"
+                  <CaretDown
+                    weight="bold"
                     className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                    fill="none"
-                  >
-                    <path
-                      d="m6 9 6 6 6-6"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  />
                 </span>
               </button>
 
@@ -121,16 +113,8 @@ function MilestoneNode({
 }) {
   if (status === "completed") {
     return (
-      <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-accent-green bg-accent-green/15 text-accent-green">
-        <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" aria-hidden>
-          <path
-            d="m3.5 8 3 3 6-6"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+      <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-scalex-red bg-scalex-red text-white shadow-[0_0_20px_-10px_rgba(227,30,36,0.8)]">
+        <Check weight="bold" className="h-4 w-4" aria-hidden />
       </span>
     );
   }
@@ -148,14 +132,7 @@ function MilestoneNode({
       {unlocked ? (
         <span className="text-sm font-bold">{number}</span>
       ) : (
-        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
-          <path
-            d="M8 11V8a4 4 0 1 1 8 0v3M7 11h10v9H7v-9Z"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <Lock weight="bold" className="h-4 w-4" aria-hidden />
       )}
     </span>
   );

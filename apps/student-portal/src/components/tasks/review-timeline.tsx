@@ -1,3 +1,4 @@
+import { Check } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@scalex/ui";
 import type { TimelineStage } from "@/lib/tasks-hub";
 
@@ -26,7 +27,11 @@ export function ReviewTimeline({ stages }: { stages: TimelineStage[] }) {
                     : "bg-surface-3 text-subtle"
               }`}
             >
-              {stage.state === "done" ? "✓" : index + 1}
+              {stage.state === "done" ? (
+                <Check weight="bold" className="h-3 w-3" aria-hidden />
+              ) : (
+                index + 1
+              )}
             </span>
             <p
               className={`text-xs font-medium sm:mt-2 ${

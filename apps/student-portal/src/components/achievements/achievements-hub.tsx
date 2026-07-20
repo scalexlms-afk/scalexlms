@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   Buildings,
+  Check,
   Lock,
   MagnifyingGlass,
   Package,
@@ -74,10 +75,10 @@ export function AchievementsHub({
                 setFilter(cat.id);
                 setShowAll(false);
               }}
-              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
                 active
-                  ? "border-scalex-red bg-scalex-red text-white"
-                  : "border-line bg-surface-2 text-muted hover:border-scalex-red/40 hover:text-foreground"
+                  ? "border-white/10 text-white metallic-red glow-red"
+                  : "border-line glass text-muted hover:border-scalex-red/40 hover:text-foreground"
               }`}
             >
               {cat.label}
@@ -108,7 +109,7 @@ export function AchievementsHub({
           <button
             type="button"
             onClick={() => setShowAll((v) => !v)}
-            className="rounded-xl border border-line bg-surface-2 px-4 py-2 text-sm font-semibold text-foreground hover:bg-surface-3"
+            className="rounded-xl border border-line glass px-4 py-2 text-sm font-semibold text-foreground metallic-edge hover:border-line-strong"
           >
             {showAll ? "Show fewer" : "View More Achievements"}
           </button>
@@ -138,20 +139,20 @@ function AchievementCard({
   const accent = CATEGORY_ACCENT[item.category];
   const border =
     item.state === "in_progress"
-      ? "border-accent-amber/50 ring-1 ring-accent-amber/30"
+      ? "border-scalex-red/50 ring-1 ring-scalex-red/25 shadow-[0_18px_40px_-30px_rgba(227,30,36,0.7)]"
       : selected
-        ? "border-scalex-red/40 ring-1 ring-scalex-red/20"
+        ? "border-scalex-red/40 ring-1 ring-scalex-red/20 shadow-[0_18px_40px_-32px_rgba(227,30,36,0.65)]"
         : "border-line";
 
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`relative rounded-[var(--radius-card)] border bg-surface-2 p-4 text-left metallic-edge transition-colors hover:bg-surface-3 ${border}`}
+      className={`relative overflow-hidden rounded-[var(--radius-card)] border bg-surface-2/90 p-4 text-left metallic-edge transition-all duration-200 hover:-translate-y-0.5 hover:bg-surface-3 ${border}`}
     >
       {item.state === "completed" ? (
         <span className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-accent-green text-[10px] font-bold text-white">
-          ✓
+          <Check weight="bold" className="h-3 w-3" aria-hidden />
         </span>
       ) : item.state === "locked" ? (
         <span className="absolute right-2 top-2 text-subtle" aria-hidden>
@@ -181,11 +182,11 @@ function AchievementCard({
             </span>
             <span>{item.progressPercent}%</span>
           </div>
-          <div className="h-1 overflow-hidden rounded-full bg-surface-3">
+          <div className="h-1 overflow-hidden rounded-full bg-line">
             <div
               className={`h-full rounded-full ${
                 item.state === "in_progress"
-                  ? "bg-accent-amber"
+                  ? "bg-gradient-to-r from-scalex-red-dark to-scalex-red"
                   : "bg-surface-3"
               }`}
               style={{ width: `${item.progressPercent}%` }}

@@ -99,26 +99,25 @@ export default async function TaskDetailPage({
 
   return (
     <PortalShell activePath="/tasks">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="academy-page mx-auto max-w-3xl space-y-6">
         <div>
-          <p className="text-xs text-muted">
-            <Link href="/dashboard" className="hover:text-foreground">
-              Dashboard
-            </Link>
-            <span className="mx-1.5 text-subtle">›</span>
-            <Link href="/tasks" className="hover:text-foreground">
-              Tasks
-            </Link>
-            <span className="mx-1.5 text-subtle">›</span>
-            <span className="text-foreground">{task.title}</span>
-          </p>
           {courseTitle ? (
-            <p className="mt-4 text-xs font-medium uppercase tracking-wider text-subtle">
+            <p className="text-xs font-medium uppercase tracking-wider text-subtle">
+              <Link href="/tasks" className="hover:text-foreground">
+                Tasks
+              </Link>
+              <span className="mx-1.5 text-faint">·</span>
               {courseTitle} · {milestoneTitle}
             </p>
-          ) : null}
-          <div className="mt-1 flex items-start justify-between gap-4">
-            <h1 className="font-display text-2xl font-bold md:text-3xl">
+          ) : (
+            <p className="text-xs font-medium uppercase tracking-wider text-subtle">
+              <Link href="/tasks" className="hover:text-foreground">
+                ← Back to Tasks
+              </Link>
+            </p>
+          )}
+          <div className="mt-2 flex items-start justify-between gap-4">
+            <h1 className="academy-page-heading font-display text-2xl font-bold md:text-3xl">
               {task.title}
             </h1>
             <StatusPill

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check, CheckCircle, Circle } from "@phosphor-icons/react/dist/ssr";
 import { Card, ProgressBar } from "@scalex/ui";
 import type { ContinueRoadmapStep } from "@/lib/continue-learning";
 
@@ -87,14 +88,9 @@ export function LessonRoadmap({
                 }
               >
                 {step.status === "completed" ? (
-                  <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" aria-hidden>
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="m4.5 8 2.2 2.2L11.5 5.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                  </svg>
+                  <CheckCircle weight="duotone" className="h-4 w-4" aria-hidden />
                 ) : (
-                  <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" aria-hidden>
-                    <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
-                  </svg>
+                  <Circle weight="regular" className="h-4 w-4" aria-hidden />
                 )}
               </span>
               <span
@@ -125,7 +121,7 @@ function StepNode({
   if (status === "completed") {
     return (
       <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-scalex-red bg-scalex-red text-[10px] font-bold text-white">
-        ✓
+        <Check weight="bold" className="h-3 w-3" aria-hidden />
       </span>
     );
   }
