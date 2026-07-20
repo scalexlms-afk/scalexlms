@@ -225,6 +225,119 @@ export async function getCompletedLessonIds(studentId: string) {
   );
 }
 
+const PROGRAM_ACCESS_MONTHS = 12;
+
+export type StudentJourneySummary = {
+  currentStage: string;
+  currentMilestoneId: string | null;
+  completionPercent: number;
+  continueHref: string;
+  enrolledAt: string | null;
+  monthsRemaining: number | null;
+  /** 0–100 elapsed share of the 12-month program window */
+  accessElapsedPercent: number;
+};
+
+function computeProgramAccess(enrolledAt: string | null): {
+  monthsRemaining: number | null;
+  accessElapsedPercent: number;
+} {
+  if (!enrolledAt) {
+    return { monthsRemaining: null, accessElapsedPercent: 0 };
+  }
+
+  const start = new Date(enrolledAt).getTime();
+  if (Number.isNaN(start)) {
+    return { monthsRemaining: null, accessElapsedPercent: 0 };
+  }
+
+  const end = start + PROGRAM_ACCESS_MONTHS * 30.44 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const total = Math.max(1, end - start);
+  const elapsed = Math.min(total, Math.max(0, now - start));
+  const remainingMs = Math.max(0, end - now);
+  const monthsRemaining = Math.max(
+    0,
+    Math.ceil(remainingMs / (30.44 * 24 * 60 * 60 * 1000))
+  );
+
+  return {
+    monthsRemaining,
+    accessElapsedPercent: Math.round((elapsed / total) * 100),
+  };
+}
+
+/** Sidebar / continue-learning journey rollup for the student portal. */
+export async function getStudentJourneySummary(
+  studentId: string
+): Promise<StudentJourneySummary> {
+  const course = await getPublishedCourse();
+  const empty: StudentJourneySummary = {
+    currentStage: "Foundation",
+    currentMilestoneId: null,
+    completionPercent: 0,
+    continueHref: "/roadmap",
+    enrolledAt: null,
+    monthsRemaining: null,
+    accessElapsedPercent: 0,
+  };
+
+  if (!course) return empty;
+
+  const enrollment = await getEnrollment(studentId, course.id);
+  const access = computeProgramAccess(enrollment?.enrolled_at ?? null);
+
+  if (!enrollment) {
+    return { ...empty, ...access };
+  }
+
+  const [roadmap, completedIds] = await Promise.all([
+    getCourseWithRoadmap(course.id),
+    getCompletedLessonIds(studentId),
+  ]);
+
+  const currentMilestone =
+    roadmap.find((ms) => {
+      const lessons = ms.modules.flatMap((m) => m.lessons);
+      return lessons.some((l) => !completedIds.has(l.id));
+    }) ?? roadmap[roadmap.length - 1];
+
+  if (!currentMilestone) {
+    return {
+      ...empty,
+      completionPercent: enrollment.completion_percent,
+      enrolledAt: enrollment.enrolled_at,
+      ...access,
+    };
+  }
+
+  let continueHref = "/roadmap";
+  const orderedLessons = [...currentMilestone.modules]
+    .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+    .flatMap((m) =>
+      [...m.lessons].sort(
+        (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+      )
+    );
+  const nextLesson = orderedLessons.find((l) => !completedIds.has(l.id));
+  if (nextLesson) {
+    continueHref = `/lessons/${nextLesson.id}`;
+  } else {
+    const task = await getTaskByMilestoneId(currentMilestone.id);
+    if (task) continueHref = `/tasks/${currentMilestone.id}`;
+  }
+
+  return {
+    currentStage: currentMilestone.title,
+    currentMilestoneId: currentMilestone.id,
+    completionPercent: enrollment.completion_percent,
+    continueHref,
+    enrolledAt: enrollment.enrolled_at,
+    monthsRemaining: access.monthsRemaining,
+    accessElapsedPercent: access.accessElapsedPercent,
+  };
+}
+
 export async function getAnnouncements(limit = 5): Promise<Announcement[]> {
   const supabase = await createClient();
   const { data } = await supabase

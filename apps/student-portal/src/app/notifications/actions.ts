@@ -22,4 +22,5 @@ export async function markNotificationRead(formData: FormData) {
   if (error) throw new Error(error.message);
 
   revalidatePath("/", "layout");
+  revalidatePath("/notifications");
 }

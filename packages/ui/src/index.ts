@@ -5,7 +5,7 @@ export { NotificationBell, BadgeMedallion } from "./notification-bell";
 export { KpiCard } from "./kpi-card";
 export { ProgressBar } from "./progress-bar";
 export { StatusPill } from "./status-pill";
-export { NavSidebar } from "./nav-sidebar";
+export { NavSidebar, NavItemRow } from "./nav-sidebar";
 export type { NavGroup, NavItem } from "./nav-sidebar";
 export { MobileNav } from "./mobile-nav";
 export { JourneyStrip } from "./journey-strip";

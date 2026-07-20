@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import type { NavGroup } from "./nav-sidebar";
+import { NavItemRow, type NavGroup } from "./nav-sidebar";
 
 interface MobileNavProps {
   groups: NavGroup[];
@@ -78,29 +78,11 @@ export function MobileNav({ groups, brand, footer }: MobileNavProps) {
                   </p>
                   <ul className="space-y-1">
                     {group.items.map((item) => (
-                      <li key={item.href}>
-                        <a
-                          href={item.href}
-                          onClick={() => setOpen(false)}
-                          className={`group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                            item.active
-                              ? "bg-gradient-to-r from-scalex-red/15 to-transparent text-foreground"
-                              : "text-muted hover:bg-surface-3 hover:text-foreground"
-                          }`}
-                        >
-                          {item.icon && (
-                            <span
-                              className={
-                                item.active
-                                  ? "text-scalex-red"
-                                  : "text-subtle"
-                              }
-                            >
-                              {item.icon}
-                            </span>
-                          )}
-                          {item.label}
-                        </a>
+                      <li key={`${group.title}-${item.label}-${item.href}`}>
+                        <NavItemRow
+                          item={item}
+                          onNavigate={() => setOpen(false)}
+                        />
                       </li>
                     ))}
                   </ul>
