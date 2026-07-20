@@ -89,7 +89,7 @@ function formatDuration(totalSeconds: number) {
   return rem === 0 ? `${hours} hr` : `${hours} hr ${rem} min`;
 }
 
-function promptsForStage(stageTitle: string): string[] {
+export function promptsForStage(stageTitle: string): string[] {
   const stage = stageTitle.toLowerCase();
   if (stage.includes("foundation") || stage.includes("setup")) {
     return [
