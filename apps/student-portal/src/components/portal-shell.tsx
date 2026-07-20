@@ -220,13 +220,10 @@ function initialsFromName(name: string) {
   return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
 }
 
-function isItemActive(activePath: string, item: NavItem, continueHref: string) {
+function isItemActive(activePath: string, item: NavItem) {
   if (item.kind === "action") return false;
   if (item.label === "Continue Learning") {
-    if (activePath.startsWith("/tasks/")) return false;
-    return (
-      activePath === continueHref || activePath.startsWith("/lessons/")
-    );
+    return activePath === "/continue-learning";
   }
   if (item.href === "/tasks") {
     return activePath === "/tasks" || activePath.startsWith("/tasks/");
@@ -356,7 +353,7 @@ export async function PortalShell({
         },
         {
           label: "Continue Learning",
-          href: journey.continueHref,
+          href: "/continue-learning",
           icon: ContinueIcon,
           emphasis: "primary" as const,
         },
@@ -442,7 +439,7 @@ export async function PortalShell({
     ...group,
     items: group.items.map((item) => ({
       ...item,
-      active: isItemActive(activePath, item, journey.continueHref),
+      active: isItemActive(activePath, item),
     })),
   }));
 

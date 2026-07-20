@@ -9,9 +9,9 @@ interface ChatMessage {
   content: string;
 }
 
-export function AiChatPanel() {
+export function AiChatPanel({ initialPrompt = "" }: { initialPrompt?: string }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialPrompt);
   const [chatId, setChatId] = useState<string | null>(null);
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);

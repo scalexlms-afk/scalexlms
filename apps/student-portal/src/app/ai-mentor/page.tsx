@@ -2,8 +2,15 @@ import { PortalShell } from "@/components/portal-shell";
 import { AiChatPanel } from "@/components/ai-chat-panel";
 import { requireStudentProfile } from "@/lib/auth";
 
-export default async function AiMentorPage() {
+export default async function AiMentorPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   await requireStudentProfile();
+  const params = await searchParams;
+  const initialPrompt =
+    typeof params.q === "string" ? params.q.trim().slice(0, 500) : "";
 
   return (
     <PortalShell activePath="/ai-mentor">
@@ -21,7 +28,7 @@ export default async function AiMentorPage() {
           </p>
         </div>
 
-        <AiChatPanel />
+        <AiChatPanel initialPrompt={initialPrompt} />
       </div>
     </PortalShell>
   );
