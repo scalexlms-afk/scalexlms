@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   NavSidebar,
   MobileNav,
@@ -247,6 +248,7 @@ export async function AdminShell({
         <NavSidebar
           groups={groups}
           brand={<Logo size="md" showTagline />}
+          linkComponent={Link}
           footer={
             <div className="text-sm">
               <p className="font-medium text-foreground">
@@ -277,6 +279,7 @@ export async function AdminShell({
             <MobileNav
               groups={groups}
               brand={<Logo size="sm" />}
+              linkComponent={Link}
               footer={
                 <div className="text-sm">
                   <p className="font-medium text-foreground">

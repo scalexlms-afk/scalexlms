@@ -68,7 +68,7 @@ function TimelineNode({
   }
   if (status === "current") {
     return (
-      <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-scalex-red bg-scalex-red/15 text-[10px] font-bold text-scalex-red ring-4 ring-scalex-red/15">
+      <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-accent-amber bg-accent-amber/15 text-accent-amber ring-4 ring-accent-amber/15">
         <Circle weight="fill" className="h-2 w-2" aria-hidden />
       </span>
     );

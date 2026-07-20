@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import {
   Clock,
   Flag,
-  FolderOpen,
   Star,
   Waveform,
 } from "@phosphor-icons/react/dist/ssr";
@@ -13,6 +12,7 @@ import {
   academyEyebrowMutedClass,
 } from "@/components/academy-cta";
 import { AcademyHeroBackdrop } from "@/components/academy-hero-backdrop";
+import { AcademyIllustration } from "@/components/academy-illustration";
 
 export function MissionHero({
   title,
@@ -73,13 +73,10 @@ export function MissionHero({
         </div>
 
         <div className="hidden shrink-0 lg:block" aria-hidden="true">
-          <div className="relative flex h-40 w-40 items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-scalex-red/10 blur-2xl" />
-            <FolderOpen
-              weight="duotone"
-              className="relative h-28 w-28 text-scalex-red"
-            />
-          </div>
+          <AcademyIllustration
+            src="/illustrations/folder-upload.png"
+            size={160}
+          />
         </div>
       </div>
     </Card>

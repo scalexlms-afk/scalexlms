@@ -1,7 +1,7 @@
-import { RocketLaunch } from "@phosphor-icons/react/dist/ssr";
 import { Card, ProgressBar } from "@scalex/ui";
 import { academyEyebrowMutedClass } from "@/components/academy-cta";
 import { AcademyHeroBackdrop } from "@/components/academy-hero-backdrop";
+import { AcademyIllustration } from "@/components/academy-illustration";
 
 export function StageHero({
   stageTitle,
@@ -39,20 +39,12 @@ export function StageHero({
           className="pointer-events-none hidden shrink-0 md:block"
           aria-hidden="true"
         >
-          <div className="relative flex h-28 w-28 items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-scalex-red/25 to-transparent blur-xl" />
-            <RocketLaunch
-              weight="duotone"
-              className="relative h-16 w-16 text-scalex-red"
-            />
-          </div>
+          <AcademyIllustration
+            src="/illustrations/rocket-purple.png"
+            size={128}
+          />
         </div>
       </div>
-
-      <div
-        className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-scalex-red/10 blur-3xl"
-        aria-hidden="true"
-      />
     </Card>
   );
 }

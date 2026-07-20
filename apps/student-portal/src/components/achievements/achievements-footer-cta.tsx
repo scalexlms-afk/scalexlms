@@ -8,7 +8,7 @@ export function AchievementsFooterCta({ href }: { href: string }) {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-start gap-3">
           <span
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-gold/20 text-accent-gold metallic-edge"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent-purple/20 text-accent-purple metallic-edge"
             aria-hidden
           >
             <Star weight="fill" className="h-5 w-5" />

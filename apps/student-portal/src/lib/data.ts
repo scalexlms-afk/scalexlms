@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient, createServiceClient } from "@scalex/db/server";
 import type {
   Course,
@@ -147,7 +148,7 @@ export async function isMilestoneUnlocked(
   return data === true;
 }
 
-export async function getPublishedCourse(): Promise<Course | null> {
+export const getPublishedCourse = cache(async (): Promise<Course | null> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("courses")
@@ -157,9 +158,9 @@ export async function getPublishedCourse(): Promise<Course | null> {
     .limit(1)
     .single();
   return data;
-}
+});
 
-export async function getCourseWithRoadmap(courseId: string) {
+export const getCourseWithRoadmap = cache(async (courseId: string) => {
   const supabase = await createClient();
   const { data: milestones } = await supabase
     .from("milestones")
@@ -170,7 +171,7 @@ export async function getCourseWithRoadmap(courseId: string) {
   return (milestones ?? []) as (Milestone & {
     modules: (Module & { lessons: Lesson[] })[];
   })[];
-}
+});
 
 export async function getEnrollment(studentId: string, courseId: string) {
   const supabase = await createClient();
@@ -268,9 +269,8 @@ function computeProgramAccess(enrolledAt: string | null): {
 }
 
 /** Sidebar / continue-learning journey rollup for the student portal. */
-export async function getStudentJourneySummary(
-  studentId: string
-): Promise<StudentJourneySummary> {
+export const getStudentJourneySummary = cache(
+  async (studentId: string): Promise<StudentJourneySummary> => {
   const course = await getPublishedCourse();
   const empty: StudentJourneySummary = {
     currentStage: "Foundation",
@@ -336,7 +336,7 @@ export async function getStudentJourneySummary(
     monthsRemaining: access.monthsRemaining,
     accessElapsedPercent: access.accessElapsedPercent,
   };
-}
+});
 
 export async function getAnnouncements(limit = 5): Promise<Announcement[]> {
   const supabase = await createClient();

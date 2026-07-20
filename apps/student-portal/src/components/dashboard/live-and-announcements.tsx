@@ -109,13 +109,19 @@ export function LiveAndAnnouncements({
           <p className="text-sm text-muted">No announcements yet.</p>
         ) : (
           <ul className="space-y-4">
-            {announcements.map((a) => (
+            {announcements.map((a, index) => (
               <li
                 key={a.id}
                 className="border-b border-line pb-4 last:border-0 last:pb-0"
               >
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-scalex-red/10 text-scalex-red metallic-edge">
+                  <span
+                    className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl metallic-edge ${
+                      index % 2 === 0
+                        ? "bg-accent-purple/15 text-accent-purple"
+                        : "bg-accent-green/15 text-accent-green"
+                    }`}
+                  >
                     <Megaphone weight="duotone" className="h-4 w-4" aria-hidden />
                   </span>
                   <div className="min-w-0">

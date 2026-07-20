@@ -24,7 +24,7 @@ export function MilestonePanel({
     <div className="mt-4 space-y-5 border-t border-line pt-5">
       <div className="rounded-xl border border-line bg-surface-3/40 p-4 metallic-edge">
         <div className="flex items-start gap-2">
-          <span className="mt-0.5 text-scalex-red" aria-hidden>
+          <span className="mt-0.5 text-accent-purple" aria-hidden>
             <Gift weight="duotone" className="h-4 w-4" />
           </span>
           <div>

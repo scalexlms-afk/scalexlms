@@ -20,6 +20,7 @@ export function HelpLinks({ premium }: { premium: boolean }) {
       href: "/ai-mentor",
       cta: "Chat →",
       iconClass: "bg-accent-purple/15 text-accent-purple",
+      ctaClass: "text-accent-purple",
       icon: <Robot weight="duotone" className="h-5 w-5" />,
     },
     {
@@ -28,6 +29,7 @@ export function HelpLinks({ premium }: { premium: boolean }) {
       href: mentorHref,
       cta: mentorCta,
       iconClass: "bg-accent-amber/15 text-accent-amber",
+      ctaClass: "text-accent-amber",
       icon: <UserCircle weight="duotone" className="h-5 w-5" />,
     },
     {
@@ -36,6 +38,7 @@ export function HelpLinks({ premium }: { premium: boolean }) {
       href: "/community",
       cta: "Go now →",
       iconClass: "bg-accent-green/15 text-accent-green",
+      ctaClass: "text-accent-green",
       icon: <UsersThree weight="duotone" className="h-5 w-5" />,
     },
   ];
@@ -60,7 +63,7 @@ export function HelpLinks({ premium }: { premium: boolean }) {
             <p className="mt-1 flex-1 text-sm text-muted">{item.body}</p>
             <Link
               href={item.href}
-              className="mt-4 text-sm font-semibold text-scalex-red hover:underline"
+              className={`mt-4 text-sm font-semibold hover:underline ${item.ctaClass}`}
             >
               {item.cta}
             </Link>

@@ -1,4 +1,3 @@
-import { FolderOpen } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@scalex/ui";
 import {
   AcademyCtaAnchor,
@@ -7,6 +6,7 @@ import {
   academyEyebrowMutedClass,
 } from "@/components/academy-cta";
 import { AcademyHeroBackdrop } from "@/components/academy-hero-backdrop";
+import { AcademyIllustration } from "@/components/academy-illustration";
 
 export function CurrentTaskHero({
   title,
@@ -64,13 +64,10 @@ export function CurrentTaskHero({
         </div>
 
         <div className="hidden shrink-0 lg:block" aria-hidden="true">
-          <div className="relative flex h-36 w-36 items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-scalex-red/15 blur-2xl" />
-            <FolderOpen
-              weight="duotone"
-              className="relative h-24 w-24 text-scalex-red"
-            />
-          </div>
+          <AcademyIllustration
+            src="/illustrations/folder-upload.png"
+            size={144}
+          />
         </div>
       </div>
     </Card>

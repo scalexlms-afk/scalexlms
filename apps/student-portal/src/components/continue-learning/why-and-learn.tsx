@@ -1,11 +1,8 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  Check,
-  Crosshair,
-} from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, Check } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@scalex/ui";
 import { academyEyebrowClass } from "@/components/academy-cta";
+import { AcademyIllustration } from "@/components/academy-illustration";
 
 export function WhyAndLearn({
   whyThisMatters,
@@ -19,7 +16,9 @@ export function WhyAndLearn({
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <Card className="relative overflow-hidden">
-        <h2 className="font-display text-lg font-semibold">Why This Matters</h2>
+        <h2 className="font-display text-lg font-semibold text-accent-gold">
+          Why This Matters
+        </h2>
         <p className="mt-3 text-sm leading-relaxed text-muted">{whyThisMatters}</p>
         <div className="mt-5 rounded-xl border border-line bg-surface-3/50 p-4 metallic-edge">
           <p className={academyEyebrowClass}>Completing this step unlocks</p>
@@ -36,13 +35,12 @@ export function WhyAndLearn({
 
       <Card className="relative overflow-hidden">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="font-display text-lg font-semibold">
+          <h2 className="font-display text-lg font-semibold text-accent-green">
             What You&apos;ll Learn
           </h2>
-          <Crosshair
-            weight="duotone"
-            className="h-10 w-10 shrink-0 text-scalex-red"
-            aria-hidden
+          <AcademyIllustration
+            src="/illustrations/target-arrow.png"
+            size={72}
           />
         </div>
         {learnItems.length === 0 ? (

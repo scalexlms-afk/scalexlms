@@ -1,11 +1,5 @@
-import {
-  NavSidebar,
-  MobileNav,
-  Logo,
-  ThemeToggle,
-  StatusPill,
-} from "@scalex/ui";
-import type { NavGroup, NavItem } from "@scalex/ui";
+import { StatusPill } from "@scalex/ui";
+import type { NavGroup } from "@scalex/ui";
 import Image from "next/image";
 import {
   Bell,
@@ -23,35 +17,13 @@ import {
   UsersThree,
   VideoCamera,
 } from "@phosphor-icons/react/dist/ssr";
-import { createClient } from "@scalex/db/server";
 import { planLabel, planPillVariant } from "@scalex/db";
-import { redirect } from "next/navigation";
+import { getSessionProfile } from "@/lib/auth";
 import { getNotifications, getStudentJourneySummary } from "@/lib/data";
+import { PortalChrome } from "@/components/portal-chrome";
+import { redirect } from "next/navigation";
 
 const navIcon = "h-4 w-4";
-
-function isItemActive(activePath: string, item: NavItem) {
-  if (item.kind === "action") return false;
-  if (item.label === "Continue Learning") {
-    return activePath === "/continue-learning";
-  }
-  if (item.href === "/tasks") {
-    return activePath === "/tasks" || activePath.startsWith("/tasks/");
-  }
-  if (item.href === "/billing") {
-    return activePath === "/billing" || activePath.startsWith("/payment");
-  }
-  if (item.href === "/notifications") {
-    return activePath === "/notifications";
-  }
-  if (item.href === "/achievements") {
-    return activePath === "/achievements";
-  }
-  if (item.href === "/settings") {
-    return activePath === "/settings";
-  }
-  return activePath === item.href || activePath.startsWith(`${item.href}/`);
-}
 
 function initialsFromName(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -131,40 +103,25 @@ function SidebarFooter({
 
 export async function PortalShell({
   children,
-  activePath,
 }: {
   children: React.ReactNode;
-  activePath: string;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await getSessionProfile();
+  if (!session) redirect("/login");
+  if (session.profile.role !== "student") redirect("/unauthorized");
 
-  if (!user) redirect("/login");
+  const { userId, profile } = session;
 
-  const [{ data: profile }, notifications, journey] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("name, email, plan, avatar_url")
-      .eq("id", user.id)
-      .single(),
-    getNotifications(user.id),
-    getStudentJourneySummary(user.id),
+  const [notifications, journey] = await Promise.all([
+    getNotifications(userId),
+    getStudentJourneySummary(userId),
   ]);
 
-  const profileData = profile as {
-    name: string;
-    email: string;
-    plan: string | null;
-    avatar_url: string | null;
-  } | null;
-
   const unreadCount = notifications.filter((n) => !n.read_at).length;
-  const name = profileData?.name ?? "Student";
-  const email = profileData?.email ?? "";
+  const name = profile.name ?? "Student";
+  const email = profile.email ?? "";
 
-  const navGroups: NavGroup[] = [
+  const groups: NavGroup[] = [
     {
       title: "Academy",
       items: [
@@ -257,58 +214,20 @@ export async function PortalShell({
     },
   ];
 
-  const groups: NavGroup[] = navGroups.map((group) => ({
-    ...group,
-    items: group.items.map((item) => ({
-      ...item,
-      active: isItemActive(activePath, item),
-    })),
-  }));
-
   const footer = (
     <SidebarFooter
       name={name}
       email={email}
-      avatarUrl={profileData?.avatar_url ?? null}
-      plan={profileData?.plan ?? null}
+      avatarUrl={profile.avatar_url ?? null}
+      plan={profile.plan ?? null}
       monthsRemaining={journey.monthsRemaining}
       accessElapsedPercent={journey.accessElapsedPercent}
     />
   );
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden bg-surface">
-      <div
-        className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_72%_-8%,rgba(227,30,36,0.12),transparent_32%),radial-gradient(circle_at_105%_72%,rgba(227,30,36,0.055),transparent_28%)]"
-        aria-hidden
-      />
-      <div className="sticky top-0 hidden h-screen shrink-0 md:block">
-        <NavSidebar
-          groups={groups}
-          brand={<Logo size="md" showTagline />}
-          footer={footer}
-        />
-      </div>
-
-      <div className="relative flex min-w-0 flex-1 flex-col">
-        <header className="pointer-events-none sticky top-0 z-20 flex h-14 items-center justify-end gap-2 px-4">
-          {/* Mobile-only menu control — sidebar is hidden below md */}
-          <div className="pointer-events-auto mr-auto md:hidden">
-            <MobileNav
-              groups={groups}
-              brand={<Logo size="sm" />}
-              footer={footer}
-            />
-          </div>
-          <div className="pointer-events-auto rounded-full border border-line glass-strong p-0.5 metallic-edge shadow-[0_14px_38px_-24px_rgba(0,0,0,0.85)]">
-            <ThemeToggle />
-          </div>
-        </header>
-
-        <main className="relative z-10 flex-1 p-4 pt-2 md:p-8 md:pt-2">
-          {children}
-        </main>
-      </div>
-    </div>
+    <PortalChrome groups={groups} footer={footer}>
+      {children}
+    </PortalChrome>
   );
 }

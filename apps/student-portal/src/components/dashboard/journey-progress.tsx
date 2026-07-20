@@ -73,7 +73,7 @@ export function JourneyProgress({
         {nextMilestone ? (
           <>
             <div className="mt-4 flex items-start gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-scalex-red/15 text-scalex-red metallic-edge">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-purple/15 text-accent-purple metallic-edge">
                 <Gift weight="duotone" className="h-5 w-5" />
               </span>
               <div className="min-w-0">
@@ -123,7 +123,7 @@ export function JourneyProgress({
 function Node({ status }: { status: DashboardMilestone["status"] }) {
   if (status === "completed") {
     return (
-      <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-scalex-red bg-scalex-red text-white">
+      <span className="relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-accent-green bg-accent-green/15 text-accent-green">
         <Check weight="bold" className="h-3 w-3" />
       </span>
     );

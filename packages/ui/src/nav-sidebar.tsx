@@ -1,4 +1,8 @@
-import type { ReactNode } from "react";
+import type {
+  ComponentType,
+  MouseEventHandler,
+  ReactNode,
+} from "react";
 
 export interface NavItem {
   label: string;
@@ -18,10 +22,37 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+export type NavLinkComponent = ComponentType<{
+  href: string;
+  className?: string;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
+  children: ReactNode;
+}>;
+
+function DefaultNavLink({
+  href,
+  className,
+  onClick,
+  children,
+}: {
+  href: string;
+  className?: string;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
+  children: ReactNode;
+}) {
+  return (
+    <a href={href} className={className} onClick={onClick}>
+      {children}
+    </a>
+  );
+}
+
 interface NavSidebarProps {
   groups: NavGroup[];
   brand?: ReactNode;
   footer?: ReactNode;
+  linkComponent?: NavLinkComponent;
+  className?: string;
 }
 
 function pillToneClass(tone: "ai" | "neutral" = "neutral") {
@@ -33,9 +64,11 @@ function pillToneClass(tone: "ai" | "neutral" = "neutral") {
 export function NavItemRow({
   item,
   onNavigate,
+  linkComponent: LinkComponent = DefaultNavLink,
 }: {
   item: NavItem;
   onNavigate?: () => void;
+  linkComponent?: NavLinkComponent;
 }) {
   const isPrimary = item.emphasis === "primary" && !item.active;
   const rowClass = `group relative flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
@@ -97,15 +130,27 @@ export function NavItemRow({
   }
 
   return (
-    <a href={item.href} onClick={onNavigate} className={rowClass}>
+    <LinkComponent
+      href={item.href}
+      onClick={onNavigate}
+      className={rowClass}
+    >
       {content}
-    </a>
+    </LinkComponent>
   );
 }
 
-export function NavSidebar({ groups, brand, footer }: NavSidebarProps) {
+export function NavSidebar({
+  groups,
+  brand,
+  footer,
+  linkComponent,
+  className = "",
+}: NavSidebarProps) {
   return (
-    <aside className="relative flex h-full w-64 flex-col overflow-hidden border-r border-line bg-surface/90 backdrop-blur-xl metallic-edge">
+    <aside
+      className={`relative flex w-64 min-h-screen shrink-0 flex-col border-r border-line bg-surface/90 backdrop-blur-xl metallic-edge ${className}`}
+    >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_25%_0%,rgba(227,30,36,0.15),transparent_68%)]"
         aria-hidden
@@ -113,7 +158,7 @@ export function NavSidebar({ groups, brand, footer }: NavSidebarProps) {
       {brand && (
         <div className="relative border-b border-line px-5 py-6">{brand}</div>
       )}
-      <nav className="relative flex-1 space-y-6 overflow-y-auto px-3 py-5">
+      <nav className="relative flex-1 space-y-6 px-3 py-5">
         {groups.map((group) => (
           <div key={group.title}>
             <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">
@@ -122,7 +167,7 @@ export function NavSidebar({ groups, brand, footer }: NavSidebarProps) {
             <ul className="space-y-1">
               {group.items.map((item) => (
                 <li key={`${group.title}-${item.label}-${item.href}`}>
-                  <NavItemRow item={item} />
+                  <NavItemRow item={item} linkComponent={linkComponent} />
                 </li>
               ))}
             </ul>
@@ -130,7 +175,7 @@ export function NavSidebar({ groups, brand, footer }: NavSidebarProps) {
         ))}
       </nav>
       {footer && (
-        <div className="relative border-t border-line bg-surface/35 px-5 py-4 backdrop-blur-sm">
+        <div className="relative mt-auto border-t border-line bg-surface/35 px-5 py-4 backdrop-blur-sm">
           {footer}
         </div>
       )}

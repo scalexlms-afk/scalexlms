@@ -1,11 +1,12 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@scalex/db/server";
 import type { Profile } from "@scalex/db/types";
 
-export async function getSessionProfile(): Promise<{
+export const getSessionProfile = cache(async (): Promise<{
   userId: string;
   profile: Profile;
-} | null> {
+} | null> => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,7 +23,7 @@ export async function getSessionProfile(): Promise<{
   if (!profile) return null;
 
   return { userId: user.id, profile: profile as Profile };
-}
+});
 
 export async function requireStudentProfile() {
   const session = await getSessionProfile();

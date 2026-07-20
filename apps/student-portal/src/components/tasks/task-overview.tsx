@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { Check, Robot } from "@phosphor-icons/react/dist/ssr";
+import {
+  Check,
+  FileText,
+  Robot,
+  ShieldCheck,
+  Target,
+} from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@scalex/ui";
 
 export function TaskOverview({
@@ -18,21 +24,36 @@ export function TaskOverview({
       <Card className="space-y-5">
         <div>
           <h2 className="font-display text-lg font-semibold">Task Overview</h2>
-          <p className="mt-1 text-xs font-semibold uppercase tracking-wider text-subtle">
-            Objective
-          </p>
+          <div className="mt-3 flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-scalex-red/15 text-scalex-red metallic-edge">
+              <Target weight="duotone" className="h-4 w-4" aria-hidden />
+            </span>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-subtle">
+              Objective
+            </p>
+          </div>
           <p className="mt-2 text-sm leading-relaxed text-muted">{objective}</p>
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-subtle">
-            Why This Matters
-          </p>
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-gold/15 text-accent-gold metallic-edge">
+              <ShieldCheck weight="duotone" className="h-4 w-4" aria-hidden />
+            </span>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-subtle">
+              Why This Matters
+            </p>
+          </div>
           <p className="mt-2 text-sm leading-relaxed text-muted">{whyThisMatters}</p>
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-subtle">
-            Submission Requirements
-          </p>
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-purple/15 text-accent-purple metallic-edge">
+              <FileText weight="duotone" className="h-4 w-4" aria-hidden />
+            </span>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-subtle">
+              Submission Requirements
+            </p>
+          </div>
           <ul className="mt-3 space-y-2">
             {requirements.map((item) => (
               <li key={item} className="flex items-start gap-2 text-sm text-foreground">

@@ -1,10 +1,10 @@
-import { RocketLaunch } from "@phosphor-icons/react/dist/ssr";
 import { Card, ProgressBar } from "@scalex/ui";
 import {
   AcademyCtaLink,
   academyEyebrowMutedClass,
 } from "@/components/academy-cta";
 import { AcademyHeroBackdrop } from "@/components/academy-hero-backdrop";
+import { AcademyIllustration } from "@/components/academy-illustration";
 
 export function RoadmapHero({
   currentStage,
@@ -45,17 +45,13 @@ export function RoadmapHero({
         </div>
 
         <div className="hidden justify-center lg:flex" aria-hidden="true">
-          <div className="relative flex h-28 w-28 items-center justify-center">
-            <div className="absolute inset-0 rounded-full bg-scalex-red/20 blur-2xl" />
-            <RocketLaunch
-              weight="duotone"
-              className="relative h-16 w-16 text-scalex-red"
-            />
-          </div>
+          <AcademyIllustration src="/illustrations/rocket-red.png" size={128} />
         </div>
 
         <div className="min-w-0 lg:text-right">
-          <p className={academyEyebrowMutedClass}>Next Unlock</p>
+          <p className={`${academyEyebrowMutedClass} text-accent-purple`}>
+            Next Unlock
+          </p>
           <p className="mt-1 font-display text-xl font-bold text-foreground">
             {unlocksLabel}
           </p>

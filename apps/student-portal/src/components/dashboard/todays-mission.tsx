@@ -1,4 +1,4 @@
-import { ClipboardText, Star } from "@phosphor-icons/react/dist/ssr";
+import { Star } from "@phosphor-icons/react/dist/ssr";
 import { Card, StatusPill } from "@scalex/ui";
 import {
   submissionStatusLabel,
@@ -10,6 +10,7 @@ import {
   academyEyebrowClass,
   academyEyebrowMutedClass,
 } from "@/components/academy-cta";
+import { AcademyIllustration } from "@/components/academy-illustration";
 
 export function TodaysMission({
   title,
@@ -34,11 +35,11 @@ export function TodaysMission({
         : `${lessonsLeft} lessons left`;
 
   return (
-    <Card className="relative overflow-hidden border-scalex-red/20 bg-gradient-to-br from-scalex-red/12 via-surface-2 to-surface-2">
+    <Card className="relative overflow-hidden border-scalex-red/30 bg-scalex-red/[0.07]">
       <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-scalex-red/15 text-scalex-red metallic-edge">
+            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-scalex-red/15 text-scalex-red metallic-edge">
               <Star weight="fill" className="h-4 w-4" />
             </span>
             <p className={academyEyebrowMutedClass}>Today&apos;s Mission</p>
@@ -72,12 +73,10 @@ export function TodaysMission({
         </div>
 
         <div className="hidden shrink-0 lg:block" aria-hidden="true">
-          <div className="flex h-36 w-36 items-center justify-center rounded-2xl bg-surface-3/80 ring-1 ring-line metallic-edge">
-            <ClipboardText
-              weight="duotone"
-              className="h-20 w-20 text-scalex-red"
-            />
-          </div>
+          <AcademyIllustration
+            src="/illustrations/clipboard-checks.png"
+            size={160}
+          />
         </div>
       </div>
     </Card>

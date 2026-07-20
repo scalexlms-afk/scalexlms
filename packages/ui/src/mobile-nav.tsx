@@ -2,15 +2,25 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { List, X } from "@phosphor-icons/react";
-import { NavItemRow, type NavGroup } from "./nav-sidebar";
+import {
+  NavItemRow,
+  type NavGroup,
+  type NavLinkComponent,
+} from "./nav-sidebar";
 
 interface MobileNavProps {
   groups: NavGroup[];
   brand?: ReactNode;
   footer?: ReactNode;
+  linkComponent?: NavLinkComponent;
 }
 
-export function MobileNav({ groups, brand, footer }: MobileNavProps) {
+export function MobileNav({
+  groups,
+  brand,
+  footer,
+  linkComponent,
+}: MobileNavProps) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -72,6 +82,7 @@ export function MobileNav({ groups, brand, footer }: MobileNavProps) {
                       <li key={`${group.title}-${item.label}-${item.href}`}>
                         <NavItemRow
                           item={item}
+                          linkComponent={linkComponent}
                           onNavigate={() => setOpen(false)}
                         />
                       </li>

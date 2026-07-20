@@ -1,6 +1,6 @@
-import { Gift } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@scalex/ui";
 import { academyEyebrowMutedClass } from "@/components/academy-cta";
+import { AcademyIllustration } from "@/components/academy-illustration";
 import type { AchievementItem } from "@/lib/achievements";
 
 export function NextAchievementBar({
@@ -24,7 +24,7 @@ export function NextAchievementBar({
   const pct = achievement.progressPercent;
 
   return (
-    <Card className="relative overflow-hidden border-scalex-red/25 bg-gradient-to-r from-scalex-red/10 via-surface-2 to-surface-2">
+    <Card className="relative overflow-hidden border-accent-amber/30 bg-accent-amber/[0.07]">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
           <p className={academyEyebrowMutedClass}>Next Achievement</p>
@@ -34,24 +34,21 @@ export function NextAchievementBar({
           <div className="mt-3 max-w-xl">
             <div className="mb-1 flex justify-between text-xs text-muted">
               <span>
-                {achievement.state === "in_progress" ? "In progress" : "Up next"}
+                {achievement.state === "in_progress"
+                  ? `${pct}% Complete`
+                  : "Up next"}
               </span>
-              <span>{pct}%</span>
+              <span className="font-semibold text-accent-amber">{pct}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-line">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-scalex-red-dark to-scalex-red shadow-[0_0_12px_-2px_rgba(227,30,36,0.6)] transition-all"
+                className="h-full rounded-full bg-accent-amber transition-all"
                 style={{ width: `${Math.max(pct, 4)}%` }}
               />
             </div>
           </div>
         </div>
-        <span
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-scalex-red/15 text-scalex-red metallic-edge"
-          aria-hidden
-        >
-          <Gift weight="duotone" className="h-7 w-7" />
-        </span>
+        <AcademyIllustration src="/illustrations/gift-box.png" size={72} />
       </div>
     </Card>
   );

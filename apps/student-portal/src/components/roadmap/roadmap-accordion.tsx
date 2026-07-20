@@ -113,7 +113,7 @@ function MilestoneNode({
 }) {
   if (status === "completed") {
     return (
-      <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-scalex-red bg-scalex-red text-white shadow-[0_0_20px_-10px_rgba(227,30,36,0.8)]">
+      <span className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-accent-green bg-accent-green/15 text-accent-green">
         <Check weight="bold" className="h-4 w-4" aria-hidden />
       </span>
     );

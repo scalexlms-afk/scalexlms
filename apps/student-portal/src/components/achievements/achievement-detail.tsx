@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card } from "@scalex/ui";
+import { StatusPill, Card } from "@scalex/ui";
 import { academyEyebrowClass } from "@/components/academy-cta";
 import type { AchievementItem } from "@/lib/achievements";
 
@@ -21,17 +21,34 @@ export function AchievementDetail({
     );
   }
 
+  const barClass =
+    achievement.state === "completed"
+      ? "bg-accent-green"
+      : achievement.state === "in_progress"
+        ? "bg-accent-amber"
+        : "bg-surface-3";
+
   return (
     <Card className="space-y-4">
-      <div>
-        <p className={academyEyebrowClass}>Achievement Details</p>
-        <h2 className="mt-1 font-display text-xl font-bold text-foreground">
-          {achievement.title}
-        </h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted">
-          {achievement.description}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className={academyEyebrowClass}>Achievement Details</p>
+          <h2 className="mt-1 font-display text-xl font-bold text-foreground">
+            {achievement.title}
+          </h2>
+        </div>
+        {achievement.state === "in_progress" ? (
+          <StatusPill label="In Progress" variant="pending" />
+        ) : achievement.state === "completed" ? (
+          <StatusPill label="Completed" variant="approved" />
+        ) : (
+          <StatusPill label="Locked" variant="neutral" />
+        )}
       </div>
+
+      <p className="text-sm leading-relaxed text-muted">
+        {achievement.description}
+      </p>
 
       <DetailRow label="Requirement" value={achievement.requirement} />
       <DetailRow label="Why It Matters" value={achievement.whyItMatters} />
@@ -45,7 +62,7 @@ export function AchievementDetail({
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-line">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-scalex-red-dark to-scalex-red shadow-[0_0_12px_-2px_rgba(227,30,36,0.6)]"
+            className={`h-full rounded-full ${barClass}`}
             style={{ width: `${achievement.progressPercent}%` }}
           />
         </div>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { FileArrowUp } from "@phosphor-icons/react";
 import { Button, Card } from "@scalex/ui";
 import { inputClasses } from "@/components/field";
-import { submitTaskAction } from "@/app/tasks/actions";
+import { submitTaskAction } from "@/app/(portal)/tasks/actions";
 
 export function TaskSubmitForm({
   milestoneId,

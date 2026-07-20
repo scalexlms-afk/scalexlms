@@ -6,7 +6,7 @@ export { KpiCard } from "./kpi-card";
 export { ProgressBar } from "./progress-bar";
 export { StatusPill } from "./status-pill";
 export { NavSidebar, NavItemRow } from "./nav-sidebar";
-export type { NavGroup, NavItem } from "./nav-sidebar";
+export type { NavGroup, NavItem, NavLinkComponent } from "./nav-sidebar";
 export { MobileNav } from "./mobile-nav";
 export { JourneyStrip } from "./journey-strip";
 export type { JourneyStep } from "./journey-strip";

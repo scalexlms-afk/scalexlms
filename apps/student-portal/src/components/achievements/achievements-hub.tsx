@@ -139,7 +139,7 @@ function AchievementCard({
   const accent = CATEGORY_ACCENT[item.category];
   const border =
     item.state === "in_progress"
-      ? "border-scalex-red/50 ring-1 ring-scalex-red/25 shadow-[0_18px_40px_-30px_rgba(227,30,36,0.7)]"
+      ? "border-accent-amber/50 ring-1 ring-accent-amber/25 shadow-[0_18px_40px_-30px_rgba(245,158,11,0.55)]"
       : selected
         ? "border-scalex-red/40 ring-1 ring-scalex-red/20 shadow-[0_18px_40px_-32px_rgba(227,30,36,0.65)]"
         : "border-line";
@@ -171,7 +171,7 @@ function AchievementCard({
       </p>
 
       {item.state === "completed" && item.earnedAt ? (
-        <p className="mt-1 text-[11px] text-muted">
+        <p className="mt-1 text-[11px] font-medium text-accent-green">
           {formatShortDate(item.earnedAt)}
         </p>
       ) : (
@@ -185,9 +185,7 @@ function AchievementCard({
           <div className="h-1 overflow-hidden rounded-full bg-line">
             <div
               className={`h-full rounded-full ${
-                item.state === "in_progress"
-                  ? "bg-gradient-to-r from-scalex-red-dark to-scalex-red"
-                  : "bg-surface-3"
+                item.state === "in_progress" ? "bg-accent-amber" : "bg-surface-3"
               }`}
               style={{ width: `${item.progressPercent}%` }}
             />

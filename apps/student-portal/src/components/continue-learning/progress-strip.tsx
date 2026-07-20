@@ -31,7 +31,7 @@ export function ProgressStrip({
           />
         </div>
         <div className="flex shrink-0 items-center gap-2 rounded-xl border border-line bg-surface-3/60 px-3 py-2 metallic-edge">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-scalex-red/15 text-scalex-red">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-purple/15 text-accent-purple">
             <Gift weight="duotone" className="h-4 w-4" aria-hidden />
           </span>
           <div>
