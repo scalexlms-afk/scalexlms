@@ -1,17 +1,10 @@
-import Link from "next/link";
-import {
-  NavSidebar,
-  MobileNav,
-  Logo,
-  NotificationBell,
-  ThemeToggle,
-} from "@scalex/ui";
 import type { NavGroup } from "@scalex/ui";
 import { getPermission, type Feature } from "@scalex/db/rbac";
 import type { UserRole } from "@scalex/db/types";
 import { requireAdminProfile } from "@/lib/auth";
 import { getAdminNotifications } from "@/lib/data";
 import { markNotificationRead } from "@/app/notifications/actions";
+import { AdminChrome } from "@/components/admin-chrome";
 
 const iconClass = "h-4 w-4";
 
@@ -242,82 +235,30 @@ export async function AdminShell({
   const groups = buildNavGroups(profile.role, activePath);
   const notifications = await getAdminNotifications(userId);
 
-  return (
-    <div className="flex min-h-screen">
-      <div className="sticky top-0 hidden h-screen shrink-0 md:block">
-        <NavSidebar
-          groups={groups}
-          brand={<Logo size="md" showTagline />}
-          linkComponent={Link}
-          footer={
-            <div className="text-sm">
-              <p className="font-medium text-foreground">
-                {profile.name}
-              </p>
-              <p className="truncate text-xs text-muted">
-                {profile.email}
-              </p>
-              <p className="mt-0.5 text-xs text-subtle">
-                {roleLabel(profile.role)}
-              </p>
-              <form action="/auth/signout" method="post" className="mt-3">
-                <button
-                  type="submit"
-                  className="text-xs text-scalex-red hover:underline"
-                >
-                  Sign out
-                </button>
-              </form>
-            </div>
-          }
-        />
-      </div>
-
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-surface/80 px-4 py-3 backdrop-blur">
-          <div className="flex items-center gap-3 md:hidden">
-            <MobileNav
-              groups={groups}
-              brand={<Logo size="sm" />}
-              linkComponent={Link}
-              footer={
-                <div className="text-sm">
-                  <p className="font-medium text-foreground">
-                    {profile.name}
-                  </p>
-                  <p className="truncate text-xs text-muted">
-                    {profile.email}
-                  </p>
-                  <p className="mt-0.5 text-xs text-subtle">
-                    {roleLabel(profile.role)}
-                  </p>
-                  <form action="/auth/signout" method="post" className="mt-3">
-                    <button
-                      type="submit"
-                      className="text-xs text-scalex-red hover:underline"
-                    >
-                      Sign out
-                    </button>
-                  </form>
-                </div>
-              }
-            />
-            <Logo size="sm" />
-          </div>
-          <div className="hidden md:block" />
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            <NotificationBell
-              notifications={notifications}
-              markReadAction={markNotificationRead}
-            />
-          </div>
-        </header>
-
-        <main className="flex-1 overflow-y-auto p-5 md:p-8">
-          <div className="mx-auto max-w-6xl animate-fade-in">{children}</div>
-        </main>
-      </div>
+  const footer = (
+    <div className="text-sm">
+      <p className="font-medium text-foreground">{profile.name}</p>
+      <p className="truncate text-xs text-muted">{profile.email}</p>
+      <p className="mt-0.5 text-xs text-subtle">{roleLabel(profile.role)}</p>
+      <form action="/auth/signout" method="post" className="mt-3">
+        <button
+          type="submit"
+          className="text-xs text-scalex-red hover:underline"
+        >
+          Sign out
+        </button>
+      </form>
     </div>
+  );
+
+  return (
+    <AdminChrome
+      groups={groups}
+      footer={footer}
+      notifications={notifications}
+      markReadAction={markNotificationRead}
+    >
+      {children}
+    </AdminChrome>
   );
 }
