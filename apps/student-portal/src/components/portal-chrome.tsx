@@ -137,20 +137,31 @@ export function PortalChrome({
       />
 
       <div
-        className={`relative z-10 hidden shrink-0 md:flex md:flex-col ${open ? "w-64" : "w-auto"}`}
+        className={`relative z-10 hidden shrink-0 md:block ${open ? "w-64" : "w-14"}`}
       >
-        <div className="sticky top-0 z-30 flex h-14 shrink-0 items-center px-4">
-          {sidebarToggle}
-        </div>
         {open ? (
-          <NavSidebar
-            groups={activeGroups}
-            brand={<Logo size="md" showTagline />}
-            footer={footer}
-            linkComponent={PortalNavLink}
-            className="min-h-[calc(100vh-3.5rem)] border-t-0"
-          />
-        ) : null}
+          <>
+            {/* Overlay — does not reserve layout height or push the sidebar down */}
+            <div className="pointer-events-none absolute right-3 top-3 z-30">
+              <div className="pointer-events-auto">{sidebarToggle}</div>
+            </div>
+            <NavSidebar
+              groups={activeGroups}
+              brand={
+                <div className="pr-11">
+                  <Logo size="md" showTagline />
+                </div>
+              }
+              footer={footer}
+              linkComponent={PortalNavLink}
+              className="min-h-screen"
+            />
+          </>
+        ) : (
+          <div className="sticky top-0 flex justify-center px-2 pt-3">
+            {sidebarToggle}
+          </div>
+        )}
       </div>
 
       <div className="relative flex min-w-0 flex-1 flex-col">
