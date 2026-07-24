@@ -8,7 +8,68 @@ export interface LessonContext {
   rank: number;
 }
 
-const CONTEXT_LIMIT = 5;
+const CONTEXT_LIMIT = 6;
+const EXCERPT_CHARS = 4500;
+const STOP_WORDS = new Set([
+  "a",
+  "an",
+  "the",
+  "and",
+  "or",
+  "to",
+  "of",
+  "in",
+  "on",
+  "for",
+  "is",
+  "are",
+  "was",
+  "were",
+  "be",
+  "i",
+  "me",
+  "my",
+  "we",
+  "you",
+  "your",
+  "do",
+  "does",
+  "did",
+  "what",
+  "which",
+  "who",
+  "how",
+  "why",
+  "when",
+  "where",
+  "can",
+  "could",
+  "would",
+  "should",
+  "u",
+  "about",
+  "with",
+  "from",
+  "this",
+  "that",
+  "it",
+  "as",
+  "at",
+  "by",
+  "if",
+  "any",
+  "some",
+  "tell",
+  "give",
+  "need",
+  "have",
+  "has",
+  "had",
+  "get",
+  "got",
+  "please",
+  "help",
+]);
 
 type SearchLessonsContextDatabase = Database & {
   public: Database["public"] & {
@@ -29,21 +90,50 @@ type SearchLessonsContextDatabase = Database & {
   };
 };
 
-export async function retrieveContext(
-  query: string,
-  supabase: SupabaseClient<Database>
-): Promise<LessonContext[]> {
-  const trimmedQuery = query.trim();
+type LessonRow = {
+  id: string;
+  title: string;
+  content_text: string | null;
+};
 
-  if (!trimmedQuery) {
-    return [];
+function extractKeywords(query: string): string[] {
+  return query
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .split(/\s+/)
+    .map((w) => w.trim())
+    .filter((w) => w.length >= 3 && !STOP_WORDS.has(w))
+    .slice(0, 8);
+}
+
+function truncateExcerpt(text: string | null): string {
+  if (!text) return "";
+  const cleaned = text.trim();
+  if (cleaned.length <= EXCERPT_CHARS) return cleaned;
+  return `${cleaned.slice(0, EXCERPT_CHARS)}\n…`;
+}
+
+function dedupeById(rows: LessonContext[]): LessonContext[] {
+  const seen = new Set<string>();
+  const out: LessonContext[] = [];
+  for (const row of rows) {
+    if (seen.has(row.id)) continue;
+    seen.add(row.id);
+    out.push(row);
   }
+  return out;
+}
 
+async function searchFts(
+  supabase: SupabaseClient<Database>,
+  query: string,
+  limit: number
+): Promise<LessonContext[]> {
   const { data, error } = await (
     supabase as SupabaseClient<SearchLessonsContextDatabase>
   ).rpc("search_lessons_context", {
-    query_text: trimmedQuery,
-    result_limit: CONTEXT_LIMIT,
+    query_text: query,
+    result_limit: limit,
   });
 
   if (error) {
@@ -58,15 +148,123 @@ export async function retrieveContext(
   }));
 }
 
-export function formatContext(chunks: LessonContext[]): string {
-  if (chunks.length === 0) {
-    return "No relevant academy lessons were found for this query.";
+async function listAccessibleLessons(
+  supabase: SupabaseClient<Database>
+): Promise<LessonRow[]> {
+  const { data, error } = await supabase
+    .from("lessons")
+    .select("id, title, content_text")
+    .not("content_text", "is", null)
+    .order("title", { ascending: true });
+
+  if (error) {
+    throw new Error(`Failed to list academy lessons: ${error.message}`);
   }
 
-  return chunks
-    .map(
-      (chunk, index) =>
-        `[Lesson ${index + 1}: ${chunk.title}]\n${chunk.content_text ?? ""}`
-    )
-    .join("\n\n");
+  return ((data ?? []) as LessonRow[]).filter(
+    (row) => (row.content_text?.trim().length ?? 0) > 80
+  );
+}
+
+function keywordFallback(
+  lessons: LessonRow[],
+  keywords: string[],
+  limit: number
+): LessonContext[] {
+  if (keywords.length === 0) return [];
+
+  const scored = lessons
+    .map((lesson) => {
+      const hay = `${lesson.title}\n${lesson.content_text ?? ""}`.toLowerCase();
+      let score = 0;
+      for (const kw of keywords) {
+        if (lesson.title.toLowerCase().includes(kw)) score += 5;
+        if (hay.includes(kw)) score += 1;
+      }
+      return { lesson, score };
+    })
+    .filter((row) => row.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+
+  return scored.map((row, index) => ({
+    id: row.lesson.id,
+    title: row.lesson.title,
+    content_text: row.lesson.content_text,
+    rank: row.score + (limit - index) * 0.01,
+  }));
+}
+
+export async function retrieveContext(
+  query: string,
+  supabase: SupabaseClient<Database>
+): Promise<LessonContext[]> {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) return [];
+
+  const keywords = extractKeywords(trimmedQuery);
+  let hits = await searchFts(supabase, trimmedQuery, CONTEXT_LIMIT);
+
+  // Retry FTS with keyword-only query (drops stopwords like "what/how/do")
+  if (hits.length === 0 && keywords.length > 0) {
+    hits = await searchFts(supabase, keywords.join(" "), CONTEXT_LIMIT);
+  }
+
+  const catalog = await listAccessibleLessons(supabase);
+
+  if (hits.length === 0 && catalog.length > 0) {
+    hits = keywordFallback(catalog, keywords, CONTEXT_LIMIT);
+  }
+
+  // Last resort: still return a few substantive lessons so the model
+  // never thinks the academy library is empty.
+  if (hits.length === 0 && catalog.length > 0) {
+    hits = catalog.slice(0, Math.min(3, CONTEXT_LIMIT)).map((lesson, index) => ({
+      id: lesson.id,
+      title: lesson.title,
+      content_text: lesson.content_text,
+      rank: 0.01 * (CONTEXT_LIMIT - index),
+    }));
+  }
+
+  return dedupeById(hits).slice(0, CONTEXT_LIMIT);
+}
+
+export async function retrieveCurriculumTitles(
+  supabase: SupabaseClient<Database>
+): Promise<string[]> {
+  const lessons = await listAccessibleLessons(supabase);
+  return lessons.map((lesson) => lesson.title);
+}
+
+export function formatContext(
+  chunks: LessonContext[],
+  curriculumTitles: string[] = []
+): string {
+  const sections: string[] = [];
+
+  if (curriculumTitles.length > 0) {
+    sections.push(
+      `ScaleX academy curriculum (lesson titles you may cite):\n${curriculumTitles
+        .map((title, i) => `${i + 1}. ${title}`)
+        .join("\n")}`
+    );
+  }
+
+  if (chunks.length === 0) {
+    sections.push(
+      "No ranked lesson excerpts matched this query. Use the curriculum list above plus careful general Amazon FBA guidance, and say when you are filling a gap outside the excerpts."
+    );
+  } else {
+    sections.push(
+      chunks
+        .map(
+          (chunk, index) =>
+            `[Lesson ${index + 1}: ${chunk.title}]\n${truncateExcerpt(chunk.content_text)}`
+        )
+        .join("\n\n")
+    );
+  }
+
+  return sections.join("\n\n---\n\n");
 }

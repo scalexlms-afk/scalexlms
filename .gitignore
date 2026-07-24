@@ -29,3 +29,7 @@ next-env.d.ts
 # OS
 .DS_Store
 Thumbs.db
+
+# local tooling / large binaries
+tools/ffmpeg/
+*.zip

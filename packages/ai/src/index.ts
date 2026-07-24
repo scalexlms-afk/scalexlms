@@ -6,6 +6,7 @@ export {
 export {
   formatContext,
   retrieveContext,
+  retrieveCurriculumTitles,
   type LessonContext,
 } from "./context";
 export {
