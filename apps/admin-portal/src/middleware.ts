@@ -5,6 +5,12 @@ import type { Database } from "@scalex/db/types";
 const PUBLIC_ROUTES = ["/login", "/auth/callback", "/reset-password"];
 const ADMIN_ROLES = ["super_admin", "instructor", "mentor", "sales"] as const;
 
+function isAdminRole(
+  role: string | undefined
+): role is (typeof ADMIN_ROLES)[number] {
+  return !!role && ADMIN_ROLES.includes(role as (typeof ADMIN_ROLES)[number]);
+}
+
 function copyCookies(from: NextResponse, to: NextResponse) {
   from.cookies.getAll().forEach((cookie) => {
     to.cookies.set(cookie.name, cookie.value);
@@ -88,15 +94,29 @@ export async function middleware(request: NextRequest) {
     return redirectResponse;
   }
 
-  if (
-    role &&
-    !ADMIN_ROLES.includes(role as (typeof ADMIN_ROLES)[number]) &&
-    !isPublic
-  ) {
-    return redirectTo("/login");
+  if (!isAdminRole(role)) {
+    if (isLogin) {
+      return supabaseResponse;
+    }
+
+    if (!isPublic) {
+      if (role) {
+        return redirectTo("/forbidden");
+      }
+
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set(
+        "error",
+        "Account profile not found. Sign in with an admin staff account."
+      );
+      const redirectResponse = NextResponse.redirect(url);
+      copyCookies(supabaseResponse, redirectResponse);
+      return redirectResponse;
+    }
   }
 
-  if (isLogin) {
+  if (isLogin && isAdminRole(role)) {
     return redirectTo("/");
   }
 

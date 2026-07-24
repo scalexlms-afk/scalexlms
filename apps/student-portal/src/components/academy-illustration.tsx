@@ -1,5 +1,8 @@
 import Image from "next/image";
 
+/** Bump when regenerating public/illustrations so clients/CDN skip stale assets. */
+const ILLUSTRATION_CACHE_BUST = "rembg-v2";
+
 export function AcademyIllustration({
   src,
   alt = "",
@@ -11,6 +14,10 @@ export function AcademyIllustration({
   size?: number;
   className?: string;
 }) {
+  const bustedSrc = src.includes("?")
+    ? `${src}&v=${ILLUSTRATION_CACHE_BUST}`
+    : `${src}?v=${ILLUSTRATION_CACHE_BUST}`;
+
   return (
     <div
       className={`relative shrink-0 ${className}`}
@@ -18,12 +25,13 @@ export function AcademyIllustration({
       aria-hidden={alt ? undefined : true}
     >
       <Image
-        src={src}
+        src={bustedSrc}
         alt={alt}
         fill
         sizes={`${size}px`}
         className="object-contain"
         priority={false}
+        unoptimized
       />
     </div>
   );
