@@ -40,7 +40,7 @@ export function ChatWindow({
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
   const peerId = mentor.id;
 
   useEffect(() => {
@@ -52,7 +52,9 @@ export function ChatWindow({
   }, [markReadAction, peerId]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = threadRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   useEffect(() => {
@@ -164,7 +166,10 @@ export function ChatWindow({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 md:px-5">
+        <div
+          ref={threadRef}
+          className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 md:px-5"
+        >
           {messages.length === 0 ? (
             <div className="flex h-full min-h-[200px] items-center justify-center text-center">
               <p className="max-w-sm text-sm text-muted">
@@ -207,7 +212,6 @@ export function ChatWindow({
               );
             })
           )}
-          <div ref={bottomRef} />
         </div>
 
         {error ? (
@@ -228,10 +232,10 @@ export function ChatWindow({
                     void onSubmit(draft);
                   }
                 }}
-                rows={2}
+                rows={4}
                 placeholder="Type your message…"
                 disabled={pending}
-                className="w-full resize-none bg-transparent px-2 py-2 text-sm text-foreground outline-none placeholder:text-subtle"
+                className="min-h-[6.5rem] w-full resize-none bg-transparent px-2 py-2 text-sm text-foreground outline-none placeholder:text-subtle"
               />
               <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-1">
                 <div className="flex items-center gap-1">
