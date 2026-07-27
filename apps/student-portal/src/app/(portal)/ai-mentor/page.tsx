@@ -1,34 +1,32 @@
-import { AiChatPanel } from "@/components/ai-chat-panel";
+import { AiMentorWorkspace } from "@/components/ai-mentor/ai-mentor-workspace";
 import { requireStudentProfile } from "@/lib/auth";
+import {
+  getAiMentorContext,
+  getRecentAiChats,
+} from "@/lib/ai-mentor";
 
 export default async function AiMentorPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
-  await requireStudentProfile();
+  const session = await requireStudentProfile();
   const params = await searchParams;
   const initialPrompt =
     typeof params.q === "string" ? params.q.trim().slice(0, 500) : "";
 
-  return (
-    <>
-      <div className="space-y-6">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-            AI Mentor
-          </p>
-          <h1 className="mt-1 font-display text-2xl font-bold md:text-3xl">
-            Your LaunchPad assistant
-          </h1>
-          <p className="mt-1 text-muted">
-            Grounded in academy lessons to help you move faster on your Amazon
-            journey.
-          </p>
-        </div>
+  const [context, chats] = await Promise.all([
+    getAiMentorContext(session.userId),
+    getRecentAiChats(session.userId),
+  ]);
 
-        <AiChatPanel initialPrompt={initialPrompt} />
-      </div>
-    </>
+  return (
+    <div className="academy-page">
+      <AiMentorWorkspace
+        context={context}
+        initialPrompt={initialPrompt}
+        initialChats={chats}
+      />
+    </div>
   );
 }
