@@ -165,9 +165,9 @@ function ConversationList({
       <div className="border-t border-line px-4 py-3">
         <span
           title="Coming soon"
-          className="inline-flex w-full items-center justify-center text-xs font-medium text-subtle/80"
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-accent-purple/35 px-3 py-2 text-xs font-semibold text-accent-purple"
         >
-          All conversations · Soon
+          View All Conversations
         </span>
       </div>
     </>
@@ -180,12 +180,14 @@ export function ConversationRail({
   lastMessagePreview,
   lastMessageAt,
   collapsible = false,
+  fillHeight = false,
 }: {
   mentor: MentorSummary;
   unreadFromMentor: number;
   lastMessagePreview: string | null;
   lastMessageAt: string | null;
   collapsible?: boolean;
+  fillHeight?: boolean;
 }) {
   const body = (
     <ConversationList
@@ -228,9 +230,19 @@ export function ConversationRail({
   }
 
   return (
-    <aside className="space-y-3">
-      <Card className="!p-0 overflow-hidden border-accent-purple/20">
-        {body}
+    <aside className={fillHeight ? "flex h-full min-h-0 flex-col" : "space-y-3"}>
+      <Card
+        className={`!p-0 overflow-hidden border-accent-purple/20 ${
+          fillHeight ? "flex h-full min-h-0 flex-col" : ""
+        }`}
+      >
+        <div
+          className={
+            fillHeight ? "flex min-h-0 flex-1 flex-col overflow-y-auto" : undefined
+          }
+        >
+          {body}
+        </div>
       </Card>
     </aside>
   );

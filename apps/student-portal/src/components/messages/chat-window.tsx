@@ -127,7 +127,7 @@ export function ChatWindow({
   }
 
   return (
-    <div className="flex h-[min(70vh,640px)] flex-col overflow-hidden rounded-2xl border border-accent-purple/20 bg-surface-2/40 lg:h-[min(78vh,720px)]">
+    <div className="flex h-[min(70vh,640px)] flex-col overflow-hidden rounded-2xl border border-accent-purple/20 bg-surface-2/50 lg:h-full">
       <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 md:px-5">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {mentor.avatarUrl ? (
@@ -158,10 +158,10 @@ export function ChatWindow({
           </div>
         </div>
         <span
-          title="Profile coming soon"
-          className="hidden shrink-0 rounded-xl border border-line px-3 py-2 text-xs font-medium text-subtle/80 sm:inline-flex"
+          title="Coming soon"
+          className="hidden shrink-0 rounded-xl border border-line px-3 py-2 text-xs font-medium text-muted sm:inline-flex"
         >
-          Profile · Soon
+          View Profile
         </span>
       </div>
 
@@ -232,10 +232,10 @@ export function ChatWindow({
                     void onSubmit(draft);
                   }
                 }}
-                rows={4}
+                rows={3}
                 placeholder="Type your message…"
                 disabled={pending}
-                className="min-h-[6.5rem] w-full resize-none bg-transparent px-2 py-2 text-sm text-foreground outline-none placeholder:text-subtle"
+                className="min-h-[5rem] w-full resize-none bg-transparent px-2 py-2 text-sm text-foreground outline-none placeholder:text-subtle"
               />
               <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-1">
                 <div className="flex items-center gap-1">
