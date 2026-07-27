@@ -21,12 +21,23 @@ export function MessagesWorkspace({
 
       <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)_280px] xl:grid-cols-[260px_minmax(0,1fr)_300px] lg:items-start">
         <div className="order-2 min-w-0 lg:order-1">
-          <ConversationRail
-            mentor={data.mentor}
-            unreadFromMentor={data.unreadFromMentor}
-            lastMessagePreview={data.lastMessagePreview}
-            lastMessageAt={data.lastMessageAt}
-          />
+          <div className="lg:hidden">
+            <ConversationRail
+              mentor={data.mentor}
+              unreadFromMentor={data.unreadFromMentor}
+              lastMessagePreview={data.lastMessagePreview}
+              lastMessageAt={data.lastMessageAt}
+              collapsible
+            />
+          </div>
+          <div className="hidden lg:block">
+            <ConversationRail
+              mentor={data.mentor}
+              unreadFromMentor={data.unreadFromMentor}
+              lastMessagePreview={data.lastMessagePreview}
+              lastMessageAt={data.lastMessageAt}
+            />
+          </div>
         </div>
 
         <div className="order-1 min-w-0 lg:order-2">
@@ -36,7 +47,6 @@ export function MessagesWorkspace({
             initialMessages={data.messages}
             sendAction={sendAction}
             markReadAction={markReadAction}
-            context={data.context}
           />
         </div>
 

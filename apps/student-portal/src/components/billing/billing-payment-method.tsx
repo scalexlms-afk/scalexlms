@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import type { ReactNode } from "react";
+import Link from "next/link";
 import { CheckCircle, CreditCard } from "@phosphor-icons/react";
 import { Card } from "@scalex/ui";
 
@@ -74,7 +74,7 @@ export function BillingPaymentMethod({
         </div>
       )}
 
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-4 flex flex-wrap items-center gap-3">
         {canManage ? (
           <button
             type="button"
@@ -85,14 +85,17 @@ export function BillingPaymentMethod({
             {pending ? "Opening…" : "Change Card"}
           </button>
         ) : (
-          <button
-            type="button"
-            disabled
-            title="Complete a payment first"
-            className="cursor-not-allowed text-sm font-semibold text-accent-purple opacity-60"
-          >
-            Change Card
-          </button>
+          <>
+            <span className="text-sm font-medium text-subtle/80">
+              Change Card · Unavailable
+            </span>
+            <Link
+              href="/support"
+              className="text-sm font-medium text-muted hover:text-accent-purple hover:underline"
+            >
+              Need help?
+            </Link>
+          </>
         )}
       </div>
       {error ? <p className="mt-2 text-xs text-scalex-red">{error}</p> : null}
@@ -102,50 +105,33 @@ export function BillingPaymentMethod({
 
 export function BillingBenefitsList({
   features,
-  compact,
 }: {
   features: readonly string[];
   compact?: boolean;
 }) {
   return (
-    <Card className={compact ? "" : "h-full"}>
+    <Card className="h-full">
       <p className="text-xs font-semibold uppercase tracking-wider text-muted">
         Plan Benefits
       </p>
-      <ul className={`mt-4 space-y-2.5 ${compact ? "" : ""}`}>
-        {features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2 text-sm">
-            <CheckCircle
-              weight="fill"
-              className="mt-0.5 h-4 w-4 shrink-0 text-accent-purple"
-              aria-hidden
-            />
-            <span className="text-foreground">{feature}</span>
-          </li>
-        ))}
-      </ul>
+      {features.length === 0 ? (
+        <div className="mt-4 rounded-xl border border-dashed border-line bg-surface-3/30 px-4 py-6 text-center">
+          <p className="text-sm text-muted">Benefits will appear here for your plan.</p>
+        </div>
+      ) : (
+        <ul className="mt-4 space-y-2.5">
+          {features.map((feature) => (
+            <li key={feature} className="flex items-start gap-2 text-sm">
+              <CheckCircle
+                weight="fill"
+                className="mt-0.5 h-4 w-4 shrink-0 text-accent-purple"
+                aria-hidden
+              />
+              <span className="text-foreground">{feature}</span>
+            </li>
+          ))}
+        </ul>
+      )}
     </Card>
-  );
-}
-
-export function BillingMetaCell({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-xl border border-line bg-surface-3/40 px-3.5 py-3">
-      <div className="flex items-center gap-2 text-muted">
-        {icon}
-        <span className="text-[11px] font-semibold uppercase tracking-wider">
-          {label}
-        </span>
-      </div>
-      <p className="mt-1.5 text-sm font-semibold text-foreground">{value}</p>
-    </div>
   );
 }

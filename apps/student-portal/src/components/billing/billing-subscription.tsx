@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { ReactNode } from "react";
+import Link from "next/link";
 import {
   CalendarBlank,
   Clock,
@@ -49,9 +50,11 @@ async function openStripePortal() {
 export function BillingSubscriptionCard({
   subscription,
   stripeCustomerId,
+  compactMeta = false,
 }: {
   subscription: BillingSubscription;
   stripeCustomerId: string | null;
+  compactMeta?: boolean;
 }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -104,7 +107,11 @@ export function BillingSubscriptionCard({
         />
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div
+        className={`mt-5 grid gap-3 sm:grid-cols-2 ${
+          compactMeta ? "" : "xl:grid-cols-4"
+        }`}
+      >
         <MetaCell
           icon={<CalendarBlank weight="duotone" className="h-4 w-4" />}
           label="Started On"
@@ -154,12 +161,20 @@ export function BillingSubscriptionCard({
           {pending ? "Opening…" : "Manage Subscription"}
         </button>
       ) : (
-        <span
-          title="Complete a Stripe payment to manage billing"
-          className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-line bg-surface-3/30 px-4 py-2.5 text-sm font-medium text-subtle/80 sm:w-auto"
-        >
-          Manage · Unavailable
-        </span>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <span
+            title="Complete a Stripe payment to manage billing"
+            className="inline-flex items-center justify-center rounded-xl border border-line bg-surface-3/30 px-4 py-2.5 text-sm font-medium text-subtle/80"
+          >
+            Manage · Unavailable
+          </span>
+          <Link
+            href="/support"
+            className="text-sm font-medium text-muted transition hover:text-accent-purple hover:underline"
+          >
+            Portal linking pending — contact support
+          </Link>
+        </div>
       )}
       {error ? <p className="mt-2 text-xs text-scalex-red">{error}</p> : null}
     </Card>

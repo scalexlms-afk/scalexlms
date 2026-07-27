@@ -22,7 +22,12 @@ export function BillingHistory({ items }: { items: BillingHistoryItem[] }) {
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-muted">No payments yet.</p>
+        <div className="mt-4 rounded-xl border border-dashed border-line bg-surface-3/30 px-4 py-8 text-center">
+          <p className="text-sm font-medium text-foreground">No payments yet</p>
+          <p className="mt-1 text-xs text-muted">
+            Invoices will show here after your first payment.
+          </p>
+        </div>
       ) : (
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-sm">
@@ -78,7 +83,13 @@ export function BillingHistory({ items }: { items: BillingHistoryItem[] }) {
                           Download
                         </a>
                       ) : (
-                        <span className="text-sm text-subtle">—</span>
+                        <span
+                          title="Invoice PDF not available"
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-subtle/70"
+                        >
+                          <DownloadSimple weight="bold" className="h-4 w-4" aria-hidden />
+                          Download
+                        </span>
                       )}
                     </td>
                   </tr>

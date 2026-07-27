@@ -10,7 +10,6 @@ import {
 } from "react";
 import {
   Checks,
-  DotsThree,
   PaperPlaneTilt,
   Paperclip,
   Smiley,
@@ -22,7 +21,6 @@ import {
   mentorInitials,
   type ChatMessageRow,
   type MentorSummary,
-  type MessagesLearningContext,
 } from "@/lib/messages-shared";
 
 export function ChatWindow({
@@ -31,14 +29,12 @@ export function ChatWindow({
   initialMessages,
   sendAction,
   markReadAction,
-  context,
 }: {
   userId: string;
   mentor: MentorSummary;
   initialMessages: ChatMessageRow[];
   sendAction: (content: string) => Promise<void>;
   markReadAction?: () => Promise<void>;
-  context?: MessagesLearningContext;
 }) {
   const [messages, setMessages] = useState(initialMessages);
   const [draft, setDraft] = useState("");
@@ -129,27 +125,27 @@ export function ChatWindow({
   }
 
   return (
-    <div className="flex h-[min(72vh,680px)] flex-col overflow-hidden rounded-2xl border border-accent-purple/20 bg-surface-2/40">
+    <div className="flex h-[min(70vh,640px)] flex-col overflow-hidden rounded-2xl border border-accent-purple/20 bg-surface-2/40 lg:h-[min(78vh,720px)]">
       <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 md:px-5">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           {mentor.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={mentor.avatarUrl}
               alt=""
-              className="h-10 w-10 rounded-full object-cover ring-1 ring-line"
+              className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-line"
             />
           ) : (
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-purple/20 text-xs font-semibold text-accent-purple ring-1 ring-line">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-purple/20 text-xs font-semibold text-accent-purple ring-1 ring-line">
               {mentorInitials(mentor.name)}
             </span>
           )}
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="truncate font-display text-sm font-semibold text-foreground md:text-base">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <p className="min-w-0 flex-1 truncate font-display text-sm font-semibold text-foreground md:text-base">
                 {mentor.name}
               </p>
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-accent-green">
+              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-accent-green">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent-green" aria-hidden />
                 Online
               </span>
@@ -159,29 +155,16 @@ export function ChatWindow({
             </p>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            disabled
-            title="Coming soon"
-            className="hidden cursor-not-allowed rounded-xl border border-line px-3 py-2 text-xs font-medium text-subtle opacity-60 sm:inline-flex"
-          >
-            View Profile
-          </button>
-          <button
-            type="button"
-            disabled
-            title="Coming soon"
-            className="cursor-not-allowed rounded-lg p-2 text-subtle opacity-60"
-            aria-label="Conversation options"
-          >
-            <DotsThree weight="bold" className="h-5 w-5" />
-          </button>
-        </div>
+        <span
+          title="Profile coming soon"
+          className="hidden shrink-0 rounded-xl border border-line px-3 py-2 text-xs font-medium text-subtle/80 sm:inline-flex"
+        >
+          Profile · Soon
+        </span>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 md:px-5">
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 md:px-5">
           {messages.length === 0 ? (
             <div className="flex h-full min-h-[200px] items-center justify-center text-center">
               <p className="max-w-sm text-sm text-muted">
@@ -228,37 +211,10 @@ export function ChatWindow({
         </div>
 
         {error ? (
-          <p className="px-4 text-sm text-accent-danger md:px-5">{error}</p>
+          <p className="shrink-0 px-4 text-sm text-accent-danger md:px-5">{error}</p>
         ) : null}
 
-        <div className="border-t border-line px-4 py-3 md:px-5">
-          {context ? (
-            <div className="mb-3 rounded-xl border border-line bg-surface-3/40 px-3 py-2.5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-                  Task Progress
-                </p>
-                <span className="text-xs font-semibold text-accent-purple">
-                  {context.completionPercent}%
-                </span>
-              </div>
-              <p className="mt-1 truncate text-sm font-medium text-foreground">
-                {context.currentTaskTitle ?? context.milestoneTitle}
-              </p>
-              <p className="mt-0.5 text-xs text-subtle">
-                Step {context.milestoneIndex} of {context.milestoneTotal}
-              </p>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-line">
-                <div
-                  className="h-full rounded-full bg-accent-purple"
-                  style={{
-                    width: `${Math.min(100, Math.max(0, context.completionPercent))}%`,
-                  }}
-                />
-              </div>
-            </div>
-          ) : null}
-
+        <div className="shrink-0 border-t border-line px-4 py-3 md:px-5">
           <MessageActionBar />
 
           <form onSubmit={handleSubmit} className="mt-3">
@@ -283,11 +239,10 @@ export function ChatWindow({
                     type="button"
                     disabled
                     title="Coming soon"
-                    className="hidden cursor-default items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-subtle/70 sm:inline-flex"
+                    className="inline-flex cursor-default items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-subtle/70"
                   >
                     <Paperclip className="h-3.5 w-3.5" aria-hidden />
-                    Attach
-                    <span className="text-[10px]">Soon</span>
+                    <span className="hidden sm:inline">Attach</span>
                   </button>
                   <button
                     type="button"
@@ -296,8 +251,7 @@ export function ChatWindow({
                     className="inline-flex cursor-default items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-subtle/70"
                   >
                     <Smiley className="h-3.5 w-3.5" aria-hidden />
-                    Emoji
-                    <span className="hidden text-[10px] sm:inline">Soon</span>
+                    <span className="hidden sm:inline">Emoji</span>
                   </button>
                 </div>
                 <button
