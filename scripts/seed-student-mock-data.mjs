@@ -219,6 +219,25 @@ async function clearPriorMockData(studentId, mentorId) {
     .eq("student_id", studentId);
   assertOk(regErr, "clear session registrations");
 
+  // Remove mock-hosted live sessions created by this seeder
+  const { data: mockSessions, error: mockSessSelErr } = await supabase
+    .from("live_sessions")
+    .select("id, title")
+    .ilike("title", `${MOCK_MARKER}%`);
+  assertOk(mockSessSelErr, "list mock live sessions");
+  if (mockSessions?.length) {
+    const ids = mockSessions.map((s) => s.id);
+    await supabase.from("session_registrations").delete().in("session_id", ids);
+    const { error } = await supabase.from("live_sessions").delete().in("id", ids);
+    assertOk(error, "clear mock live sessions");
+  }
+
+  const { error: lcErr } = await supabase
+    .from("lesson_completions")
+    .delete()
+    .eq("student_id", studentId);
+  assertOk(lcErr, "clear lesson completions");
+
   const { error: subErr } = await supabase
     .from("submissions")
     .delete()
@@ -258,6 +277,7 @@ async function main() {
     tickets: 0,
     communityPosts: 0,
     sessionRegs: 0,
+    lessonCompletions: 0,
     submissions: 0,
     badges: 0,
     aiChats: 0,
@@ -316,13 +336,82 @@ async function main() {
         student_id: studentId,
         course_id: course.id,
         plan: "premium",
-        completion_percent: 12,
+        completion_percent: 35,
       },
       { onConflict: "student_id,course_id" }
     );
     assertOk(enrollErr, "upsert enrollment");
     summary.enrollment = true;
-    console.log(`✓ Enrolled in "${course.title}" (premium, 12%)`);
+    console.log(`✓ Enrolled in "${course.title}" (premium, 35%)`);
+
+    // Lesson completions (first ~8 lessons) so Academy roadmap looks filled
+    const { data: milestonesForCourse, error: msCourseErr } = await supabase
+      .from("milestones")
+      .select("id, order_index")
+      .eq("course_id", course.id)
+      .order("order_index", { ascending: true });
+    assertOk(msCourseErr, "list milestones for completions");
+
+    let lessonIds = [];
+    if (milestonesForCourse?.length) {
+      const { data: modules, error: modErr } = await supabase
+        .from("modules")
+        .select("id, order_index, milestone_id")
+        .in(
+          "milestone_id",
+          milestonesForCourse.map((m) => m.id)
+        )
+        .order("order_index", { ascending: true });
+      assertOk(modErr, "list modules");
+
+      if (modules?.length) {
+        const { data: lessons, error: lesErr } = await supabase
+          .from("lessons")
+          .select("id, module_id, order_index")
+          .in(
+            "module_id",
+            modules.map((m) => m.id)
+          )
+          .order("order_index", { ascending: true });
+        assertOk(lesErr, "list lessons");
+
+        const msOrder = new Map(
+          milestonesForCourse.map((m) => [m.id, m.order_index ?? 0])
+        );
+        const moduleMeta = new Map(
+          modules.map((m) => [
+            m.id,
+            (msOrder.get(m.milestone_id) ?? 0) * 1000 + (m.order_index ?? 0),
+          ])
+        );
+        lessonIds = (lessons ?? [])
+          .slice()
+          .sort(
+            (a, b) =>
+              (moduleMeta.get(a.module_id) ?? 0) -
+                (moduleMeta.get(b.module_id) ?? 0) ||
+              a.order_index - b.order_index
+          )
+          .slice(0, 8)
+          .map((l) => l.id);
+      }
+    }
+
+    if (lessonIds.length) {
+      const completionRows = lessonIds.map((lessonId, i) => ({
+        student_id: studentId,
+        lesson_id: lessonId,
+        completed_at: hoursAgo(48 - i * 3),
+      }));
+      const { error: lcInsErr } = await supabase
+        .from("lesson_completions")
+        .upsert(completionRows, { onConflict: "student_id,lesson_id" });
+      assertOk(lcInsErr, "insert lesson completions");
+      summary.lessonCompletions = completionRows.length;
+      console.log(`✓ Lesson completions: ${completionRows.length}`);
+    } else {
+      console.log("⊘ No lessons found — skipped completions");
+    }
   }
 
   // 3) Prefs
@@ -590,17 +679,37 @@ async function main() {
   summary.communityPosts = postRows.length;
   console.log(`✓ Community posts: ${postRows.length} (approved, no media)`);
 
-  // 9) Session registrations (if upcoming sessions exist)
-  const { data: sessions, error: sessErr } = await supabase
+  // 9) Create upcoming live sessions + register student (no recordings/storage)
+  const sessionRows = [
+    {
+      title: `${MOCK_MARKER} Product Hunting Masterclass`,
+      description: "Live walkthrough of product research for Private Label.",
+      type: "masterclass",
+      audience: "all_premium",
+      scheduled_at: daysFromNow(2),
+      host_id: mentorId,
+      meeting_url: "https://meet.google.com/mock-seed-product-hunting",
+      recording_url: null,
+    },
+    {
+      title: `${MOCK_MARKER} Weekly Q&A with Mentor`,
+      description: "Ask anything about your current milestone.",
+      type: "qa",
+      audience: "all_premium",
+      scheduled_at: daysFromNow(5),
+      host_id: mentorId,
+      meeting_url: "https://meet.google.com/mock-seed-weekly-qa",
+      recording_url: null,
+    },
+  ];
+  const { data: createdSessions, error: sessInsErr } = await supabase
     .from("live_sessions")
-    .select("id, title, scheduled_at")
-    .gte("scheduled_at", new Date().toISOString())
-    .order("scheduled_at", { ascending: true })
-    .limit(2);
-  assertOk(sessErr, "list upcoming sessions");
+    .insert(sessionRows)
+    .select("id, title");
+  assertOk(sessInsErr, "insert live sessions");
 
-  if (sessions?.length) {
-    const regs = sessions.map((s) => ({
+  if (createdSessions?.length) {
+    const regs = createdSessions.map((s) => ({
       session_id: s.id,
       student_id: studentId,
     }));
@@ -610,10 +719,8 @@ async function main() {
     assertOk(regInsErr, "upsert session registrations");
     summary.sessionRegs = regs.length;
     console.log(
-      `✓ Session registrations: ${regs.length} (${sessions.map((s) => s.title).join(", ")})`
+      `✓ Live sessions + registrations: ${regs.length} (${createdSessions.map((s) => s.title.replace(MOCK_MARKER, "").trim()).join(", ")})`
     );
-  } else {
-    console.log("⊘ No upcoming live sessions — skipped registrations");
   }
 
   // 10) Submissions for first gating tasks (text/link only)
@@ -751,6 +858,7 @@ async function main() {
   console.log(`  support tickets:  ${summary.tickets}`);
   console.log(`  community posts:  ${summary.communityPosts}`);
   console.log(`  session regs:     ${summary.sessionRegs}`);
+  console.log(`  lesson completes: ${summary.lessonCompletions}`);
   console.log(`  submissions:      ${summary.submissions}`);
   console.log(`  badges:           ${summary.badges}`);
   console.log(`  ai chats:         ${summary.aiChats}`);
