@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarBlank, ChatCircle } from "@phosphor-icons/react";
+import { ChatCircle } from "@phosphor-icons/react";
+import { BookCallButton } from "@/components/messages/book-call-button";
 
 export function MessagesHero() {
   return (
@@ -21,13 +22,7 @@ export function MessagesHero() {
         </div>
       </div>
 
-      <span
-        title="Coming soon"
-        className="inline-flex items-center gap-2 rounded-xl border border-line bg-surface-3/30 px-3.5 py-2.5 text-sm font-medium text-subtle/80"
-      >
-        <CalendarBlank weight="bold" className="h-4 w-4" aria-hidden />
-        Book Call · Soon
-      </span>
+      <BookCallButton variant="hero" />
     </div>
   );
 }

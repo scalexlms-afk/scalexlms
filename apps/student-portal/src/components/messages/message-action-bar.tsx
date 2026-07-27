@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { Lifebuoy, Robot } from "@phosphor-icons/react";
+import { BookCallButton } from "@/components/messages/book-call-button";
 
 export function MessageActionBar() {
   return (
     <div className="flex flex-wrap gap-2">
+      <BookCallButton variant="chip" />
       <Link
         href="/ai-mentor"
         className="inline-flex items-center gap-1.5 rounded-xl border border-accent-purple/40 bg-accent-purple/10 px-3 py-2 text-xs font-semibold text-accent-purple transition hover:bg-accent-purple/15"
