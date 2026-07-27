@@ -15,25 +15,17 @@ export function MessagesRail({
   mentor,
   context,
   recentSubmissions,
-  fillHeight = false,
 }: {
   mentor: MentorSummary;
   context: MessagesLearningContext;
   recentSubmissions: RecentSubmissionItem[];
-  fillHeight?: boolean;
 }) {
   const askHref = `/ai-mentor?q=${encodeURIComponent(
     `Help me prepare questions for my mentor about ${context.currentTaskTitle ?? context.milestoneTitle}`
   )}`;
 
   return (
-    <aside
-      className={`space-y-4 ${
-        fillHeight
-          ? "h-full min-h-0 overflow-y-auto overscroll-contain pr-0.5"
-          : "lg:sticky lg:top-20"
-      }`}
-    >
+    <aside className="space-y-4 lg:sticky lg:top-20">
       <Card className="border-accent-purple/20">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted">
           Learning Context
@@ -145,10 +137,10 @@ export function MessagesRail({
         </p>
         <span
           title="Coming soon"
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface-3/30 px-3 py-2.5 text-sm font-medium text-muted"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface-3/30 px-3 py-2.5 text-sm font-medium text-subtle/80"
         >
           <UserCircle weight="bold" className="h-4 w-4" aria-hidden />
-          View Profile
+          Profile · Unavailable
         </span>
       </Card>
 

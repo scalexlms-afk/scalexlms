@@ -56,50 +56,7 @@ function Avatar({
   );
 }
 
-function ConversationsHeader() {
-  return (
-    <div className="flex shrink-0 items-center justify-between gap-2 border-b border-line px-4 py-3">
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-        Conversations
-      </p>
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          disabled
-          title="Coming soon"
-          className="cursor-default rounded-lg p-1.5 text-subtle/70"
-          aria-label="Filter conversations"
-        >
-          <Funnel className="h-4 w-4" weight="bold" />
-        </button>
-        <button
-          type="button"
-          disabled
-          title="Coming soon"
-          className="cursor-default rounded-lg p-1.5 text-subtle/70"
-          aria-label="New message"
-        >
-          <PencilSimple className="h-4 w-4" weight="bold" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function ConversationsFooter() {
-  return (
-    <div className="shrink-0 border-t border-line px-4 py-3">
-      <span
-        title="Coming soon"
-        className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl border border-accent-purple/35 px-3 py-2 text-xs font-semibold text-accent-purple"
-      >
-        View All Conversations
-      </span>
-    </div>
-  );
-}
-
-function ConversationsThreads({
+function ConversationList({
   mentor,
   unreadFromMentor,
   lastMessagePreview,
@@ -111,72 +68,109 @@ function ConversationsThreads({
   lastMessageAt: string | null;
 }) {
   return (
-    <ul className="divide-y divide-line">
-      <li>
-        <div className="flex w-full items-start gap-3 bg-accent-purple/10 px-4 py-3">
-          <Avatar name={mentor.name} avatarUrl={mentor.avatarUrl} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  {mentor.name}
-                </p>
-                <p className="text-[11px] text-muted">Your Mentor</p>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                {lastMessageAt ? (
-                  <span className="text-[11px] text-subtle">
-                    {formatThreadTime(lastMessageAt)}
-                  </span>
-                ) : null}
-                {unreadFromMentor > 0 ? (
-                  <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-scalex-red px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    {unreadFromMentor > 9 ? "9+" : unreadFromMentor}
-                  </span>
-                ) : null}
-              </div>
-            </div>
-            <p className="mt-1 line-clamp-2 text-xs text-muted">
-              {lastMessagePreview ?? "No messages yet — say hello"}
-            </p>
-          </div>
+    <>
+      <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+          Conversations
+        </p>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            disabled
+            title="Coming soon"
+            className="cursor-default rounded-lg p-1.5 text-subtle/70"
+            aria-label="Filter conversations"
+          >
+            <Funnel className="h-4 w-4" weight="bold" />
+          </button>
+          <button
+            type="button"
+            disabled
+            title="Coming soon"
+            className="cursor-default rounded-lg p-1.5 text-subtle/70"
+            aria-label="New message"
+          >
+            <PencilSimple className="h-4 w-4" weight="bold" />
+          </button>
         </div>
-      </li>
+      </div>
 
-      <li>
-        <Link
-          href="/support"
-          className="flex w-full items-start gap-3 px-4 py-3 transition hover:bg-surface-3/50"
-        >
-          <Avatar name="Support" tone="muted" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-foreground">
-              ScaleX Support
-            </p>
-            <p className="mt-1 line-clamp-2 text-xs text-muted">
-              Tickets, billing help, and account questions
-            </p>
+      <ul className="divide-y divide-line">
+        <li>
+          <div className="flex w-full items-start gap-3 bg-accent-purple/10 px-4 py-3">
+            <Avatar name={mentor.name} avatarUrl={mentor.avatarUrl} />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {mentor.name}
+                  </p>
+                  <p className="text-[11px] text-muted">Your Mentor</p>
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  {lastMessageAt ? (
+                    <span className="text-[11px] text-subtle">
+                      {formatThreadTime(lastMessageAt)}
+                    </span>
+                  ) : null}
+                  {unreadFromMentor > 0 ? (
+                    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-scalex-red px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      {unreadFromMentor > 9 ? "9+" : unreadFromMentor}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+              <p className="mt-1 line-clamp-2 text-xs text-muted">
+                {lastMessagePreview ?? "No messages yet — say hello"}
+              </p>
+            </div>
           </div>
-        </Link>
-      </li>
+        </li>
 
-      <li>
-        <Link
-          href="/ai-mentor"
-          className="flex w-full items-start gap-3 px-4 py-3 transition hover:bg-surface-3/50"
+        <li>
+          <Link
+            href="/support"
+            className="flex w-full items-start gap-3 px-4 py-3 transition hover:bg-surface-3/50"
+          >
+            <Avatar name="Support" tone="muted" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-foreground">
+                ScaleX Support
+              </p>
+              <p className="mt-1 line-clamp-2 text-xs text-muted">
+                Tickets, billing help, and account questions
+              </p>
+            </div>
+          </Link>
+        </li>
+
+        <li>
+          <Link
+            href="/ai-mentor"
+            className="flex w-full items-start gap-3 px-4 py-3 transition hover:bg-surface-3/50"
+          >
+            <Avatar name="AI Mentor" tone="ai" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-foreground">
+                AI Mentor
+              </p>
+              <p className="mt-1 line-clamp-2 text-xs text-muted">
+                24/7 curriculum-grounded answers
+              </p>
+            </div>
+          </Link>
+        </li>
+      </ul>
+
+      <div className="border-t border-line px-4 py-3">
+        <span
+          title="Coming soon"
+          className="inline-flex w-full items-center justify-center text-xs font-medium text-subtle/80"
         >
-          <Avatar name="AI Mentor" tone="ai" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold text-foreground">
-              AI Mentor
-            </p>
-            <p className="mt-1 line-clamp-2 text-xs text-muted">
-              24/7 curriculum-grounded answers
-            </p>
-          </div>
-        </Link>
-      </li>
-    </ul>
+          All conversations · Soon
+        </span>
+      </div>
+    </>
   );
 }
 
@@ -186,17 +180,15 @@ export function ConversationRail({
   lastMessagePreview,
   lastMessageAt,
   collapsible = false,
-  fillHeight = false,
 }: {
   mentor: MentorSummary;
   unreadFromMentor: number;
   lastMessagePreview: string | null;
   lastMessageAt: string | null;
   collapsible?: boolean;
-  fillHeight?: boolean;
 }) {
-  const threads = (
-    <ConversationsThreads
+  const body = (
+    <ConversationList
       mentor={mentor}
       unreadFromMentor={unreadFromMentor}
       lastMessagePreview={lastMessagePreview}
@@ -229,31 +221,16 @@ export function ConversationRail({
               Hide
             </span>
           </summary>
-          <div className="border-t border-line">
-            {threads}
-            <ConversationsFooter />
-          </div>
+          <div className="border-t border-line">{body}</div>
         </details>
       </aside>
     );
   }
 
   return (
-    <aside className={fillHeight ? "flex h-full min-h-0 flex-col" : "space-y-3"}>
-      <Card
-        className={`!p-0 overflow-hidden border-accent-purple/20 ${
-          fillHeight ? "flex h-full min-h-0 flex-col" : ""
-        }`}
-      >
-        <ConversationsHeader />
-        <div
-          className={
-            fillHeight ? "min-h-0 flex-1 overflow-y-auto" : undefined
-          }
-        >
-          {threads}
-        </div>
-        <ConversationsFooter />
+    <aside className="space-y-3">
+      <Card className="!p-0 overflow-hidden border-accent-purple/20">
+        {body}
       </Card>
     </aside>
   );
