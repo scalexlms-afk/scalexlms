@@ -11,7 +11,8 @@
     "typecheck": "turbo typecheck",
     "db:migrate": "node scripts/apply-migrations.mjs",
     "db:types": "node scripts/generate-types.mjs",
-    "db:seed-test-users": "node scripts/seed-test-users.mjs"
+    "db:seed-test-users": "node scripts/seed-test-users.mjs",
+    "seed:student-mock": "node scripts/seed-student-mock-data.mjs"
   },
   "devDependencies": {
     "playwright": "^1.61.1",
