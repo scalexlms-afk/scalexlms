@@ -1,0 +1,27 @@
+"use client";
+
+import { GearSix } from "@phosphor-icons/react";
+import { ThemeToggle } from "@scalex/ui";
+
+export function SettingsHero() {
+  return (
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent-purple/20 text-accent-purple metallic-edge">
+            <GearSix weight="duotone" className="h-6 w-6" aria-hidden />
+          </span>
+          <div>
+            <h1 className="font-display text-2xl font-bold text-foreground md:text-3xl">
+              Settings
+            </h1>
+            <p className="mt-0.5 text-sm text-muted">
+              Manage your account, preferences, and learning experience.
+            </p>
+          </div>
+        </div>
+      </div>
+      <ThemeToggle />
+    </div>
+  );
+}

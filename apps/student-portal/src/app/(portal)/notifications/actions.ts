@@ -24,3 +24,18 @@ export async function markNotificationRead(formData: FormData) {
   revalidatePath("/", "layout");
   revalidatePath("/notifications");
 }
+
+export async function markAllNotificationsRead() {
+  const { userId } = await requireStudentProfile();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() } as never)
+    .eq("user_id", userId)
+    .is("read_at", null);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/", "layout");
+  revalidatePath("/notifications");
+}
