@@ -173,7 +173,7 @@ export async function PortalShell({
           icon: <VideoCamera weight="duotone" className={navIcon} />,
         },
         {
-          label: "Messages",
+          label: "Mentor Chat",
           href: "/messages",
           icon: <ChatCircle weight="duotone" className={navIcon} />,
         },
