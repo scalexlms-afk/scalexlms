@@ -168,7 +168,7 @@ export async function PortalShell({
           icon: <UsersThree weight="duotone" className={navIcon} />,
         },
         {
-          label: "Sessions",
+          label: "Live Classes",
           href: "/sessions",
           icon: <VideoCamera weight="duotone" className={navIcon} />,
         },
