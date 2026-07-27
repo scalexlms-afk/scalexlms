@@ -16,11 +16,12 @@ export function MessagesWorkspace({
   markReadAction?: () => Promise<void>;
 }) {
   return (
-    <div className="messages-theme space-y-6">
+    <div className="messages-theme flex flex-col gap-4 lg:min-h-[calc(100dvh-5.5rem)]">
       <MessagesHero />
 
-      <div className="grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)_220px] xl:grid-cols-[210px_minmax(0,1fr)_240px] lg:items-start">
-        <div className="order-2 min-w-0 lg:order-1">
+      {/* Thin rails + stretch all three columns to the bottom of the viewport */}
+      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[168px_minmax(0,1fr)_188px] xl:grid-cols-[180px_minmax(0,1fr)_200px] lg:items-stretch">
+        <div className="order-2 min-h-0 min-w-0 lg:order-1 lg:h-full">
           <div className="lg:hidden">
             <ConversationRail
               mentor={data.mentor}
@@ -30,17 +31,18 @@ export function MessagesWorkspace({
               collapsible
             />
           </div>
-          <div className="hidden lg:block">
+          <div className="hidden h-full min-h-0 lg:block">
             <ConversationRail
               mentor={data.mentor}
               unreadFromMentor={data.unreadFromMentor}
               lastMessagePreview={data.lastMessagePreview}
               lastMessageAt={data.lastMessageAt}
+              fillHeight
             />
           </div>
         </div>
 
-        <div className="order-1 min-w-0 lg:order-2">
+        <div className="order-1 min-h-[min(70vh,640px)] min-w-0 lg:order-2 lg:h-full lg:min-h-0">
           <ChatWindow
             userId={data.userId}
             mentor={data.mentor}
@@ -50,11 +52,12 @@ export function MessagesWorkspace({
           />
         </div>
 
-        <div className="order-3 min-w-0 lg:order-3">
+        <div className="order-3 min-h-0 min-w-0 lg:order-3 lg:h-full">
           <MessagesRail
             mentor={data.mentor}
             context={data.context}
             recentSubmissions={data.recentSubmissions}
+            fillHeight
           />
         </div>
       </div>

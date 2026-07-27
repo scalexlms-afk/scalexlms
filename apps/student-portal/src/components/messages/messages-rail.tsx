@@ -15,17 +15,25 @@ export function MessagesRail({
   mentor,
   context,
   recentSubmissions,
+  fillHeight = false,
 }: {
   mentor: MentorSummary;
   context: MessagesLearningContext;
   recentSubmissions: RecentSubmissionItem[];
+  fillHeight?: boolean;
 }) {
   const askHref = `/ai-mentor?q=${encodeURIComponent(
     `Help me prepare questions for my mentor about ${context.currentTaskTitle ?? context.milestoneTitle}`
   )}`;
 
   return (
-    <aside className="space-y-4 lg:sticky lg:top-20">
+    <aside
+      className={`space-y-4 ${
+        fillHeight
+          ? "h-full min-h-0 overflow-y-auto overscroll-contain"
+          : "lg:sticky lg:top-20"
+      }`}
+    >
       <Card className="border-accent-purple/20">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted">
           Learning Context

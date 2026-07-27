@@ -127,7 +127,7 @@ export function ChatWindow({
   }
 
   return (
-    <div className="flex h-[min(70vh,640px)] flex-col overflow-hidden rounded-2xl border border-accent-purple/20 bg-surface-2/40 lg:h-[calc(100dvh-10rem)]">
+    <div className="flex h-[min(70vh,640px)] flex-col overflow-hidden rounded-2xl border border-accent-purple/20 bg-surface-2/40 lg:h-full">
       <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3 md:px-5">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {mentor.avatarUrl ? (

@@ -180,12 +180,14 @@ export function ConversationRail({
   lastMessagePreview,
   lastMessageAt,
   collapsible = false,
+  fillHeight = false,
 }: {
   mentor: MentorSummary;
   unreadFromMentor: number;
   lastMessagePreview: string | null;
   lastMessageAt: string | null;
   collapsible?: boolean;
+  fillHeight?: boolean;
 }) {
   const body = (
     <ConversationList
@@ -228,9 +230,19 @@ export function ConversationRail({
   }
 
   return (
-    <aside className="space-y-3">
-      <Card className="!p-0 overflow-hidden border-accent-purple/20">
-        {body}
+    <aside className={fillHeight ? "flex h-full min-h-0 flex-col" : "space-y-3"}>
+      <Card
+        className={`!p-0 overflow-hidden border-accent-purple/20 ${
+          fillHeight ? "flex h-full min-h-0 flex-col" : ""
+        }`}
+      >
+        <div
+          className={
+            fillHeight ? "min-h-0 flex-1 overflow-y-auto" : undefined
+          }
+        >
+          {body}
+        </div>
       </Card>
     </aside>
   );
