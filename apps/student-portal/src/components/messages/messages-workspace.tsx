@@ -15,13 +15,12 @@ export function MessagesWorkspace({
   markReadAction?: () => Promise<void>;
 }) {
   return (
-    <div className="messages-theme lg:-mx-4 lg:-mb-4 xl:-mx-6">
-      {/* Mobile: keep a compact title; desktop matches mockup (nav label only). */}
-      <h1 className="mb-4 font-display text-xl font-bold text-foreground lg:hidden">
+    <div className="messages-theme flex h-full min-h-0 flex-col">
+      <h1 className="mb-3 shrink-0 font-display text-xl font-bold text-foreground lg:hidden">
         Mentor Chat
       </h1>
 
-      <div className="grid gap-3 lg:h-[calc(100dvh-4.25rem)] lg:grid-cols-[minmax(200px,0.85fr)_minmax(0,2fr)_minmax(240px,1.05fr)] lg:items-stretch xl:grid-cols-[minmax(220px,0.8fr)_minmax(0,2.1fr)_minmax(260px,1fr)]">
+      <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(240px,280px)_minmax(0,1fr)_minmax(260px,300px)] lg:items-stretch">
         <div className="order-2 min-h-0 min-w-0 lg:order-1 lg:h-full">
           <div className="lg:hidden">
             <ConversationRail
@@ -32,7 +31,7 @@ export function MessagesWorkspace({
               collapsible
             />
           </div>
-          <div className="hidden h-full lg:block">
+          <div className="hidden h-full min-h-0 lg:block">
             <ConversationRail
               mentor={data.mentor}
               unreadFromMentor={data.unreadFromMentor}
@@ -43,7 +42,7 @@ export function MessagesWorkspace({
           </div>
         </div>
 
-        <div className="order-1 min-h-0 min-w-0 lg:order-2 lg:h-full">
+        <div className="order-1 min-h-[min(70vh,640px)] min-w-0 lg:order-2 lg:h-full lg:min-h-0">
           <ChatWindow
             userId={data.userId}
             mentor={data.mentor}

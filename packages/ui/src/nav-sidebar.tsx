@@ -158,7 +158,7 @@ export function NavSidebar({
       {brand && (
         <div className="relative border-b border-line px-5 py-6">{brand}</div>
       )}
-      <nav className="relative flex-1 space-y-6 px-3 py-5">
+      <nav className="relative min-h-0 flex-1 space-y-6 overflow-y-auto px-3 py-5">
         {groups.map((group) => (
           <div key={group.title}>
             <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">

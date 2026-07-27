@@ -29,7 +29,9 @@ export function MessagesRail({
   return (
     <aside
       className={`space-y-4 ${
-        fillHeight ? "h-full min-h-0 overflow-y-auto pr-0.5" : "lg:sticky lg:top-20"
+        fillHeight
+          ? "h-full min-h-0 overflow-y-auto overscroll-contain pr-0.5"
+          : "lg:sticky lg:top-20"
       }`}
     >
       <Card className="border-accent-purple/20">

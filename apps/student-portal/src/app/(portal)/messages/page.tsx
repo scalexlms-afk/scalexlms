@@ -15,7 +15,7 @@ export default async function MessagesPage() {
 
   if (!premium) {
     return (
-      <div className="academy-page">
+      <div className="academy-page h-full min-h-0 overflow-y-auto">
         <MessagesUpgrade plan={profile.plan} />
       </div>
     );
@@ -23,7 +23,7 @@ export default async function MessagesPage() {
 
   if (!profile.mentor_id) {
     return (
-      <div className="academy-page">
+      <div className="academy-page h-full min-h-0 overflow-y-auto">
         <MessagesNoMentor />
       </div>
     );
@@ -32,14 +32,14 @@ export default async function MessagesPage() {
   const data = await getMessagesPageData(userId, profile);
   if (!data) {
     return (
-      <div className="academy-page">
+      <div className="academy-page h-full min-h-0 overflow-y-auto">
         <MessagesNoMentor />
       </div>
     );
   }
 
   return (
-    <div className="academy-page">
+    <div className="academy-page flex h-full min-h-0 flex-col">
       <MessagesWorkspace
         data={data}
         sendAction={sendMentorMessageAction}

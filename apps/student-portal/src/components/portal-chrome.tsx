@@ -112,6 +112,7 @@ export function PortalChrome({
   }, [open, hydrated]);
 
   const activeGroups = withActiveGroups(groups, pathname);
+  const lockViewport = pathname.startsWith("/messages");
 
   const sidebarToggle = (
     <button
@@ -130,14 +131,20 @@ export function PortalChrome({
   );
 
   return (
-    <div className="relative flex min-h-screen bg-surface">
+    <div
+      className={`relative flex bg-surface ${
+        lockViewport ? "h-dvh overflow-hidden" : "min-h-screen"
+      }`}
+    >
       <div
         className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_72%_-8%,rgba(227,30,36,0.12),transparent_32%),radial-gradient(circle_at_105%_72%,rgba(227,30,36,0.055),transparent_28%)]"
         aria-hidden
       />
 
       <div
-        className={`relative z-10 hidden shrink-0 md:block ${open ? "w-64" : "w-14"}`}
+        className={`relative z-10 hidden shrink-0 md:block ${
+          open ? "w-64" : "w-14"
+        } ${lockViewport ? "h-full" : ""}`}
       >
         {open ? (
           <>
@@ -154,7 +161,9 @@ export function PortalChrome({
               }
               footer={footer}
               linkComponent={PortalNavLink}
-              className="min-h-screen"
+              className={
+                lockViewport ? "!h-full !min-h-0 overflow-hidden" : "min-h-screen"
+              }
             />
           </>
         ) : (
@@ -164,8 +173,16 @@ export function PortalChrome({
         )}
       </div>
 
-      <div className="relative flex min-w-0 flex-1 flex-col">
-        <header className="pointer-events-none sticky top-0 z-20 flex h-14 items-center justify-end gap-2 px-4">
+      <div
+        className={`relative flex min-w-0 flex-1 flex-col ${
+          lockViewport ? "min-h-0 overflow-hidden" : ""
+        }`}
+      >
+        <header
+          className={`pointer-events-none z-20 flex h-14 shrink-0 items-center justify-end gap-2 px-4 ${
+            lockViewport ? "" : "sticky top-0"
+          }`}
+        >
           <div className="pointer-events-auto mr-auto flex items-center gap-2 md:hidden">
             <MobileNav
               groups={activeGroups}
@@ -179,7 +196,13 @@ export function PortalChrome({
           </div>
         </header>
 
-        <main className="relative z-10 flex-1 p-4 pt-2 md:p-8 md:pt-2">
+        <main
+          className={
+            lockViewport
+              ? "relative z-10 flex min-h-0 flex-1 flex-col overflow-hidden p-3 md:p-4"
+              : "relative z-10 flex-1 p-4 pt-2 md:p-8 md:pt-2"
+          }
+        >
           {children}
         </main>
       </div>
