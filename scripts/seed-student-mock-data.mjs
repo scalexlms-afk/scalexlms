@@ -27,8 +27,38 @@ const root = resolve(__dirname, "..");
 const STUDENT_EMAIL = "student@scalex.dev";
 const MENTOR_EMAIL = "mentor@scalex.dev";
 const TEST_PASSWORD = "ScaleXTest123!";
+/** Legacy visible marker — still cleared if present; new seeds keep UI strings clean. */
 const MOCK_MARKER = "[Mock Seed]";
 const MOCK_STRIPE_PREFIX = "mock_seed_";
+const SEED_TAG = "student-mock";
+const SEED_MEETING = "mock-seed";
+
+const AUTHOR_STUDENTS = [
+  { email: "aisha.khan@scalex.dev", name: "Aisha Khan" },
+  { email: "bilal.ahmed@scalex.dev", name: "Bilal Ahmed" },
+  { email: "sara.malik@scalex.dev", name: "Sara Malik" },
+];
+
+const FILLER_STUDENTS = [
+  { email: "filler01@scalex.dev", name: "Filler One" },
+  { email: "filler02@scalex.dev", name: "Filler Two" },
+  { email: "filler03@scalex.dev", name: "Filler Three" },
+  { email: "filler04@scalex.dev", name: "Filler Four" },
+  { email: "filler05@scalex.dev", name: "Filler Five" },
+  { email: "filler06@scalex.dev", name: "Filler Six" },
+  { email: "filler07@scalex.dev", name: "Filler Seven" },
+  { email: "filler08@scalex.dev", name: "Filler Eight" },
+  { email: "filler09@scalex.dev", name: "Filler Nine" },
+  { email: "filler10@scalex.dev", name: "Filler Ten" },
+  { email: "filler11@scalex.dev", name: "Filler Eleven" },
+  { email: "filler12@scalex.dev", name: "Filler Twelve" },
+  { email: "filler13@scalex.dev", name: "Filler Thirteen" },
+  { email: "filler14@scalex.dev", name: "Filler Fourteen" },
+  { email: "filler15@scalex.dev", name: "Filler Fifteen" },
+  { email: "filler16@scalex.dev", name: "Filler Sixteen" },
+  { email: "filler17@scalex.dev", name: "Filler Seventeen" },
+  { email: "filler18@scalex.dev", name: "Filler Eighteen" },
+];
 
 function loadEnv() {
   const paths = [
@@ -127,7 +157,7 @@ function assertOk(error, label) {
   }
 }
 
-async function clearPriorMockData(studentId, mentorId) {
+async function clearPriorMockData(studentId, mentorId, authorIds = []) {
   // Invoices cascade from payments with mock stripe ids; also wipe any prior
   // payments for this test student so re-runs stay clean.
   const { data: payments, error: paySelErr } = await supabase
@@ -158,7 +188,7 @@ async function clearPriorMockData(studentId, mentorId) {
         n.payload && typeof n.payload === "object" ? n.payload : null;
       return (
         title.includes(MOCK_MARKER) ||
-        (payload && payload.seed === "student-mock")
+        (payload && payload.seed === SEED_TAG)
       );
     })
     .map((n) => n.id);
@@ -185,65 +215,92 @@ async function clearPriorMockData(studentId, mentorId) {
     .eq("recipient_id", studentId);
   assertOk(msgErr2, "clear mentor→student messages");
 
-  const { data: priorTickets, error: ticketSelErr } = await supabase
+  // Test student: wipe all support tickets so re-seeds stay clean.
+  const { error: ticketErr } = await supabase
     .from("support_tickets")
-    .select("id, subject")
+    .delete()
     .eq("student_id", studentId);
-  assertOk(ticketSelErr, "list tickets");
-  const mockTicketIds = (priorTickets ?? [])
-    .filter((t) => String(t.subject ?? "").includes(MOCK_MARKER))
-    .map((t) => t.id);
-  if (mockTicketIds.length) {
-    const { error: ticketErr } = await supabase
-      .from("support_tickets")
-      .delete()
-      .in("id", mockTicketIds);
-    assertOk(ticketErr, "clear mock tickets");
-  }
+  assertOk(ticketErr, "clear student tickets");
 
-  // Mock announcements (title includes [Mock Seed])
-  const { data: mockAnnouncements, error: annSelErr } = await supabase
+  // Mock announcements (legacy marker or seed tag in content footer)
+  const { data: allAnnouncements, error: annSelErr } = await supabase
     .from("announcements")
-    .select("id, title")
-    .ilike("title", `%${MOCK_MARKER}%`);
-  assertOk(annSelErr, "list mock announcements");
-  if (mockAnnouncements?.length) {
+    .select("id, title, content");
+  assertOk(annSelErr, "list announcements");
+  const mockAnnouncementIds = (allAnnouncements ?? [])
+    .filter((a) => {
+      const title = String(a.title ?? "");
+      const content = String(a.content ?? "");
+      return (
+        title.includes(MOCK_MARKER) ||
+        content.includes(MOCK_MARKER) ||
+        content.includes(`[seed:${SEED_TAG}]`)
+      );
+    })
+    .map((a) => a.id);
+  if (mockAnnouncementIds.length) {
     const { error } = await supabase
       .from("announcements")
       .delete()
-      .in(
-        "id",
-        mockAnnouncements.map((a) => a.id)
-      );
+      .in("id", mockAnnouncementIds);
     assertOk(error, "clear mock announcements");
   }
 
-  // Mock community posts (student + mentor) — clear likes/comments first
+  // Community posts from student, mentor, and seed author accounts
+  const communityAuthors = [...new Set([studentId, mentorId, ...authorIds])];
   const { data: mockPosts, error: postSelErr } = await supabase
     .from("community_posts")
     .select("id, content, author_id")
-    .in("author_id", [studentId, mentorId]);
+    .in("author_id", communityAuthors);
   assertOk(postSelErr, "list posts");
   const postIds = (mockPosts ?? [])
-    .filter((p) => String(p.content ?? "").includes(MOCK_MARKER))
+    .filter((p) => {
+      const content = String(p.content ?? "");
+      return (
+        content.includes(MOCK_MARKER) ||
+        content.includes(`[seed:${SEED_TAG}]`) ||
+        communityAuthors.includes(p.author_id)
+      );
+    })
     .map((p) => p.id);
-  if (postIds.length) {
+  // Only wipe posts that look seeded (marker/tag) OR are from dedicated filler authors
+  const authorOnlyIds = new Set(authorIds);
+  const wipePostIds = (mockPosts ?? [])
+    .filter((p) => {
+      const content = String(p.content ?? "");
+      if (content.includes(MOCK_MARKER) || content.includes(`[seed:${SEED_TAG}]`)) {
+        return true;
+      }
+      // Filler author accounts are seed-only — clear all their posts
+      if (authorOnlyIds.has(p.author_id)) return true;
+      // Student/mentor: only clear tagged posts (already handled above)
+      return false;
+    })
+    .map((p) => p.id);
+  // Also clear student/mentor posts that still use the old marker
+  const finalPostIds = [...new Set([...wipePostIds, ...postIds.filter((id) => {
+    const p = (mockPosts ?? []).find((row) => row.id === id);
+    const content = String(p?.content ?? "");
+    return content.includes(MOCK_MARKER) || content.includes(`[seed:${SEED_TAG}]`);
+  })])];
+
+  if (finalPostIds.length) {
     const { error: likeErr } = await supabase
       .from("post_likes")
       .delete()
-      .in("post_id", postIds);
+      .in("post_id", finalPostIds);
     assertOk(likeErr, "clear mock post likes");
 
     const { error: commentErr } = await supabase
       .from("comments")
       .delete()
-      .in("post_id", postIds);
+      .in("post_id", finalPostIds);
     assertOk(commentErr, "clear mock post comments");
 
     const { error } = await supabase
       .from("community_posts")
       .delete()
-      .in("id", postIds);
+      .in("id", finalPostIds);
     assertOk(error, "clear mock community posts");
   }
 
@@ -253,11 +310,13 @@ async function clearPriorMockData(studentId, mentorId) {
     .eq("student_id", studentId);
   assertOk(regErr, "clear session registrations");
 
-  // Remove mock-hosted live sessions created by this seeder
+  // Remove mock-hosted live sessions (meeting_url or legacy title marker)
   const { data: mockSessions, error: mockSessSelErr } = await supabase
     .from("live_sessions")
-    .select("id, title")
-    .ilike("title", `${MOCK_MARKER}%`);
+    .select("id, title, meeting_url")
+    .or(
+      `title.ilike.%${MOCK_MARKER}%,meeting_url.ilike.%${SEED_MEETING}%`
+    );
   assertOk(mockSessSelErr, "list mock live sessions");
   if (mockSessions?.length) {
     const ids = mockSessions.map((s) => s.id);
@@ -300,18 +359,21 @@ async function clearPriorMockData(studentId, mentorId) {
     .in("key", ["milestone_1", "product_found"]);
   assertOk(badgeErr, "clear mock badges");
 
+  // Clear all AI chats for the test student (seed-owned)
   const { data: mockChats, error: chatSelErr } = await supabase
     .from("ai_chats")
-    .select("id, title")
+    .select("id")
     .eq("student_id", studentId);
   assertOk(chatSelErr, "list mock ai chats");
-  const chatIds = (mockChats ?? [])
-    .filter((c) => String(c.title ?? "").includes(MOCK_MARKER))
-    .map((c) => c.id);
+  const chatIds = (mockChats ?? []).map((c) => c.id);
   if (chatIds.length) {
     const { error } = await supabase.from("ai_chats").delete().in("id", chatIds);
     assertOk(error, "clear mock ai chats");
   }
+}
+
+function withSeedFooter(text) {
+  return `${text}\n\n[seed:${SEED_TAG}]`;
 }
 
 async function main() {
@@ -338,22 +400,44 @@ async function main() {
     completionPercent: null,
   };
 
-  console.log("Ensuring student + mentor accounts…");
+  console.log("Ensuring student + mentor + author accounts…");
   const studentId = await ensureUser({
     email: STUDENT_EMAIL,
-    name: "Test Student",
+    name: "Mustafa Aziz",
     role: "student",
   });
   const mentorId = await ensureUser({
     email: MENTOR_EMAIL,
-    name: "Mentor",
+    name: "Usman",
     role: "mentor",
   });
-  console.log(`  student: ${studentId}`);
-  console.log(`  mentor:  ${mentorId}`);
+  const authorIds = [];
+  for (const author of AUTHOR_STUDENTS) {
+    authorIds.push(
+      await ensureUser({
+        email: author.email,
+        name: author.name,
+        role: "student",
+      })
+    );
+  }
+  const fillerIds = [];
+  for (const filler of FILLER_STUDENTS) {
+    fillerIds.push(
+      await ensureUser({
+        email: filler.email,
+        name: filler.name,
+        role: "student",
+      })
+    );
+  }
+  console.log(`  student: ${studentId} (Mustafa Aziz)`);
+  console.log(`  mentor:  ${mentorId} (Usman)`);
+  console.log(`  authors: ${authorIds.length}`);
+  console.log(`  fillers: ${fillerIds.length}`);
 
   console.log("Clearing prior mock seed rows…");
-  await clearPriorMockData(studentId, mentorId);
+  await clearPriorMockData(studentId, mentorId, authorIds);
 
   // 1) Premium profile (no avatar_url)
   const { error: profileErr } = await supabase
@@ -549,7 +633,7 @@ async function main() {
   summary.prefs = true;
   console.log("✓ notification_preferences + user_settings.learning");
 
-  // 4) Payments + invoices (pdf_url null)
+  // 4) Payments + invoices — 3 paid + 1 pending remaining; stable INV-2026-00x
   const { data: planRow } = await supabase
     .from("payment_plan_settings")
     .select("total_cents, first_payment_percent, remaining_percent")
@@ -563,107 +647,147 @@ async function main() {
   const remPct = planRow?.remaining_percent ?? 30;
   const firstAmount = Math.round((totalCents * firstPct) / 100);
   const remainingAmount = Math.round((totalCents * remPct) / 100);
+  const installment = Math.round(firstAmount / 3);
 
-  const paidAt = hoursAgo(72);
-  const { data: paidPayment, error: paidErr } = await supabase
-    .from("payments")
-    .insert({
-      student_id: studentId,
+  const paidSpecs = [
+    {
       type: "first_payment",
-      amount: firstAmount,
-      status: "paid",
-      method: "card",
-      stripe_session_id: `${MOCK_STRIPE_PREFIX}first_${studentId.slice(0, 8)}`,
-      paid_at: paidAt,
-    })
-    .select("id")
-    .single();
-  assertOk(paidErr, "insert paid payment");
+      amount: installment,
+      paidAt: daysAgo(90),
+      number: "INV-2026-001",
+      stripe: `${MOCK_STRIPE_PREFIX}paid_001_${studentId.slice(0, 8)}`,
+    },
+    {
+      type: "first_payment",
+      amount: installment,
+      paidAt: daysAgo(60),
+      number: "INV-2026-002",
+      stripe: `${MOCK_STRIPE_PREFIX}paid_002_${studentId.slice(0, 8)}`,
+    },
+    {
+      type: "first_payment",
+      amount: firstAmount - installment * 2,
+      paidAt: daysAgo(30),
+      number: "INV-2026-003",
+      stripe: `${MOCK_STRIPE_PREFIX}paid_003_${studentId.slice(0, 8)}`,
+    },
+  ];
 
-  const { data: pendingPayment, error: pendErr } = await supabase
-    .from("payments")
-    .insert({
-      student_id: studentId,
-      type: "remaining",
-      amount: remainingAmount,
-      status: "pending",
-      method: null,
-      stripe_session_id: `${MOCK_STRIPE_PREFIX}remaining_${studentId.slice(0, 8)}`,
-      paid_at: null,
-    })
-    .select("id")
-    .single();
-  assertOk(pendErr, "insert pending payment");
-  summary.payments = 2;
+  for (const spec of paidSpecs) {
+    const { data: paidPayment, error: paidErr } = await supabase
+      .from("payments")
+      .insert({
+        student_id: studentId,
+        type: spec.type,
+        amount: spec.amount,
+        status: "paid",
+        method: "card",
+        stripe_session_id: spec.stripe,
+        paid_at: spec.paidAt,
+      })
+      .select("id")
+      .single();
+    assertOk(paidErr, `insert paid payment ${spec.number}`);
 
-  const invNumber = `INV-MOCK-${Date.now()}`;
-  const { error: invErr } = await supabase.from("invoices").insert({
-    payment_id: paidPayment.id,
-    number: invNumber,
-    issued_at: paidAt,
-    pdf_url: null,
+    const { error: invErr } = await supabase.from("invoices").insert({
+      payment_id: paidPayment.id,
+      number: spec.number,
+      issued_at: spec.paidAt,
+      pdf_url: null,
+    });
+    assertOk(invErr, `insert invoice ${spec.number}`);
+    summary.payments += 1;
+    summary.invoices += 1;
+  }
+
+  const { error: pendErr } = await supabase.from("payments").insert({
+    student_id: studentId,
+    type: "remaining",
+    amount: remainingAmount,
+    status: "pending",
+    method: null,
+    stripe_session_id: `${MOCK_STRIPE_PREFIX}remaining_${studentId.slice(0, 8)}`,
+    paid_at: null,
   });
-  assertOk(invErr, "insert invoice");
-  summary.invoices = 1;
+  assertOk(pendErr, "insert pending payment");
+  summary.payments += 1;
   console.log(
-    `✓ Payments: paid first (${firstAmount}¢) + pending remaining (${remainingAmount}¢); invoice ${invNumber}`
+    `✓ Payments: 3 paid invoices (INV-2026-001..003) + pending remaining (${remainingAmount}¢)`
   );
 
-  // 5) Notifications
+  // 5) Notifications — clean mockup titles; seed only in payload
   const notifications = [
     {
       user_id: studentId,
       type: "submission_review",
-      title: `${MOCK_MARKER} Task approved`,
-      body: "Your mentor approved Submit Business Plan. Keep going!",
-      payload: { seed: "student-mock", href: "/tasks" },
+      title: "Mentor Review Complete",
+      body: "Usman approved your Business Plan. You're clear to continue into Business Setup.",
+      payload: { seed: SEED_TAG, href: "/tasks" },
       read_at: null,
       created_at: hoursAgo(2),
     },
     {
       user_id: studentId,
-      type: "message",
-      title: `${MOCK_MARKER} New mentor message`,
-      body: "Your mentor replied in Mentor Chat.",
-      payload: { seed: "student-mock", href: "/messages" },
+      type: "submission_review",
+      title: "AI Review Ready",
+      body: "LaunchPad AI pre-scored your Business Setup documents — mentor review is next.",
+      payload: { seed: SEED_TAG, href: "/tasks" },
       read_at: null,
       created_at: hoursAgo(5),
     },
     {
       user_id: studentId,
       type: "session_scheduled",
-      title: `${MOCK_MARKER} Live class upcoming`,
-      body: "Premium Q&A is on the calendar — register if seats remain.",
-      payload: { seed: "student-mock", href: "/sessions" },
-      read_at: hoursAgo(1),
-      created_at: hoursAgo(20),
-    },
-    {
-      user_id: studentId,
-      type: "payment_success",
-      title: `${MOCK_MARKER} First payment received`,
-      body: "Your premium first installment was recorded.",
-      payload: { seed: "student-mock", href: "/billing" },
-      read_at: hoursAgo(48),
-      created_at: hoursAgo(72),
-    },
-    {
-      user_id: studentId,
-      type: "payment_reminder",
-      title: `${MOCK_MARKER} Remaining balance due`,
-      body: "Complete your remaining payment to stay fully current.",
-      payload: { seed: "student-mock", href: "/billing" },
+      title: "Live Class Reminder",
+      body: "Product Hunting Masterclass starts in 2 days — you're registered.",
+      payload: { seed: SEED_TAG, href: "/sessions" },
       read_at: null,
       created_at: hoursAgo(8),
     },
     {
       user_id: studentId,
+      type: "message",
+      title: "New Mentor Message",
+      body: "Usman replied in Mentor Chat about your niche shortlist.",
+      payload: { seed: SEED_TAG, href: "/messages" },
+      read_at: null,
+      created_at: hoursAgo(4),
+    },
+    {
+      user_id: studentId,
+      type: "payment_reminder",
+      title: "Remaining Balance Due",
+      body: "Your remaining Premium installment is outstanding. Pay anytime from Billing.",
+      payload: { seed: SEED_TAG, href: "/billing" },
+      read_at: null,
+      created_at: hoursAgo(12),
+    },
+    {
+      user_id: studentId,
+      type: "payment_success",
+      title: "Payment Received",
+      body: "Invoice INV-2026-003 was recorded successfully.",
+      payload: { seed: SEED_TAG, href: "/billing" },
+      read_at: hoursAgo(48),
+      created_at: daysAgo(30),
+    },
+    {
+      user_id: studentId,
       type: "community_moderation",
-      title: `${MOCK_MARKER} Post approved`,
-      body: "Your community post is live in Product Hunting.",
-      payload: { seed: "student-mock", href: "/community" },
+      title: "Community Reply",
+      body: "Usman answered your Brand Registry question in Community.",
+      payload: { seed: SEED_TAG, href: "/community" },
       read_at: hoursAgo(3),
       created_at: hoursAgo(10),
+    },
+    {
+      user_id: studentId,
+      type: "milestone_unlocked",
+      title: "Milestone Unlocked",
+      body: "Business Setup is open — upload your documents when ready.",
+      payload: { seed: SEED_TAG, href: "/roadmap" },
+      read_at: hoursAgo(20),
+      created_at: hoursAgo(40),
     },
   ];
 
@@ -674,33 +798,37 @@ async function main() {
   summary.notifications = notifications.length;
   console.log(`✓ Notifications: ${notifications.length}`);
 
-  // 6) Messages thread (text only)
+  // 6) Messages thread (text only, clean copy)
   const messageRows = [
     {
       sender_id: studentId,
       recipient_id: mentorId,
-      content: `${MOCK_MARKER} Hi! I just finished drafting my business plan — can you review the niche choice?`,
+      content:
+        "Hi Usman! I just finished drafting my business plan — can you review the niche choice?",
       created_at: hoursAgo(30),
       read_at: hoursAgo(28),
     },
     {
       sender_id: mentorId,
       recipient_id: studentId,
-      content: `${MOCK_MARKER} Looks solid. Narrow the TAM estimate and add your first 3 competitor ASINs.`,
+      content:
+        "Looks solid, Mustafa. Narrow the TAM estimate and add your first 3 competitor ASINs.",
       created_at: hoursAgo(26),
       read_at: hoursAgo(24),
     },
     {
       sender_id: studentId,
       recipient_id: mentorId,
-      content: `${MOCK_MARKER} Updated — shared a Google Doc link in the task submission.`,
+      content:
+        "Updated — shared a Google Doc link in the task submission.",
       created_at: hoursAgo(6),
       read_at: null,
     },
     {
       sender_id: mentorId,
       recipient_id: studentId,
-      content: `${MOCK_MARKER} Great. I'll review tomorrow. Join the next premium Q&A if you can.`,
+      content:
+        "Great. I'll review tomorrow. Join the Product Hunting Masterclass if you can.",
       created_at: hoursAgo(4),
       read_at: null,
     },
@@ -708,9 +836,9 @@ async function main() {
   const { error: msgInsErr } = await supabase.from("messages").insert(messageRows);
   assertOk(msgInsErr, "insert messages");
   summary.messages = messageRows.length;
-  console.log(`✓ Messages: ${messageRows.length} with mentor`);
+  console.log(`✓ Messages: ${messageRows.length} with Usman`);
 
-  // 7) Support tickets
+  // 7) Support tickets — clean subjects
   const { data: staff } = await supabase
     .from("profiles")
     .select("id")
@@ -721,7 +849,7 @@ async function main() {
   const ticketRows = [
     {
       student_id: studentId,
-      subject: `${MOCK_MARKER} Can't access live class link`,
+      subject: "Can't access live class link",
       body: "The Sessions page shows an upcoming class but meeting URL is empty. Is that expected before the host publishes it?",
       priority: "normal",
       status: "open",
@@ -732,15 +860,26 @@ async function main() {
     },
     {
       student_id: studentId,
-      subject: `${MOCK_MARKER} Invoice PDF missing`,
-      body: "Billing shows a paid first installment but no PDF download. Confirming that's OK for mock/test.",
+      subject: "Invoice PDF missing",
+      body: "Billing shows paid installments but no PDF download. Confirming that's OK when Storage isn't used.",
       priority: "normal",
       status: "resolved",
       staff_reply:
-        "Confirmed — invoice PDFs are optional when Storage is not used. Your payment row is valid.",
+        "Confirmed — invoice PDFs are optional. Your payment rows and INV-2026 numbers are valid.",
       staff_replied_by: staffId,
       staff_reply_at: hoursAgo(18),
       created_at: hoursAgo(36),
+    },
+    {
+      student_id: studentId,
+      subject: "Mentor chat notification delay",
+      body: "I got Usman's reply in Messages but the notification arrived a few minutes later. Just flagging it.",
+      priority: "normal",
+      status: "in_progress",
+      staff_reply: "Looking into push timing — thanks for the report.",
+      staff_replied_by: staffId,
+      staff_reply_at: hoursAgo(6),
+      created_at: hoursAgo(9),
     },
   ];
   const { error: ticketInsErr } = await supabase
@@ -748,26 +887,29 @@ async function main() {
     .insert(ticketRows);
   assertOk(ticketInsErr, "insert support tickets");
   summary.tickets = ticketRows.length;
-  console.log(`✓ Support tickets: ${ticketRows.length} (open + resolved)`);
+  console.log(`✓ Support tickets: ${ticketRows.length}`);
 
   // 8) Announcements
   const announcementRows = [
     {
-      title: `${MOCK_MARKER} Welcome to LaunchPad Premium`,
-      content:
-        "Your premium seat is active. Start with Foundation lessons, then submit your Business Plan for mentor review.",
+      title: "Welcome to LaunchPad Premium",
+      content: withSeedFooter(
+        "Your premium seat is active. Start with Foundation lessons, then submit your Business Plan for mentor review."
+      ),
       published_at: hoursAgo(96),
     },
     {
-      title: `${MOCK_MARKER} Live Q&A this week`,
-      content:
-        "Bring product research questions to the Weekly Q&A. Register on the Sessions page — seats are limited.",
+      title: "Live Q&A this week",
+      content: withSeedFooter(
+        "Bring product research questions to the Weekly Q&A. Register on the Sessions page — seats are limited."
+      ),
       published_at: hoursAgo(36),
     },
     {
-      title: `${MOCK_MARKER} Reminder: remaining balance`,
-      content:
-        "Complete your remaining installment when ready. Billing shows status and invoice for the first payment.",
+      title: "Reminder: remaining balance",
+      content: withSeedFooter(
+        "Complete your remaining installment when ready. Billing shows status and invoices for paid installments."
+      ),
       published_at: hoursAgo(12),
     },
   ];
@@ -778,93 +920,122 @@ async function main() {
   summary.announcements = announcementRows.length;
   console.log(`✓ Announcements: ${announcementRows.length}`);
 
-  // 9) Community posts (student + mentor announcements), then comments + likes
-  const studentPostRows = [
+  // 9) Community posts — multi-author feed + mentor announcements
+  const [aishaId, bilalId, saraId] = authorIds;
+  const communityPostRows = [
     {
-      author_id: studentId,
+      author_id: aishaId ?? studentId,
       channel: "product_hunting",
-      content: `${MOCK_MARKER} Looking for feedback on kitchen gadget niches under $30 — demand vs competition tips?`,
+      content: withSeedFooter(
+        "Kitchen gadgets under $30\nAnyone seeing strong demand vs competition on silicone utensils? Sharing my Helium10 shortlist."
+      ),
       status: "approved",
       media_urls: [],
       like_count: 0,
-      created_at: hoursAgo(40),
+      created_at: hoursAgo(48),
+    },
+    {
+      author_id: bilalId ?? studentId,
+      channel: "supplier_help",
+      content: withSeedFooter(
+        "Alibaba MOQ negotiation\nWhat's a realistic first order for private label packaging when the factory wants 3k units?"
+      ),
+      status: "approved",
+      media_urls: [],
+      like_count: 0,
+      created_at: hoursAgo(36),
     },
     {
       author_id: studentId,
       channel: "questions",
-      content: `${MOCK_MARKER} Do I need brand registry before ordering samples, or after first sale?`,
+      content: withSeedFooter(
+        "Brand Registry timing\nDo I need brand registry before ordering samples, or after first sale?"
+      ),
       status: "approved",
       media_urls: [],
       like_count: 0,
       created_at: hoursAgo(22),
     },
     {
-      author_id: studentId,
+      author_id: saraId ?? studentId,
       channel: "student_wins",
-      content: `${MOCK_MARKER} Finished Foundation business plan draft — first real deliverable done!`,
+      content: withSeedFooter(
+        "First milestone done!\nFinished my Foundation business plan and got mentor approval — momentum feels real."
+      ),
+      status: "approved",
+      media_urls: [],
+      like_count: 0,
+      created_at: hoursAgo(18),
+    },
+    {
+      author_id: studentId,
+      channel: "product_hunting",
+      content: withSeedFooter(
+        "Looking for feedback\nKitchen gadget niches under $30 — demand vs competition tips for Pakistan-based sourcing?"
+      ),
       status: "approved",
       media_urls: [],
       like_count: 0,
       created_at: hoursAgo(15),
     },
+    {
+      author_id: mentorId,
+      channel: "announcements",
+      content: withSeedFooter(
+        "Mentors online this week\nDrop your milestone blockers in Questions and include your niche + marketplace."
+      ),
+      status: "approved",
+      media_urls: [],
+      like_count: 0,
+      created_at: hoursAgo(14),
+    },
   ];
-  const mentorPostRow = {
-    author_id: mentorId,
-    channel: "announcements",
-    content: `${MOCK_MARKER} Mentors online this week — drop your milestone blockers in Questions and tag your niche.`,
-    status: "approved",
-    media_urls: [],
-    like_count: 0,
-    created_at: hoursAgo(18),
-  };
 
-  const { data: insertedStudentPosts, error: postInsErr } = await supabase
+  const { data: insertedPosts, error: postInsErr } = await supabase
     .from("community_posts")
-    .insert(studentPostRows)
-    .select("id, channel");
-  assertOk(postInsErr, "insert student community posts");
+    .insert(communityPostRows)
+    .select("id, author_id, channel");
+  assertOk(postInsErr, "insert community posts");
+  const posts = insertedPosts ?? [];
+  summary.communityPosts = posts.length;
 
-  const { data: insertedMentorPost, error: mentorPostErr } = await supabase
-    .from("community_posts")
-    .insert(mentorPostRow)
-    .select("id, channel")
-    .single();
-  assertOk(mentorPostErr, "insert mentor community post");
-
-  const studentPostIds = (insertedStudentPosts ?? []).map((p) => p.id);
-  const mentorPostId = insertedMentorPost?.id;
-  summary.communityPosts =
-    studentPostIds.length + (mentorPostId ? 1 : 0);
+  const studentQuestion = posts.find(
+    (p) => p.author_id === studentId && p.channel === "questions"
+  );
+  const aishaPost = posts.find((p) => p.author_id === aishaId);
+  const mentorPost = posts.find((p) => p.author_id === mentorId);
 
   const commentRows = [];
-  if (studentPostIds[0]) {
+  if (studentQuestion) {
     commentRows.push({
-      post_id: studentPostIds[0],
+      post_id: studentQuestion.id,
       author_id: mentorId,
-      content: `${MOCK_MARKER} Check review velocity on page-1 ASINs before locking the niche.`,
-      created_at: hoursAgo(38),
-    });
-  }
-  if (studentPostIds[1]) {
-    commentRows.push({
-      post_id: studentPostIds[1],
-      author_id: studentId,
-      content: `${MOCK_MARKER} Following up — anyone brand-registered before samples?`,
+      content:
+        "Brand Registry after you have a trademark filing is typical — samples can come first.",
       created_at: hoursAgo(20),
     });
+  }
+  if (aishaPost) {
     commentRows.push({
-      post_id: studentPostIds[1],
+      post_id: aishaPost.id,
       author_id: mentorId,
-      content: `${MOCK_MARKER} Brand Registry after you have a trademark filing is typical — samples can come first.`,
-      created_at: hoursAgo(19),
+      content:
+        "Check review velocity on page-1 ASINs before locking the niche.",
+      created_at: hoursAgo(46),
+    });
+    commentRows.push({
+      post_id: aishaPost.id,
+      author_id: studentId,
+      content: "Thanks — I'll share my Keepa screenshots next.",
+      created_at: hoursAgo(44),
     });
   }
-  if (mentorPostId) {
+  if (mentorPost) {
     commentRows.push({
-      post_id: mentorPostId,
+      post_id: mentorPost.id,
       author_id: studentId,
-      content: `${MOCK_MARKER} Thanks! I'll post my Business Setup questions there.`,
-      created_at: hoursAgo(16),
+      content: "Thanks Usman! I'll post my Business Setup questions there.",
+      created_at: hoursAgo(12),
     });
   }
 
@@ -876,11 +1047,13 @@ async function main() {
     summary.comments = commentRows.length;
   }
 
-  // Mentor likes student posts (trigger bumps like_count)
-  const likeRows = studentPostIds.map((postId) => ({
+  const likeTargets = posts
+    .filter((p) => p.author_id !== mentorId)
+    .map((p) => p.id);
+  const likeRows = likeTargets.map((postId) => ({
     post_id: postId,
     user_id: mentorId,
-    created_at: hoursAgo(14),
+    created_at: hoursAgo(10),
   }));
   if (likeRows.length) {
     const { error: likeInsErr } = await supabase
@@ -889,8 +1062,7 @@ async function main() {
     assertOk(likeInsErr, "insert post likes");
     summary.postLikes = likeRows.length;
 
-    // Ensure like_count matches inserted likes (trigger should already bump)
-    for (const postId of studentPostIds) {
+    for (const postId of likeTargets) {
       const { count } = await supabase
         .from("post_likes")
         .select("*", { count: "exact", head: true })
@@ -906,36 +1078,37 @@ async function main() {
     `✓ Community: ${summary.communityPosts} posts, ${summary.comments} comments, ${summary.postLikes} likes`
   );
 
-  // 10) Live sessions: 2 upcoming + 1 past (no recordings/storage)
+  // 10) Live sessions + dense registrations via fillers
   const sessionRows = [
     {
-      title: `${MOCK_MARKER} Product Hunting Masterclass`,
-      description: "Live walkthrough of product research for Private Label.",
+      title: "Product Hunting Masterclass",
+      description:
+        "Live walkthrough of product research for Private Label — Foundation & Product Hunting.",
       type: "masterclass",
       audience: "all_premium",
       scheduled_at: daysFromNow(2),
       host_id: mentorId,
-      meeting_url: "https://meet.google.com/mock-seed-product-hunting",
+      meeting_url: `https://meet.google.com/${SEED_MEETING}-product-hunting`,
       recording_url: null,
     },
     {
-      title: `${MOCK_MARKER} Weekly Q&A with Mentor`,
-      description: "Ask anything about your current milestone.",
+      title: "Weekly Q&A with Mentor",
+      description: "Ask anything about your current milestone — Business Setup focus.",
       type: "qa",
       audience: "all_premium",
       scheduled_at: daysFromNow(5),
       host_id: mentorId,
-      meeting_url: "https://meet.google.com/mock-seed-weekly-qa",
+      meeting_url: `https://meet.google.com/${SEED_MEETING}-weekly-qa`,
       recording_url: null,
     },
     {
-      title: `${MOCK_MARKER} Orientation Kickoff`,
+      title: "Orientation Kickoff",
       description: "Past orientation session for new Premium students.",
       type: "batch_class",
       audience: "all_premium",
       scheduled_at: daysAgo(7),
       host_id: mentorId,
-      meeting_url: "https://meet.google.com/mock-seed-orientation",
+      meeting_url: `https://meet.google.com/${SEED_MEETING}-orientation`,
       recording_url: null,
     },
   ];
@@ -947,17 +1120,24 @@ async function main() {
   summary.liveSessions = createdSessions?.length ?? 0;
 
   if (createdSessions?.length) {
-    const regs = createdSessions.map((s) => ({
-      session_id: s.id,
-      student_id: studentId,
-    }));
+    const regs = [];
+    for (const s of createdSessions) {
+      regs.push({ session_id: s.id, student_id: studentId });
+      for (const fillerId of fillerIds) {
+        regs.push({ session_id: s.id, student_id: fillerId });
+      }
+      for (const authorId of authorIds) {
+        regs.push({ session_id: s.id, student_id: authorId });
+      }
+    }
+    // Cap roughly 12–24 unique students across sessions (student + 18 fillers + 3 authors = 22)
     const { error: regInsErr } = await supabase
       .from("session_registrations")
       .upsert(regs, { onConflict: "session_id,student_id" });
     assertOk(regInsErr, "upsert session registrations");
     summary.sessionRegs = regs.length;
     console.log(
-      `✓ Live sessions + registrations: ${regs.length} (2 upcoming + 1 past)`
+      `✓ Live sessions: ${createdSessions.length}; registrations: ${regs.length} (~${1 + fillerIds.length + authorIds.length} students × sessions)`
     );
   }
 
@@ -1000,7 +1180,7 @@ async function main() {
             status: "approved",
             content: {
               type: "text",
-              text: `${MOCK_MARKER} Business plan draft: Target kitchen gadgets under $30 AOV, Pakistan-based sourcing, launch US storefront in 6 months.`,
+              text: "Business plan draft: Target kitchen gadgets under $30 AOV, Pakistan-based sourcing, launch US storefront in 6 months.",
             },
             submitted_at: hoursAgo(48),
             ai_score: 86,
@@ -1018,7 +1198,7 @@ async function main() {
           submission_id: sub0.id,
           reviewer_id: mentorId,
           decision: "approved",
-          feedback: `${MOCK_MARKER} Approved — clear niche, solid TAM sketch, and competitor ASINs look good. Proceed to Business Setup.`,
+          feedback: "Approved — clear niche, solid TAM sketch, and competitor ASINs look good. Proceed to Business Setup.",
           reviewed_at: hoursAgo(40),
         });
         assertOk(revErr, "insert MS1 review");
@@ -1044,7 +1224,7 @@ async function main() {
           content: {
             type: "link",
             link: "https://docs.google.com/document/d/mock-seed-business-docs",
-            comments: `${MOCK_MARKER} Shared folder with registration docs (link only, no file upload).`,
+            comments: "Shared folder with registration docs (link only, no file upload).",
           },
           submitted_at: hoursAgo(10),
           ai_score: 74,
@@ -1118,7 +1298,7 @@ async function main() {
     .from("ai_chats")
     .insert({
       student_id: studentId,
-      title: `${MOCK_MARKER} Product research tips`,
+      title: "Product research tips",
     })
     .select("id")
     .single();
@@ -1129,13 +1309,15 @@ async function main() {
       {
         chat_id: chat.id,
         role: "user",
-        content: `${MOCK_MARKER} How do I estimate monthly demand for a kitchen gadget niche?`,
+        content:
+          "How do I estimate monthly demand for a kitchen gadget niche?",
         created_at: hoursAgo(14),
       },
       {
         chat_id: chat.id,
         role: "assistant",
-        content: `${MOCK_MARKER} Start with keyword search volume, review velocity on page-1 ASINs, and seasonality. Cross-check with Keepa/Helium10-style demand before committing to samples.`,
+        content:
+          "Start with keyword search volume, review velocity on page-1 ASINs, and seasonality. Cross-check with Keepa/Helium10-style demand before committing to samples.",
         created_at: hoursAgo(14),
       },
     ]);
@@ -1149,6 +1331,8 @@ async function main() {
   console.log("Login (student portal):");
   console.log(`  Email:    ${STUDENT_EMAIL}`);
   console.log(`  Password: ${TEST_PASSWORD}`);
+  console.log(`  Name:     Mustafa Aziz`);
+  console.log(`  Mentor:   Usman`);
   console.log(`  Plan:     premium`);
   console.log("\nSeeded:");
   console.log(`  profile:          ${summary.profile}`);

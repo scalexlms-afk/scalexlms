@@ -30,6 +30,7 @@ export interface CommunityComment {
   profiles?: {
     name: string;
     avatar_url?: string | null;
+    role?: string | null;
   } | null;
 }
 
@@ -99,13 +100,16 @@ export function postSnippet(content: string): {
   title: string | null;
   body: string;
 } {
-  const trimmed = content.trim();
-  const newline = trimmed.indexOf("\n");
+  const cleaned = content
+    .replace(/\n*\[seed:[^\]]+\]\s*$/i, "")
+    .replace(/\n*\[Mock Seed\][^\n]*/gi, "")
+    .trim();
+  const newline = cleaned.indexOf("\n");
   if (newline === -1) {
-    return { title: null, body: trimmed };
+    return { title: null, body: cleaned };
   }
   return {
-    title: trimmed.slice(0, newline).trim(),
-    body: trimmed.slice(newline + 1).trim(),
+    title: cleaned.slice(0, newline).trim(),
+    body: cleaned.slice(newline + 1).trim(),
   };
 }

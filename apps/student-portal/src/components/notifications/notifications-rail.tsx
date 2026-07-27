@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Sparkle } from "@phosphor-icons/react";
 import { Card } from "@scalex/ui";
 import type {
@@ -60,6 +60,7 @@ export function NotificationsRail({
   onViewActionItems: () => void;
 }) {
   const [pending, startTransition] = useTransition();
+  const [tipsDismissed, setTipsDismissed] = useState(false);
 
   function currentOn(id: PrefRow["id"]) {
     if (id === "inApp") return prefs.inApp;
@@ -100,7 +101,9 @@ export function NotificationsRail({
                     {row.label}
                   </p>
                   {!row.available ? (
-                    <p className="text-[11px] text-subtle">Not available yet</p>
+                    <p className="text-[11px] text-subtle">
+                      Coming Soon
+                    </p>
                   ) : null}
                 </div>
                 {row.available && row.channel ? (
@@ -163,16 +166,25 @@ export function NotificationsRail({
         </button>
       </Card>
 
-      <Card>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Notification Tips
-        </p>
-        <ul className="mt-3 space-y-2 text-sm text-muted">
-          <li>· Check action items daily so reviews never stall.</li>
-          <li>· Mentor replies and live class alerts are highest priority.</li>
-          <li>· Turn off email digests anytime from preferences above.</li>
-        </ul>
-      </Card>
+      {!tipsDismissed ? (
+        <Card>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+            Notification Tips
+          </p>
+          <ul className="mt-3 space-y-2 text-sm text-muted">
+            <li>· Check action items daily so reviews never stall.</li>
+            <li>· Mentor replies and live class alerts are highest priority.</li>
+            <li>· Turn off email digests anytime from preferences above.</li>
+          </ul>
+          <button
+            type="button"
+            onClick={() => setTipsDismissed(true)}
+            className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-line px-3 py-2 text-xs font-semibold text-muted transition hover:bg-surface-3 hover:text-foreground"
+          >
+            Got it, thanks!
+          </button>
+        </Card>
+      ) : null}
     </aside>
   );
 }

@@ -80,11 +80,18 @@ export function RecentActivity({
           {tab === "conversations" ? (
             <ConversationsFooterLink premium={premium} />
           ) : (
-            <span className="text-sm text-muted">
-              {tickets.length === 0
-                ? "No tickets yet"
-                : `${tickets.length} recent ${tickets.length === 1 ? "ticket" : "tickets"}`}
-            </span>
+            <button
+              type="button"
+              onClick={() => {
+                document
+                  .getElementById("create-ticket")
+                  ?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-purple hover:underline"
+            >
+              {tickets.length === 0 ? "Create a ticket" : "New ticket"}
+              <ArrowRight className="h-3.5 w-3.5" weight="bold" aria-hidden />
+            </button>
           )}
         </div>
       </Card>
@@ -122,11 +129,18 @@ export function RecentActivity({
             <TicketList tickets={tickets} />
           </div>
           <div className="border-t border-line px-5 py-3">
-            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-purple">
-              {tickets.length === 0
-                ? "Create a ticket above to get started"
-                : "All recent tickets listed"}
-            </span>
+            <button
+              type="button"
+              onClick={() => {
+                document
+                  .getElementById("create-ticket")
+                  ?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-purple hover:underline"
+            >
+              {tickets.length === 0 ? "Create a ticket" : "Open new ticket"}
+              <ArrowRight className="h-3.5 w-3.5" weight="bold" aria-hidden />
+            </button>
           </div>
         </Card>
       </div>

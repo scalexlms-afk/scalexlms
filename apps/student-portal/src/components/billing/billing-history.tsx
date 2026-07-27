@@ -78,13 +78,7 @@ export function BillingHistory({ items }: { items: BillingHistoryItem[] }) {
                           Download
                         </a>
                       ) : (
-                        <span
-                          className="inline-flex cursor-not-allowed items-center gap-1.5 text-sm font-semibold text-subtle opacity-60"
-                          title="Invoice PDF not available"
-                        >
-                          <DownloadSimple weight="bold" className="h-4 w-4" aria-hidden />
-                          Download
-                        </span>
+                        <span className="text-sm text-subtle">—</span>
                       )}
                     </td>
                   </tr>

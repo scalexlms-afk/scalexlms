@@ -38,7 +38,11 @@ export function NotificationFeed({
     <div className="space-y-6">
       {groups.map(({ group, items: groupItems }) => (
         <section key={group} className="space-y-3">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted">
+          <h2
+            className={`text-xs font-semibold uppercase tracking-wider ${
+              group === "action" ? "text-accent-amber" : "text-muted"
+            }`}
+          >
             {TIME_GROUP_LABELS[group]}
           </h2>
           <ul className="space-y-3">

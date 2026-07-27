@@ -103,11 +103,19 @@ export function CommunityWorkspace({
           ) : null}
 
           <AskAiBanner
+            sticky
             queryHint={
               searchQuery.trim()
                 ? searchQuery.trim().slice(0, 200)
                 : "Help me with my Amazon FBA question"
             }
+            onSearchSimilar={() => {
+              const el = document.querySelector<HTMLInputElement>(
+                'input[type="search"], input[placeholder*="Search"]'
+              );
+              el?.focus();
+              el?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }}
           />
         </div>
 

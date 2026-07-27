@@ -29,15 +29,13 @@ export function PriorityBanner({ premium }: { premium: boolean }) {
       </div>
 
       {premium ? (
-        <button
-          type="button"
-          disabled
-          title="Coming soon"
-          className="inline-flex shrink-0 cursor-not-allowed items-center gap-1.5 rounded-xl border border-accent-purple/40 bg-accent-purple/10 px-3.5 py-2.5 text-sm font-semibold text-accent-purple opacity-60"
+        <Link
+          href="/billing"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-accent-purple/40 bg-accent-purple/10 px-3.5 py-2.5 text-sm font-semibold text-accent-purple transition hover:bg-accent-purple/15"
         >
           View Premium Benefits
           <ArrowRight className="h-4 w-4" weight="bold" aria-hidden />
-        </button>
+        </Link>
       ) : (
         <Link
           href="/payment?mode=upgrade"

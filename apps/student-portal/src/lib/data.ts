@@ -181,6 +181,9 @@ const PROGRAM_ACCESS_MONTHS = 12;
 export type StudentJourneySummary = {
   currentStage: string;
   currentMilestoneId: string | null;
+  /** 1-based milestone step in the 8-milestone roadmap */
+  milestoneIndex: number;
+  milestoneTotal: number;
   completionPercent: number;
   continueHref: string;
   enrolledAt: string | null;
@@ -225,6 +228,8 @@ export const getStudentJourneySummary = cache(
   const empty: StudentJourneySummary = {
     currentStage: "Foundation",
     currentMilestoneId: null,
+    milestoneIndex: 1,
+    milestoneTotal: 8,
     completionPercent: 0,
     continueHref: "/roadmap",
     enrolledAt: null,
@@ -246,6 +251,7 @@ export const getStudentJourneySummary = cache(
     getCompletedLessonIds(studentId),
   ]);
 
+  const milestoneTotal = Math.max(1, roadmap.length || 8);
   const currentMilestone =
     roadmap.find((ms) => {
       const lessons = ms.modules.flatMap((m) => m.lessons);
@@ -255,11 +261,16 @@ export const getStudentJourneySummary = cache(
   if (!currentMilestone) {
     return {
       ...empty,
+      milestoneTotal,
       completionPercent: enrollment.completion_percent,
       enrolledAt: enrollment.enrolled_at,
       ...access,
     };
   }
+
+  const milestoneIndexRaw =
+    roadmap.findIndex((ms) => ms.id === currentMilestone.id) + 1;
+  const milestoneIndex = milestoneIndexRaw > 0 ? milestoneIndexRaw : 1;
 
   let continueHref = "/roadmap";
   const orderedLessons = [...currentMilestone.modules]
@@ -280,6 +291,8 @@ export const getStudentJourneySummary = cache(
   return {
     currentStage: currentMilestone.title,
     currentMilestoneId: currentMilestone.id,
+    milestoneIndex,
+    milestoneTotal,
     completionPercent: enrollment.completion_percent,
     continueHref,
     enrolledAt: enrollment.enrolled_at,
@@ -506,7 +519,7 @@ export async function getCommunityPosts(
   const [{ data: comments }, { data: likes }] = await Promise.all([
     supabase
       .from("comments")
-      .select("*, profiles:author_id(name, avatar_url)")
+      .select("*, profiles:author_id(name, avatar_url, role)")
       .in("post_id", postIds)
       .order("created_at", { ascending: true }),
     supabase
@@ -556,7 +569,7 @@ export async function getCommunityPost(
   const [{ data: comments }, { data: likes }] = await Promise.all([
     supabase
       .from("comments")
-      .select("*, profiles:author_id(name, avatar_url)")
+      .select("*, profiles:author_id(name, avatar_url, role)")
       .eq("post_id", postId)
       .order("created_at", { ascending: true }),
     supabase

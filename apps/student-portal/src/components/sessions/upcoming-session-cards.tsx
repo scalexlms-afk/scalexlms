@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import { Card, Button, StatusPill } from "@scalex/ui";
 import { registerForSessionAction } from "@/app/(portal)/sessions/actions";
 import {
@@ -6,6 +9,24 @@ import {
   sessionTypeLabel,
   type SessionListItem,
 } from "@/lib/sessions-shared";
+
+const MILESTONE_CHIPS = [
+  "All",
+  "Foundation",
+  "Business Setup",
+  "Brand Research",
+  "Product Hunting",
+  "Sourcing",
+  "Brand Development",
+  "Launch",
+  "Scaling",
+] as const;
+
+function matchesMilestone(session: SessionListItem, chip: string) {
+  if (chip === "All") return true;
+  const hay = `${session.title} ${session.description ?? ""}`.toLowerCase();
+  return hay.includes(chip.toLowerCase());
+}
 
 function SessionMiniCard({ session }: { session: SessionListItem }) {
   return (
@@ -67,6 +88,12 @@ export function UpcomingSessionCards({
 }: {
   sessions: SessionListItem[];
 }) {
+  const [chip, setChip] = useState<(typeof MILESTONE_CHIPS)[number]>("All");
+  const filtered = useMemo(
+    () => sessions.filter((s) => matchesMilestone(s, chip)),
+    [sessions, chip]
+  );
+
   return (
     <section id="upcoming-sessions" className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -80,15 +107,37 @@ export function UpcomingSessionCards({
         </div>
       </div>
 
-      {sessions.length === 0 ? (
-        <Card>
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+        {MILESTONE_CHIPS.map((item) => {
+          const active = chip === item;
+          return (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setChip(item)}
+              className={`shrink-0 rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+                active
+                  ? "bg-accent-purple text-white"
+                  : "border border-line bg-surface-2/60 text-muted hover:text-foreground"
+              }`}
+            >
+              {item}
+            </button>
+          );
+        })}
+      </div>
+
+      {filtered.length === 0 ? (
+        <Card className="border-dashed">
           <p className="text-sm text-muted">
-            No upcoming sessions scheduled. Check back soon!
+            {sessions.length === 0
+              ? "No upcoming sessions scheduled. Check back soon!"
+              : `No sessions match “${chip}” right now.`}
           </p>
         </Card>
       ) : (
         <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
-          {sessions.map((session) => (
+          {filtered.map((session) => (
             <SessionMiniCard key={session.id} session={session} />
           ))}
         </div>
@@ -113,7 +162,7 @@ export function MyBookingsSection({
         </p>
       </div>
       {sessions.length === 0 ? (
-        <Card>
+        <Card className="border-dashed">
           <p className="text-sm text-muted">
             You haven&apos;t registered for any upcoming sessions yet.
           </p>

@@ -28,15 +28,14 @@ export function SessionsHero() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          disabled
+        <span
           title="Coming soon"
-          className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl border border-line bg-surface-2/60 px-3.5 py-2.5 text-sm font-medium text-subtle opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl border border-line bg-surface-2/40 px-3.5 py-2.5 text-sm font-medium text-subtle/80"
         >
           <Bell weight="bold" className="h-4 w-4" aria-hidden />
-          Enable Reminder
-        </button>
+          Reminder
+          <span className="text-[10px] uppercase tracking-wider">Soon</span>
+        </span>
         <button
           type="button"
           onClick={scrollToBookings}

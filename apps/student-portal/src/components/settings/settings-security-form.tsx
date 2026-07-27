@@ -66,11 +66,30 @@ export function SettingsSecurityForm({
       </Card>
 
       <Card>
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Two-factor authentication
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+            Two-factor authentication
+          </p>
+          <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-subtle">
+            Coming Soon
+          </span>
+        </div>
         <p className="mt-2 text-sm text-muted">
-          TOTP 2FA is not available yet.
+          TOTP 2FA will be available in a future update.
+        </p>
+      </Card>
+
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+            Trusted devices
+          </p>
+          <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-subtle">
+            Coming Soon
+          </span>
+        </div>
+        <p className="mt-2 text-sm text-muted">
+          Device management is not available yet.
         </p>
       </Card>
     </div>

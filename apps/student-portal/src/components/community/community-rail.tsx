@@ -138,6 +138,9 @@ function ContributorItem({
         </p>
         <p className="text-xs text-subtle">
           {contributor.postCount} post{contributor.postCount === 1 ? "" : "s"}
+          {contributor.postCount > 0
+            ? ` · ${contributor.postCount * 10} pts`
+            : ""}
           {levelLabel ? ` · ${levelLabel}` : ""}
         </p>
       </div>
@@ -147,13 +150,13 @@ function ContributorItem({
 
 export function CommunityRail({ data }: { data: CommunityRailData }) {
   return (
-    <aside className="space-y-4 lg:sticky lg:top-20">
-      <Card className="border-accent-purple/20">
+    <aside className="space-y-3 lg:sticky lg:top-20">
+      <Card className="border-accent-purple/20 !py-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-purple/15 text-accent-purple">
-            <Fire weight="duotone" className="h-4 w-4" aria-hidden />
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent-purple/15 text-accent-purple">
+            <Fire weight="duotone" className="h-3.5 w-3.5" aria-hidden />
           </span>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
             Trending Discussions
           </p>
         </div>

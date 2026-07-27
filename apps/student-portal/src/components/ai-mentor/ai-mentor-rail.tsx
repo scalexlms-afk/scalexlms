@@ -8,7 +8,6 @@ import {
   Path,
   Robot,
   Translate,
-  ArrowClockwise,
 } from "@phosphor-icons/react";
 import { Card } from "@scalex/ui";
 import type { AiMentorContext } from "@/lib/ai-mentor";
@@ -116,11 +115,11 @@ export function AiMentorRail({
           </div>
         </dl>
         <Link
-          href={context.continueHref}
+          href="/roadmap"
           className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-accent-purple/40 bg-accent-purple/10 px-3 py-2.5 text-sm font-semibold text-accent-purple transition hover:bg-accent-purple/15"
         >
-          <ArrowClockwise weight="bold" className="h-4 w-4" aria-hidden />
-          Continue learning
+          <Path weight="bold" className="h-4 w-4" aria-hidden />
+          View Roadmap
         </Link>
       </Card>
 

@@ -37,23 +37,24 @@ function SidebarFooter({
   email,
   avatarUrl,
   plan,
-  monthsRemaining,
-  accessElapsedPercent,
+  completionPercent,
+  milestoneIndex,
+  milestoneTotal,
 }: {
   name: string;
   email: string;
   avatarUrl: string | null;
   plan: string | null;
-  monthsRemaining: number | null;
-  accessElapsedPercent: number;
+  completionPercent: number;
+  milestoneIndex: number;
+  milestoneTotal: number;
 }) {
   const initials = initialsFromName(name);
-  const accessLabel =
-    monthsRemaining === null
-      ? "Not enrolled"
-      : monthsRemaining === 1
-        ? "1 month remaining"
-        : `${monthsRemaining} months remaining`;
+  const pct = Math.min(100, Math.max(0, Math.round(completionPercent)));
+  const step = Math.min(
+    milestoneTotal,
+    Math.max(1, Math.round(milestoneIndex))
+  );
 
   return (
     <div className="space-y-3">
@@ -86,16 +87,18 @@ function SidebarFooter({
       />
 
       <div className="rounded-[var(--radius-card)] border border-line px-3 py-3 metallic-graphite metallic-edge">
-        <p className="text-sm font-semibold text-foreground">Program Access</p>
-        <p className="mt-0.5 text-xs text-muted">{accessLabel}</p>
+        <p className="text-sm font-semibold text-foreground">
+          Program Progress: {pct}% Complete
+        </p>
         <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-line">
           <div
             className="h-full rounded-full bg-gradient-to-r from-scalex-red-dark to-scalex-red shadow-[0_0_12px_-2px_rgba(227,30,36,0.6)] transition-[width] duration-500"
-            style={{
-              width: `${Math.min(100, Math.max(0, accessElapsedPercent))}%`,
-            }}
+            style={{ width: `${pct}%` }}
           />
         </div>
+        <p className="mt-2 text-xs text-muted">
+          Step {step} of {milestoneTotal}
+        </p>
       </div>
     </div>
   );
@@ -220,8 +223,9 @@ export async function PortalShell({
       email={email}
       avatarUrl={profile.avatar_url ?? null}
       plan={profile.plan ?? null}
-      monthsRemaining={journey.monthsRemaining}
-      accessElapsedPercent={journey.accessElapsedPercent}
+      completionPercent={journey.completionPercent}
+      milestoneIndex={journey.milestoneIndex}
+      milestoneTotal={journey.milestoneTotal}
     />
   );
 

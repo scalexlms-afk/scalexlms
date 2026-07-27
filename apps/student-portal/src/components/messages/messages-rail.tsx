@@ -107,7 +107,13 @@ export function MessagesRail({
             <p className="truncate font-display text-sm font-semibold text-foreground">
               {mentor.name}
             </p>
-            <p className="text-xs text-muted">ScaleX Mentor</p>
+            <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-accent-green">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent-green" aria-hidden />
+                Online
+              </span>
+              <span className="text-xs text-muted">· Amazon FBA Expert</span>
+            </div>
           </div>
         </div>
         <p className="mt-3 text-xs text-muted">

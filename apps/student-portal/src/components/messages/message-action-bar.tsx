@@ -11,24 +11,22 @@ import {
 export function MessageActionBar() {
   return (
     <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        disabled
+      <span
         title="Coming soon"
-        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-xl border border-line bg-surface-3/40 px-3 py-2 text-xs font-medium text-subtle opacity-60"
+        className="hidden items-center gap-1.5 rounded-xl border border-line bg-surface-3/30 px-3 py-2 text-xs font-medium text-subtle/80 sm:inline-flex"
       >
         <Paperclip className="h-3.5 w-3.5" aria-hidden />
         Attach File
-      </button>
-      <button
-        type="button"
-        disabled
+        <span className="text-[10px] uppercase tracking-wider">Soon</span>
+      </span>
+      <span
         title="Coming soon"
-        className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-xl border border-line bg-surface-3/40 px-3 py-2 text-xs font-medium text-subtle opacity-60"
+        className="hidden items-center gap-1.5 rounded-xl border border-line bg-surface-3/30 px-3 py-2 text-xs font-medium text-subtle/80 sm:inline-flex"
       >
         <CalendarBlank className="h-3.5 w-3.5" aria-hidden />
         Book Call
-      </button>
+        <span className="text-[10px] uppercase tracking-wider">Soon</span>
+      </span>
       <Link
         href="/ai-mentor"
         className="inline-flex items-center gap-1.5 rounded-xl border border-accent-purple/40 bg-accent-purple/10 px-3 py-2 text-xs font-semibold text-accent-purple transition hover:bg-accent-purple/15"

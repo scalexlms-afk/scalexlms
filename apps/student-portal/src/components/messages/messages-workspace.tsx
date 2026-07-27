@@ -20,28 +20,33 @@ export function MessagesWorkspace({
       <MessagesHero />
 
       <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)_280px] xl:grid-cols-[260px_minmax(0,1fr)_300px] lg:items-start">
-        <ConversationRail
-          mentor={data.mentor}
-          unreadFromMentor={data.unreadFromMentor}
-          lastMessagePreview={data.lastMessagePreview}
-          lastMessageAt={data.lastMessageAt}
-        />
+        <div className="order-2 min-w-0 lg:order-1">
+          <ConversationRail
+            mentor={data.mentor}
+            unreadFromMentor={data.unreadFromMentor}
+            lastMessagePreview={data.lastMessagePreview}
+            lastMessageAt={data.lastMessageAt}
+          />
+        </div>
 
-        <div className="min-w-0">
+        <div className="order-1 min-w-0 lg:order-2">
           <ChatWindow
             userId={data.userId}
             mentor={data.mentor}
             initialMessages={data.messages}
             sendAction={sendAction}
             markReadAction={markReadAction}
+            context={data.context}
           />
         </div>
 
-        <MessagesRail
-          mentor={data.mentor}
-          context={data.context}
-          recentSubmissions={data.recentSubmissions}
-        />
+        <div className="order-3 min-w-0 lg:order-3">
+          <MessagesRail
+            mentor={data.mentor}
+            context={data.context}
+            recentSubmissions={data.recentSubmissions}
+          />
+        </div>
       </div>
     </div>
   );

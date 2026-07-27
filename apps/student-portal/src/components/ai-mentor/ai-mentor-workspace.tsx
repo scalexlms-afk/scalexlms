@@ -2,11 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
+  CheckCircle,
+  ListChecks,
+  MagnifyingGlass,
   Microphone,
   PaperPlaneTilt,
   Paperclip,
   Robot,
+  ThumbsDown,
+  ThumbsUp,
   User,
+  Lightbulb,
 } from "@phosphor-icons/react";
 import { AiMentorHero } from "@/components/ai-mentor/ai-mentor-hero";
 import { AiMentorRail } from "@/components/ai-mentor/ai-mentor-rail";
@@ -18,6 +24,62 @@ import {
 import type { AiChatSummary, AiMentorContext } from "@/lib/ai-mentor";
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
+
+type FeedbackChoice = "helpful" | "not_helpful" | "example" | "checklist";
+
+function AssistantFeedbackChips({
+  messageKey,
+  disabled,
+  onAction,
+}: {
+  messageKey: string;
+  disabled?: boolean;
+  onAction: (choice: FeedbackChoice) => void;
+}) {
+  const [picked, setPicked] = useState<FeedbackChoice | null>(null);
+
+  const chips: Array<{
+    id: FeedbackChoice;
+    label: string;
+    Icon: typeof ThumbsUp;
+  }> = [
+    { id: "helpful", label: "Helpful", Icon: ThumbsUp },
+    { id: "not_helpful", label: "Not helpful", Icon: ThumbsDown },
+    { id: "example", label: "Show example", Icon: Lightbulb },
+    { id: "checklist", label: "Checklist", Icon: ListChecks },
+  ];
+
+  return (
+    <div className="mt-2 flex flex-wrap gap-1.5 pl-10">
+      {chips.map(({ id, label, Icon }) => {
+        const active = picked === id;
+        return (
+          <button
+            key={`${messageKey}-${id}`}
+            type="button"
+            disabled={disabled || (picked !== null && !active)}
+            onClick={() => {
+              setPicked(id);
+              onAction(id);
+            }}
+            className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-[11px] font-medium transition ${
+              active
+                ? "border-accent-purple/50 bg-accent-purple/15 text-accent-purple"
+                : "border-line bg-surface-3/40 text-muted hover:border-accent-purple/30 hover:text-foreground disabled:opacity-50"
+            }`}
+          >
+            {active && id === "helpful" ? (
+              <CheckCircle weight="fill" className="h-3 w-3" aria-hidden />
+            ) : (
+              <Icon weight="bold" className="h-3 w-3" aria-hidden />
+            )}
+            {label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export function AiMentorWorkspace({
   context,
@@ -36,6 +98,7 @@ export function AiMentorWorkspace({
   const [loadingChat, setLoadingChat] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPrompts, setShowPrompts] = useState(true);
+  const [chatSearch, setChatSearch] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -43,6 +106,12 @@ export function AiMentorWorkspace({
     () => buildSuggestedPrompts(context.milestoneTitle),
     [context.milestoneTitle]
   );
+
+  const filteredChats = useMemo(() => {
+    const q = chatSearch.trim().toLowerCase();
+    if (!q) return chats;
+    return chats.filter((c) => c.title.toLowerCase().includes(q));
+  }, [chats, chatSearch]);
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,7 +144,6 @@ export function AiMentorWorkspace({
       };
       setChatId(id);
       setMessages(data.messages);
-      setShowPrompts(data.messages.length === 0);
       queueMicrotask(scrollToBottom);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load chat");
@@ -90,7 +158,6 @@ export function AiMentorWorkspace({
 
     setError(null);
     setInput("");
-    setShowPrompts(false);
     setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
     setStreaming(true);
 
@@ -166,12 +233,32 @@ export function AiMentorWorkspace({
     }
   }
 
+  function onFeedback(choice: FeedbackChoice) {
+    if (choice === "example") {
+      void sendText(
+        `Show a practical real-world example related to the ${context.milestoneTitle} milestone from ScaleX curriculum.`
+      );
+      return;
+    }
+    if (choice === "checklist") {
+      void sendText(
+        `Generate a practical checklist for completing "${context.currentTaskTitle ?? context.milestoneTitle}" in ${context.milestoneTitle}.`
+      );
+    }
+  }
+
   function onSubmit(event: FormEvent) {
     event.preventDefault();
     void sendText(input);
   }
 
   const busy = streaming || loadingChat;
+  const lastAssistantIndex = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i]?.role === "assistant" && messages[i]?.content) return i;
+    }
+    return -1;
+  })();
 
   return (
     <div className="ai-mentor-theme space-y-6">
@@ -207,28 +294,39 @@ export function AiMentorWorkspace({
                 </div>
               ) : (
                 messages.map((message, index) => (
-                  <div
-                    key={`${message.role}-${index}`}
-                    className={`flex gap-2.5 ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                  >
-                    {message.role === "assistant" ? (
-                      <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-purple/20 text-accent-purple">
-                        <Robot weight="fill" className="h-4 w-4" aria-hidden />
-                      </span>
-                    ) : null}
+                  <div key={`${message.role}-${index}`}>
                     <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
-                        message.role === "user"
-                          ? "bg-accent-purple text-white"
-                          : "border border-line bg-surface-3/80 text-foreground"
-                      }`}
+                      className={`flex gap-2.5 ${message.role === "user" ? "justify-end" : "justify-start"}`}
                     >
-                      {message.content || (streaming ? "…" : "")}
+                      {message.role === "assistant" ? (
+                        <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-purple/20 text-accent-purple">
+                          <Robot weight="fill" className="h-4 w-4" aria-hidden />
+                        </span>
+                      ) : null}
+                      <div
+                        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
+                          message.role === "user"
+                            ? "bg-accent-purple text-white"
+                            : "border border-line bg-surface-3/80 text-foreground"
+                        }`}
+                      >
+                        {message.content || (streaming ? "…" : "")}
+                      </div>
+                      {message.role === "user" ? (
+                        <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-3 text-muted">
+                          <User weight="fill" className="h-4 w-4" aria-hidden />
+                        </span>
+                      ) : null}
                     </div>
-                    {message.role === "user" ? (
-                      <span className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-3 text-muted">
-                        <User weight="fill" className="h-4 w-4" aria-hidden />
-                      </span>
+                    {message.role === "assistant" &&
+                    message.content &&
+                    index === lastAssistantIndex &&
+                    !streaming ? (
+                      <AssistantFeedbackChips
+                        messageKey={`${chatId ?? "new"}-${index}`}
+                        disabled={busy}
+                        onAction={onFeedback}
+                      />
                     ) : null}
                   </div>
                 ))
@@ -262,24 +360,22 @@ export function AiMentorWorkspace({
                 />
                 <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-1">
                   <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      disabled
+                    <span
                       title="Coming soon"
-                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-subtle"
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-subtle/70"
                     >
                       <Paperclip className="h-3.5 w-3.5" aria-hidden />
                       Attach
-                    </button>
-                    <button
-                      type="button"
-                      disabled
+                      <span className="text-[10px]">Soon</span>
+                    </span>
+                    <span
                       title="Coming soon"
-                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-subtle"
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-subtle/70"
                     >
                       <Microphone className="h-3.5 w-3.5" aria-hidden />
                       Voice
-                    </button>
+                      <span className="text-[10px]">Soon</span>
+                    </span>
                     <button
                       type="button"
                       onClick={() => setShowPrompts((v) => !v)}
@@ -310,11 +406,27 @@ export function AiMentorWorkspace({
             </form>
           </div>
 
-          <RecentChats
-            chats={chats}
-            activeChatId={chatId}
-            onSelect={(id) => void loadChat(id)}
-          />
+          <div className="space-y-2">
+            <label className="relative block">
+              <MagnifyingGlass
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle"
+                aria-hidden
+              />
+              <input
+                type="search"
+                value={chatSearch}
+                onChange={(e) => setChatSearch(e.target.value)}
+                placeholder="Search conversations…"
+                className="w-full rounded-xl border border-line bg-surface-2/60 py-2 pl-9 pr-3 text-sm text-foreground outline-none placeholder:text-subtle focus:border-accent-purple/50"
+              />
+            </label>
+            <RecentChats
+              chats={filteredChats}
+              activeChatId={chatId}
+              onSelect={(id) => void loadChat(id)}
+              onViewAll={startNewChat}
+            />
+          </div>
         </div>
 
         <AiMentorRail

@@ -37,12 +37,13 @@ export function SettingsAccountPanel({
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-scalex-red">
-              Deactivate account
+              Danger zone
             </p>
             <p className="mt-2 text-sm text-muted">
-              Soft-deactivates your student account and signs you out. Type{" "}
+              Soft-deactivates your student account and signs you out immediately.
+              Your learning history is retained for support. Type{" "}
               <span className="font-semibold text-foreground">DEACTIVATE</span>{" "}
-              to confirm.
+              to confirm — this cannot be undone from the portal.
             </p>
 
             <form action={deactivateAction} className="mt-4 space-y-3">

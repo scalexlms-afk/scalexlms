@@ -123,7 +123,7 @@ export function SettingsLearningOverview({
             label="Achievements Earned"
             value={stats.achievementsEarned}
           />
-          <StatRow label="Current Streak" value="—" />
+          {/* Streak tracking not computed yet — omit placeholder dash */}
         </div>
       </div>
     </Card>

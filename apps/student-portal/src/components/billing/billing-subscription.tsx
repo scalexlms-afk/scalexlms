@@ -154,14 +154,12 @@ export function BillingSubscriptionCard({
           {pending ? "Opening…" : "Manage Subscription"}
         </button>
       ) : (
-        <button
-          type="button"
-          disabled
-          title="Complete a Stripe payment first"
-          className="mt-5 inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-accent-purple px-4 py-2.5 text-sm font-semibold text-white opacity-60 shadow-[0_12px_28px_-16px_rgba(139,92,246,0.9)] sm:w-auto"
+        <span
+          title="Complete a Stripe payment to manage billing"
+          className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-line bg-surface-3/30 px-4 py-2.5 text-sm font-medium text-subtle/80 sm:w-auto"
         >
-          Manage Subscription
-        </button>
+          Manage · Unavailable
+        </span>
       )}
       {error ? <p className="mt-2 text-xs text-scalex-red">{error}</p> : null}
     </Card>

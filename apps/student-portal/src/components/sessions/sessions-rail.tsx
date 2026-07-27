@@ -6,6 +6,8 @@ import {
   ArrowRight,
   CaretLeft,
   CaretRight,
+  FileText,
+  FolderOpen,
   Robot,
 } from "@phosphor-icons/react";
 import { Card } from "@scalex/ui";
@@ -13,10 +15,19 @@ import { localDayKey, type SessionListItem } from "@/lib/sessions-shared";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
+const RESOURCE_STUBS = [
+  { label: "Session workbook PDF", soon: true },
+  { label: "Prep checklist", href: "/tasks" },
+  { label: "Roadmap context", href: "/roadmap" },
+  { label: "Ask AI about this session", href: "/ai-mentor?q=Help%20me%20prepare%20for%20my%20next%20Live%20Session" },
+] as const;
+
 function MiniCalendar({
-  markedDates,
+  liveDates,
+  registeredDates,
 }: {
-  markedDates: Set<string>;
+  liveDates: Set<string>;
+  registeredDates: Set<string>;
 }) {
   const [cursor, setCursor] = useState(() => {
     const now = new Date();
@@ -82,7 +93,8 @@ function MiniCalendar({
           if (cell.day == null || cell.key == null) {
             return <span key={`e-${index}`} />;
           }
-          const marked = markedDates.has(cell.key);
+          const isLive = liveDates.has(cell.key);
+          const isRegistered = registeredDates.has(cell.key);
           const isToday = cell.key === todayKey;
           return (
             <span
@@ -94,25 +106,46 @@ function MiniCalendar({
               }`}
             >
               {cell.day}
-              {marked ? (
-                <span
-                  className="absolute bottom-1 h-1 w-1 rounded-full bg-accent-purple"
-                  aria-hidden
-                />
+              {isLive || isRegistered ? (
+                <span className="absolute bottom-1 flex items-center gap-0.5">
+                  {isLive ? (
+                    <span
+                      className="h-1 w-1 rounded-full bg-accent-purple"
+                      title="Live session"
+                      aria-hidden
+                    />
+                  ) : null}
+                  {isRegistered ? (
+                    <span
+                      className="h-1 w-1 rounded-full bg-accent-green"
+                      title="Registered"
+                      aria-hidden
+                    />
+                  ) : null}
+                </span>
               ) : null}
             </span>
           );
         })}
       </div>
 
-      <button
-        type="button"
-        disabled
+      <div className="mt-3 flex flex-wrap gap-3 text-[10px] text-subtle">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-accent-purple" aria-hidden />
+          Live
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-accent-green" aria-hidden />
+          Registered
+        </span>
+      </div>
+
+      <span
         title="Coming soon"
-        className="mt-3 w-full cursor-not-allowed rounded-xl border border-line bg-surface-3/40 px-3 py-2 text-xs font-semibold text-subtle opacity-60"
+        className="mt-3 block w-full rounded-xl border border-line bg-surface-3/30 px-3 py-2 text-center text-xs font-medium text-subtle/80"
       >
-        View full calendar
-      </button>
+        Full calendar · Soon
+      </span>
     </div>
   );
 }
@@ -122,12 +155,15 @@ export function SessionsRail({
 }: {
   calendarSessions: SessionListItem[];
 }) {
-  const markedDates = useMemo(() => {
-    const set = new Set<string>();
+  const { liveDates, registeredDates } = useMemo(() => {
+    const live = new Set<string>();
+    const registered = new Set<string>();
     for (const session of calendarSessions) {
-      set.add(localDayKey(session.scheduled_at));
+      const key = localDayKey(session.scheduled_at);
+      live.add(key);
+      if (session.registered) registered.add(key);
     }
-    return set;
+    return { liveDates: live, registeredDates: registered };
   }, [calendarSessions]);
 
   const askHref = `/ai-mentor?q=${encodeURIComponent(
@@ -141,8 +177,47 @@ export function SessionsRail({
           Session calendar
         </p>
         <div className="mt-3">
-          <MiniCalendar markedDates={markedDates} />
+          <MiniCalendar
+            liveDates={liveDates}
+            registeredDates={registeredDates}
+          />
         </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-purple/15 text-accent-purple">
+            <FolderOpen weight="duotone" className="h-4 w-4" aria-hidden />
+          </span>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+            Session Resources
+          </p>
+        </div>
+        <ul className="mt-3 space-y-1.5 text-sm">
+          {RESOURCE_STUBS.map((item) => (
+            <li key={item.label}>
+              {"soon" in item && item.soon ? (
+                <span className="flex items-center justify-between gap-2 rounded-lg px-2 py-2 text-subtle">
+                  <span className="inline-flex items-center gap-2">
+                    <FileText weight="duotone" className="h-4 w-4" aria-hidden />
+                    {item.label}
+                  </span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider">
+                    Soon
+                  </span>
+                </span>
+              ) : (
+                <Link
+                  href={"href" in item ? item.href : "/sessions"}
+                  className="flex items-center gap-2 rounded-lg px-2 py-2 text-muted transition hover:bg-surface-3/60 hover:text-foreground"
+                >
+                  <FileText weight="duotone" className="h-4 w-4" aria-hidden />
+                  {item.label}
+                </Link>
+              )}
+            </li>
+          ))}
+        </ul>
       </Card>
 
       <Link

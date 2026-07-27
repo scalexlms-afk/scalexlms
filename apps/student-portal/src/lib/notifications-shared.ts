@@ -185,7 +185,7 @@ export type NotificationTimeGroup =
   | "older";
 
 export const TIME_GROUP_LABELS: Record<NotificationTimeGroup, string> = {
-  action: "Action Required",
+  action: "ACTION REQUIRED",
   today: "Today",
   yesterday: "Yesterday",
   week: "This Week",

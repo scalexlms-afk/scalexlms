@@ -16,7 +16,10 @@ const TICKET_FEATURES = [
 
 export function CreateTicketCard({ onCreate }: { onCreate: () => void }) {
   return (
-    <Card className="flex h-full flex-col border-accent-blue/25 bg-gradient-to-br from-accent-blue/10 via-surface-2 to-surface-2">
+    <Card
+      id="create-ticket"
+      className="flex h-full flex-col border-accent-blue/25 bg-gradient-to-br from-accent-blue/10 via-surface-2 to-surface-2"
+    >
       <div className="flex items-start gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-accent-blue/20 text-accent-blue metallic-edge">
           <Ticket weight="duotone" className="h-6 w-6" aria-hidden />
