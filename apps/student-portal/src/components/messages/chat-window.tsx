@@ -127,7 +127,7 @@ export function ChatWindow({
   }
 
   return (
-    <div className="flex max-h-[calc(100dvh-9.5rem)] flex-col overflow-hidden rounded-2xl border border-accent-purple/20 bg-surface-2/40">
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-accent-purple/20 bg-surface-2/40">
       <div className="flex shrink-0 items-center justify-between gap-3 border-b border-line px-4 py-3 md:px-5">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {mentor.avatarUrl ? (
@@ -165,14 +165,13 @@ export function ChatWindow({
         </span>
       </div>
 
-      {/* Grow with messages; only scroll after the panel hits max-h (page end). */}
+      {/* Height follows message count; scrolls only after hitting near page bottom. */}
       <div
         ref={threadRef}
-        className="min-h-0 space-y-3 overflow-y-auto px-4 py-4 md:px-5"
-        style={{ flex: "0 1 auto" }}
+        className="max-h-[calc(100dvh-16rem)] space-y-3 overflow-y-auto px-4 py-4 md:px-5"
       >
         {messages.length === 0 ? (
-          <div className="flex min-h-[140px] items-center justify-center text-center">
+          <div className="flex min-h-[120px] items-center justify-center text-center">
             <p className="max-w-sm text-sm text-muted">
               No messages yet. Say hello to {mentor.name} — they&apos;re here
               to review tasks and guide your launch.
