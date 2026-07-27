@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ChatCircle, Heart } from "@phosphor-icons/react/dist/ssr";
 import { requireStudentProfile } from "@/lib/auth";
 import { getCommunityPost } from "@/lib/data";
 import { planLabel, planPillVariant } from "@scalex/db";
 import { Card, Button, StatusPill } from "@scalex/ui";
-import { inputClasses } from "@/components/field";
 import { addCommentAction, toggleLikeAction } from "../actions";
 
 function formatTime(value: string) {
@@ -15,6 +15,9 @@ function formatTime(value: string) {
     minute: "2-digit",
   });
 }
+
+const commentInput =
+  "w-full rounded-xl border border-line bg-surface-3/80 px-3.5 py-2.5 text-sm text-foreground placeholder:text-subtle outline-none transition-colors focus:border-accent-purple/50 focus:ring-2 focus:ring-accent-purple/20";
 
 export default async function CommunityPostPage({
   params,
@@ -33,26 +36,26 @@ export default async function CommunityPostPage({
     post.profiles?.role === "super_admin";
 
   return (
-    <>
+    <div className="academy-page community-theme">
       <div className="mx-auto max-w-2xl space-y-6">
         <Link
           href={`/community?channel=${post.channel}`}
-          className="text-xs text-muted hover:text-scalex-red"
+          className="text-xs text-muted transition hover:text-accent-purple"
         >
           ← Back to feed
         </Link>
 
-        <Card>
+        <Card className="border-accent-purple/15">
           <div className="flex items-start gap-3">
             {post.profiles?.avatar_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={post.profiles.avatar_url}
                 alt=""
-                className="h-12 w-12 rounded-full object-cover"
+                className="h-12 w-12 rounded-full object-cover ring-1 ring-line"
               />
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-scalex-red/20 text-base font-semibold text-scalex-red">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-purple/20 text-base font-semibold text-accent-purple ring-1 ring-line">
                 {name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -84,7 +87,9 @@ export default async function CommunityPostPage({
             </div>
           </div>
 
-          <p className="mt-4 whitespace-pre-wrap text-sm">{post.content}</p>
+          <p className="mt-4 whitespace-pre-wrap text-sm leading-relaxed">
+            {post.content}
+          </p>
 
           {(post.media_urls?.length ?? 0) > 0 && (
             <div className="mt-4 grid gap-3">
@@ -94,7 +99,7 @@ export default async function CommunityPostPage({
                   key={url}
                   src={url}
                   alt=""
-                  className="w-full rounded-lg object-cover"
+                  className="w-full rounded-xl object-cover"
                 />
               ))}
             </div>
@@ -104,17 +109,29 @@ export default async function CommunityPostPage({
             <input type="hidden" name="postId" value={post.id} />
             <button
               type="submit"
-              className={`text-sm ${
-                post.liked_by_user ? "text-scalex-red" : "text-muted"
+              className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors ${
+                post.liked_by_user
+                  ? "text-accent-purple"
+                  : "text-muted hover:text-accent-purple"
               }`}
             >
-              {post.liked_by_user ? "♥ Liked" : "♡ Like"} · {post.like_count}
+              <Heart
+                weight={post.liked_by_user ? "fill" : "regular"}
+                className="h-4 w-4"
+                aria-hidden
+              />
+              {post.liked_by_user ? "Liked" : "Like"} · {post.like_count}
             </button>
           </form>
         </Card>
 
         <Card>
-          <h2 className="font-display text-lg font-semibold">
+          <h2 className="flex items-center gap-2 font-display text-lg font-semibold">
+            <ChatCircle
+              weight="duotone"
+              className="h-5 w-5 text-accent-purple"
+              aria-hidden
+            />
             Comments ({post.comments?.length ?? 0})
           </h2>
           <ul className="mt-4 space-y-3">
@@ -122,7 +139,7 @@ export default async function CommunityPostPage({
               <li className="text-sm text-muted">No comments yet.</li>
             ) : (
               (post.comments ?? []).map((comment) => (
-                <li key={comment.id} className="rounded-lg bg-surface-3 p-3">
+                <li key={comment.id} className="rounded-xl bg-surface-3/70 p-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-xs font-medium">
                       {comment.profiles?.name ?? "Student"}
@@ -145,15 +162,19 @@ export default async function CommunityPostPage({
                 name="content"
                 required
                 placeholder="Write a comment…"
-                className={inputClasses}
+                className={commentInput}
               />
-              <Button type="submit" size="sm">
+              <Button
+                type="submit"
+                size="sm"
+                className="!bg-accent-purple hover:!bg-accent-purple/90"
+              >
                 Reply
               </Button>
             </form>
           )}
         </Card>
       </div>
-    </>
+    </div>
   );
 }
