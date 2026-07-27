@@ -72,6 +72,10 @@ function daysFromNow(d) {
   return new Date(Date.now() + d * 24 * 60 * 60 * 1000).toISOString();
 }
 
+function daysAgo(d) {
+  return new Date(Date.now() - d * 24 * 60 * 60 * 1000).toISOString();
+}
+
 async function ensureUser({ email, name, role }) {
   const { data: existing } = await supabase
     .from("profiles")
@@ -197,15 +201,45 @@ async function clearPriorMockData(studentId, mentorId) {
     assertOk(ticketErr, "clear mock tickets");
   }
 
+  // Mock announcements (title includes [Mock Seed])
+  const { data: mockAnnouncements, error: annSelErr } = await supabase
+    .from("announcements")
+    .select("id, title")
+    .ilike("title", `%${MOCK_MARKER}%`);
+  assertOk(annSelErr, "list mock announcements");
+  if (mockAnnouncements?.length) {
+    const { error } = await supabase
+      .from("announcements")
+      .delete()
+      .in(
+        "id",
+        mockAnnouncements.map((a) => a.id)
+      );
+    assertOk(error, "clear mock announcements");
+  }
+
+  // Mock community posts (student + mentor) — clear likes/comments first
   const { data: mockPosts, error: postSelErr } = await supabase
     .from("community_posts")
-    .select("id, content")
-    .eq("author_id", studentId);
+    .select("id, content, author_id")
+    .in("author_id", [studentId, mentorId]);
   assertOk(postSelErr, "list posts");
   const postIds = (mockPosts ?? [])
     .filter((p) => String(p.content ?? "").includes(MOCK_MARKER))
     .map((p) => p.id);
   if (postIds.length) {
+    const { error: likeErr } = await supabase
+      .from("post_likes")
+      .delete()
+      .in("post_id", postIds);
+    assertOk(likeErr, "clear mock post likes");
+
+    const { error: commentErr } = await supabase
+      .from("comments")
+      .delete()
+      .in("post_id", postIds);
+    assertOk(commentErr, "clear mock post comments");
+
     const { error } = await supabase
       .from("community_posts")
       .delete()
@@ -237,6 +271,21 @@ async function clearPriorMockData(studentId, mentorId) {
     .delete()
     .eq("student_id", studentId);
   assertOk(lcErr, "clear lesson completions");
+
+  // Reviews for student's submissions, then submissions
+  const { data: priorSubs, error: subSelErr } = await supabase
+    .from("submissions")
+    .select("id")
+    .eq("student_id", studentId);
+  assertOk(subSelErr, "list submissions for review clear");
+  const priorSubIds = (priorSubs ?? []).map((s) => s.id);
+  if (priorSubIds.length) {
+    const { error: revErr } = await supabase
+      .from("reviews")
+      .delete()
+      .in("submission_id", priorSubIds);
+    assertOk(revErr, "clear reviews for student submissions");
+  }
 
   const { error: subErr } = await supabase
     .from("submissions")
@@ -276,11 +325,17 @@ async function main() {
     messages: 0,
     tickets: 0,
     communityPosts: 0,
+    comments: 0,
+    postLikes: 0,
+    announcements: 0,
     sessionRegs: 0,
+    liveSessions: 0,
     lessonCompletions: 0,
     submissions: 0,
+    reviews: 0,
     badges: 0,
     aiChats: 0,
+    completionPercent: null,
   };
 
   console.log("Ensuring student + mentor accounts…");
@@ -328,6 +383,8 @@ async function main() {
     .maybeSingle();
   assertOk(courseErr, "fetch course");
 
+  let milestonesForCourse = [];
+
   if (!course) {
     console.warn("⚠ No published course — skipping enrollment & submissions");
   } else {
@@ -336,31 +393,33 @@ async function main() {
         student_id: studentId,
         course_id: course.id,
         plan: "premium",
-        completion_percent: 35,
+        completion_percent: 0,
       },
       { onConflict: "student_id,course_id" }
     );
     assertOk(enrollErr, "upsert enrollment");
     summary.enrollment = true;
-    console.log(`✓ Enrolled in "${course.title}" (premium, 35%)`);
+    console.log(`✓ Enrolled in "${course.title}" (premium)`);
 
-    // Lesson completions (first ~8 lessons) so Academy roadmap looks filled
-    const { data: milestonesForCourse, error: msCourseErr } = await supabase
+    // Lesson completions: ALL of milestone 1 + ~4 of milestone 2
+    const { data: msRows, error: msCourseErr } = await supabase
       .from("milestones")
-      .select("id, order_index")
+      .select("id, title, order_index")
       .eq("course_id", course.id)
       .order("order_index", { ascending: true });
     assertOk(msCourseErr, "list milestones for completions");
+    milestonesForCourse = msRows ?? [];
 
-    let lessonIds = [];
-    if (milestonesForCourse?.length) {
+    const ms1 = milestonesForCourse[0] ?? null;
+    const ms2 = milestonesForCourse[1] ?? null;
+    const targetMilestoneIds = [ms1?.id, ms2?.id].filter(Boolean);
+
+    let completionLessonIds = [];
+    if (targetMilestoneIds.length) {
       const { data: modules, error: modErr } = await supabase
         .from("modules")
         .select("id, order_index, milestone_id")
-        .in(
-          "milestone_id",
-          milestonesForCourse.map((m) => m.id)
-        )
+        .in("milestone_id", targetMilestoneIds)
         .order("order_index", { ascending: true });
       assertOk(modErr, "list modules");
 
@@ -375,42 +434,91 @@ async function main() {
           .order("order_index", { ascending: true });
         assertOk(lesErr, "list lessons");
 
-        const msOrder = new Map(
-          milestonesForCourse.map((m) => [m.id, m.order_index ?? 0])
-        );
-        const moduleMeta = new Map(
-          modules.map((m) => [
-            m.id,
-            (msOrder.get(m.milestone_id) ?? 0) * 1000 + (m.order_index ?? 0),
-          ])
-        );
-        lessonIds = (lessons ?? [])
-          .slice()
-          .sort(
-            (a, b) =>
-              (moduleMeta.get(a.module_id) ?? 0) -
-                (moduleMeta.get(b.module_id) ?? 0) ||
-              a.order_index - b.order_index
-          )
-          .slice(0, 8)
+        const moduleById = new Map(modules.map((m) => [m.id, m]));
+        const sorted = (lessons ?? []).slice().sort((a, b) => {
+          const ma = moduleById.get(a.module_id);
+          const mb = moduleById.get(b.module_id);
+          const msA =
+            milestonesForCourse.find((m) => m.id === ma?.milestone_id)
+              ?.order_index ?? 0;
+          const msB =
+            milestonesForCourse.find((m) => m.id === mb?.milestone_id)
+              ?.order_index ?? 0;
+          return (
+            msA - msB ||
+            (ma?.order_index ?? 0) - (mb?.order_index ?? 0) ||
+            a.order_index - b.order_index
+          );
+        });
+
+        const ms1LessonIds = sorted
+          .filter((l) => moduleById.get(l.module_id)?.milestone_id === ms1?.id)
           .map((l) => l.id);
+        const ms2LessonIds = sorted
+          .filter((l) => moduleById.get(l.module_id)?.milestone_id === ms2?.id)
+          .map((l) => l.id)
+          .slice(0, 4);
+
+        completionLessonIds = [...ms1LessonIds, ...ms2LessonIds];
       }
     }
 
-    if (lessonIds.length) {
-      const completionRows = lessonIds.map((lessonId, i) => ({
+    if (completionLessonIds.length) {
+      const completionRows = completionLessonIds.map((lessonId, i) => ({
         student_id: studentId,
         lesson_id: lessonId,
-        completed_at: hoursAgo(48 - i * 3),
+        completed_at: hoursAgo(72 - i * 4),
       }));
       const { error: lcInsErr } = await supabase
         .from("lesson_completions")
         .upsert(completionRows, { onConflict: "student_id,lesson_id" });
       assertOk(lcInsErr, "insert lesson completions");
       summary.lessonCompletions = completionRows.length;
-      console.log(`✓ Lesson completions: ${completionRows.length}`);
+      console.log(
+        `✓ Lesson completions: ${completionRows.length} (all MS1 + up to 4 MS2)`
+      );
     } else {
       console.log("⊘ No lessons found — skipped completions");
+    }
+
+    // Refresh enrollment completion via RPC (fallback ~45% if permission denied)
+    const { error: rpcErr } = await supabase.rpc(
+      "refresh_enrollment_completion",
+      {
+        p_student_id: studentId,
+        p_course_id: course.id,
+      }
+    );
+    if (rpcErr) {
+      const msg = String(rpcErr.message ?? rpcErr);
+      const isPerm =
+        /permission|denied|not granted|execute/i.test(msg) ||
+        rpcErr.code === "42501";
+      if (isPerm) {
+        const { error: pctErr } = await supabase
+          .from("enrollments")
+          .update({ completion_percent: 45 })
+          .eq("student_id", studentId)
+          .eq("course_id", course.id);
+        assertOk(pctErr, "set completion_percent fallback");
+        summary.completionPercent = 45;
+        console.log(
+          `⚠ refresh_enrollment_completion RPC denied — set completion_percent=45`
+        );
+      } else {
+        throw new Error(`refresh_enrollment_completion: ${msg}`);
+      }
+    } else {
+      const { data: enrollRow } = await supabase
+        .from("enrollments")
+        .select("completion_percent")
+        .eq("student_id", studentId)
+        .eq("course_id", course.id)
+        .maybeSingle();
+      summary.completionPercent = enrollRow?.completion_percent ?? null;
+      console.log(
+        `✓ refresh_enrollment_completion → ${summary.completionPercent}%`
+      );
     }
   }
 
@@ -506,8 +614,8 @@ async function main() {
     {
       user_id: studentId,
       type: "submission_review",
-      title: `${MOCK_MARKER} Task needs revision`,
-      body: "Your mentor left feedback on Submit Business Plan.",
+      title: `${MOCK_MARKER} Task approved`,
+      body: "Your mentor approved Submit Business Plan. Keep going!",
       payload: { seed: "student-mock", href: "/tasks" },
       read_at: null,
       created_at: hoursAgo(2),
@@ -642,8 +750,36 @@ async function main() {
   summary.tickets = ticketRows.length;
   console.log(`✓ Support tickets: ${ticketRows.length} (open + resolved)`);
 
-  // 8) Community posts (approved, empty media_urls)
-  const postRows = [
+  // 8) Announcements
+  const announcementRows = [
+    {
+      title: `${MOCK_MARKER} Welcome to LaunchPad Premium`,
+      content:
+        "Your premium seat is active. Start with Foundation lessons, then submit your Business Plan for mentor review.",
+      published_at: hoursAgo(96),
+    },
+    {
+      title: `${MOCK_MARKER} Live Q&A this week`,
+      content:
+        "Bring product research questions to the Weekly Q&A. Register on the Sessions page — seats are limited.",
+      published_at: hoursAgo(36),
+    },
+    {
+      title: `${MOCK_MARKER} Reminder: remaining balance`,
+      content:
+        "Complete your remaining installment when ready. Billing shows status and invoice for the first payment.",
+      published_at: hoursAgo(12),
+    },
+  ];
+  const { error: annInsErr } = await supabase
+    .from("announcements")
+    .insert(announcementRows);
+  assertOk(annInsErr, "insert announcements");
+  summary.announcements = announcementRows.length;
+  console.log(`✓ Announcements: ${announcementRows.length}`);
+
+  // 9) Community posts (student + mentor announcements), then comments + likes
+  const studentPostRows = [
     {
       author_id: studentId,
       channel: "product_hunting",
@@ -659,7 +795,7 @@ async function main() {
       content: `${MOCK_MARKER} Do I need brand registry before ordering samples, or after first sale?`,
       status: "approved",
       media_urls: [],
-      like_count: 1,
+      like_count: 0,
       created_at: hoursAgo(22),
     },
     {
@@ -668,18 +804,109 @@ async function main() {
       content: `${MOCK_MARKER} Finished Foundation business plan draft — first real deliverable done!`,
       status: "approved",
       media_urls: [],
-      like_count: 2,
+      like_count: 0,
       created_at: hoursAgo(15),
     },
   ];
-  const { error: postInsErr } = await supabase
-    .from("community_posts")
-    .insert(postRows);
-  assertOk(postInsErr, "insert community posts");
-  summary.communityPosts = postRows.length;
-  console.log(`✓ Community posts: ${postRows.length} (approved, no media)`);
+  const mentorPostRow = {
+    author_id: mentorId,
+    channel: "announcements",
+    content: `${MOCK_MARKER} Mentors online this week — drop your milestone blockers in Questions and tag your niche.`,
+    status: "approved",
+    media_urls: [],
+    like_count: 0,
+    created_at: hoursAgo(18),
+  };
 
-  // 9) Create upcoming live sessions + register student (no recordings/storage)
+  const { data: insertedStudentPosts, error: postInsErr } = await supabase
+    .from("community_posts")
+    .insert(studentPostRows)
+    .select("id, channel");
+  assertOk(postInsErr, "insert student community posts");
+
+  const { data: insertedMentorPost, error: mentorPostErr } = await supabase
+    .from("community_posts")
+    .insert(mentorPostRow)
+    .select("id, channel")
+    .single();
+  assertOk(mentorPostErr, "insert mentor community post");
+
+  const studentPostIds = (insertedStudentPosts ?? []).map((p) => p.id);
+  const mentorPostId = insertedMentorPost?.id;
+  summary.communityPosts =
+    studentPostIds.length + (mentorPostId ? 1 : 0);
+
+  const commentRows = [];
+  if (studentPostIds[0]) {
+    commentRows.push({
+      post_id: studentPostIds[0],
+      author_id: mentorId,
+      content: `${MOCK_MARKER} Check review velocity on page-1 ASINs before locking the niche.`,
+      created_at: hoursAgo(38),
+    });
+  }
+  if (studentPostIds[1]) {
+    commentRows.push({
+      post_id: studentPostIds[1],
+      author_id: studentId,
+      content: `${MOCK_MARKER} Following up — anyone brand-registered before samples?`,
+      created_at: hoursAgo(20),
+    });
+    commentRows.push({
+      post_id: studentPostIds[1],
+      author_id: mentorId,
+      content: `${MOCK_MARKER} Brand Registry after you have a trademark filing is typical — samples can come first.`,
+      created_at: hoursAgo(19),
+    });
+  }
+  if (mentorPostId) {
+    commentRows.push({
+      post_id: mentorPostId,
+      author_id: studentId,
+      content: `${MOCK_MARKER} Thanks! I'll post my Business Setup questions there.`,
+      created_at: hoursAgo(16),
+    });
+  }
+
+  if (commentRows.length) {
+    const { error: commentInsErr } = await supabase
+      .from("comments")
+      .insert(commentRows);
+    assertOk(commentInsErr, "insert comments");
+    summary.comments = commentRows.length;
+  }
+
+  // Mentor likes student posts (trigger bumps like_count)
+  const likeRows = studentPostIds.map((postId) => ({
+    post_id: postId,
+    user_id: mentorId,
+    created_at: hoursAgo(14),
+  }));
+  if (likeRows.length) {
+    const { error: likeInsErr } = await supabase
+      .from("post_likes")
+      .insert(likeRows);
+    assertOk(likeInsErr, "insert post likes");
+    summary.postLikes = likeRows.length;
+
+    // Ensure like_count matches inserted likes (trigger should already bump)
+    for (const postId of studentPostIds) {
+      const { count } = await supabase
+        .from("post_likes")
+        .select("*", { count: "exact", head: true })
+        .eq("post_id", postId);
+      await supabase
+        .from("community_posts")
+        .update({ like_count: count ?? 1 })
+        .eq("id", postId);
+    }
+  }
+
+  console.log(
+    `✓ Community: ${summary.communityPosts} posts, ${summary.comments} comments, ${summary.postLikes} likes`
+  );
+
+  // 10) Live sessions: 2 upcoming + 1 past (no recordings/storage)
   const sessionRows = [
     {
       title: `${MOCK_MARKER} Product Hunting Masterclass`,
@@ -701,12 +928,23 @@ async function main() {
       meeting_url: "https://meet.google.com/mock-seed-weekly-qa",
       recording_url: null,
     },
+    {
+      title: `${MOCK_MARKER} Orientation Kickoff`,
+      description: "Past orientation session for new Premium students.",
+      type: "batch_class",
+      audience: "all_premium",
+      scheduled_at: daysAgo(7),
+      host_id: mentorId,
+      meeting_url: "https://meet.google.com/mock-seed-orientation",
+      recording_url: null,
+    },
   ];
   const { data: createdSessions, error: sessInsErr } = await supabase
     .from("live_sessions")
     .insert(sessionRows)
     .select("id, title");
   assertOk(sessInsErr, "insert live sessions");
+  summary.liveSessions = createdSessions?.length ?? 0;
 
   if (createdSessions?.length) {
     const regs = createdSessions.map((s) => ({
@@ -719,18 +957,18 @@ async function main() {
     assertOk(regInsErr, "upsert session registrations");
     summary.sessionRegs = regs.length;
     console.log(
-      `✓ Live sessions + registrations: ${regs.length} (${createdSessions.map((s) => s.title.replace(MOCK_MARKER, "").trim()).join(", ")})`
+      `✓ Live sessions + registrations: ${regs.length} (2 upcoming + 1 past)`
     );
   }
 
-  // 10) Submissions for first gating tasks (text/link only)
+  // 11) Submissions + reviews (MS1 approved → then MS2 under_review)
   if (course) {
     const { data: milestones, error: msErr } = await supabase
       .from("milestones")
-      .select("id, order_index")
+      .select("id, title, order_index")
       .eq("course_id", course.id)
       .order("order_index", { ascending: true })
-      .limit(2);
+      .limit(3);
     assertOk(msErr, "list milestones");
 
     let taskList = [];
@@ -753,23 +991,47 @@ async function main() {
 
     if (taskList.length >= 1) {
       const t0 = taskList[0];
-      const { error: sub0Err } = await supabase.from("submissions").upsert(
-        {
-          task_id: t0.id,
-          student_id: studentId,
-          status: "under_review",
-          content: {
-            type: "text",
-            text: `${MOCK_MARKER} Business plan draft: Target kitchen gadgets under $30 AOV, Pakistan-based sourcing, launch US storefront in 6 months.`,
+      const { data: sub0, error: sub0Err } = await supabase
+        .from("submissions")
+        .upsert(
+          {
+            task_id: t0.id,
+            student_id: studentId,
+            status: "approved",
+            content: {
+              type: "text",
+              text: `${MOCK_MARKER} Business plan draft: Target kitchen gadgets under $30 AOV, Pakistan-based sourcing, launch US storefront in 6 months.`,
+            },
+            submitted_at: hoursAgo(48),
+            ai_score: 86,
+            ai_notes: "Strong plan; niche and timeline look realistic.",
           },
-          submitted_at: hoursAgo(28),
-          ai_score: 78,
-          ai_notes: "Solid structure; tighten competitor ASIN list.",
-        },
-        { onConflict: "task_id,student_id" }
-      );
-      assertOk(sub0Err, "upsert submission 1");
+          { onConflict: "task_id,student_id" }
+        )
+        .select("id")
+        .single();
+      assertOk(sub0Err, "upsert submission MS1");
       summary.submissions += 1;
+
+      if (sub0?.id) {
+        const { error: revErr } = await supabase.from("reviews").insert({
+          submission_id: sub0.id,
+          reviewer_id: mentorId,
+          decision: "approved",
+          feedback: `${MOCK_MARKER} Approved — clear niche, solid TAM sketch, and competitor ASINs look good. Proceed to Business Setup.`,
+          reviewed_at: hoursAgo(40),
+        });
+        assertOk(revErr, "insert MS1 review");
+        summary.reviews += 1;
+      }
+
+      // Align profile stage with approved MS1
+      const ms1Title =
+        milestones?.find((m) => m.id === t0.milestone_id)?.title ?? "Foundation";
+      await supabase
+        .from("profiles")
+        .update({ current_stage: ms1Title })
+        .eq("id", studentId);
     }
 
     if (taskList.length >= 2) {
@@ -778,38 +1040,79 @@ async function main() {
         {
           task_id: t1.id,
           student_id: studentId,
-          status: "submitted",
+          status: "under_review",
           content: {
             type: "link",
             link: "https://docs.google.com/document/d/mock-seed-business-docs",
             comments: `${MOCK_MARKER} Shared folder with registration docs (link only, no file upload).`,
           },
           submitted_at: hoursAgo(10),
-          ai_score: null,
-          ai_notes: null,
+          ai_score: 74,
+          ai_notes:
+            "Docs link is present; confirm NTN / bank letter filenames match checklist.",
         },
         { onConflict: "task_id,student_id" }
       );
-      assertOk(sub1Err, "upsert submission 2");
+      assertOk(sub1Err, "upsert submission MS2");
       summary.submissions += 1;
     }
 
-    console.log(`✓ Submissions: ${summary.submissions} (text/link only)`);
+    console.log(
+      `✓ Submissions: ${summary.submissions} (MS1 approved + review, MS2 under_review)`
+    );
+
+    // Re-run completion RPC after approvals (ignore permission; already handled)
+    const { error: rpc2Err } = await supabase.rpc(
+      "refresh_enrollment_completion",
+      {
+        p_student_id: studentId,
+        p_course_id: course.id,
+      }
+    );
+    if (!rpc2Err) {
+      const { data: enrollRow } = await supabase
+        .from("enrollments")
+        .select("completion_percent")
+        .eq("student_id", studentId)
+        .eq("course_id", course.id)
+        .maybeSingle();
+      summary.completionPercent = enrollRow?.completion_percent ?? summary.completionPercent;
+    } else if (
+      !/permission|denied|not granted|execute/i.test(String(rpc2Err.message)) &&
+      rpc2Err.code !== "42501"
+    ) {
+      // Non-permission failure after submissions — leave prior percent
+      console.warn(
+        `⚠ post-submission refresh_enrollment_completion: ${rpc2Err.message}`
+      );
+    } else if (summary.completionPercent == null) {
+      await supabase
+        .from("enrollments")
+        .update({ completion_percent: 45 })
+        .eq("student_id", studentId)
+        .eq("course_id", course.id);
+      summary.completionPercent = 45;
+    }
   }
 
-  // 11) Optional badges + AI chat
+  // 12) Badges + AI chat
   const { error: badgeInsErr } = await supabase.from("badges").upsert(
     [
       {
         student_id: studentId,
         key: "milestone_1",
-        earned_at: hoursAgo(20),
+        earned_at: hoursAgo(40),
+      },
+      {
+        student_id: studentId,
+        key: "product_found",
+        earned_at: hoursAgo(12),
       },
     ],
     { onConflict: "key,student_id" }
   );
   assertOk(badgeInsErr, "upsert badges");
-  summary.badges = 1;
+  summary.badges = 2;
 
   const { data: chat, error: chatErr } = await supabase
     .from("ai_chats")
@@ -839,7 +1142,7 @@ async function main() {
     assertOk(chatMsgErr, "insert ai chat messages");
     summary.aiChats = 1;
   }
-  console.log("✓ Badge milestone_1 + AI chat thread");
+  console.log("✓ Badges milestone_1 + product_found + AI chat thread");
 
   // Summary
   console.log("\n========== Mock seed complete ==========");
@@ -850,20 +1153,25 @@ async function main() {
   console.log("\nSeeded:");
   console.log(`  profile:          ${summary.profile}`);
   console.log(`  enrollment:       ${summary.enrollment}`);
+  console.log(`  completion %:     ${summary.completionPercent}`);
   console.log(`  prefs/settings:   ${summary.prefs}`);
   console.log(`  payments:         ${summary.payments}`);
   console.log(`  invoices:         ${summary.invoices} (pdf_url null)`);
   console.log(`  notifications:    ${summary.notifications}`);
   console.log(`  messages:         ${summary.messages}`);
   console.log(`  support tickets:  ${summary.tickets}`);
+  console.log(`  announcements:    ${summary.announcements}`);
   console.log(`  community posts:  ${summary.communityPosts}`);
+  console.log(`  comments:         ${summary.comments}`);
+  console.log(`  post likes:       ${summary.postLikes}`);
+  console.log(`  live sessions:    ${summary.liveSessions}`);
   console.log(`  session regs:     ${summary.sessionRegs}`);
   console.log(`  lesson completes: ${summary.lessonCompletions}`);
   console.log(`  submissions:      ${summary.submissions}`);
+  console.log(`  reviews:          ${summary.reviews}`);
   console.log(`  badges:           ${summary.badges}`);
   console.log(`  ai chats:         ${summary.aiChats}`);
   console.log("\nNo Storage uploads. Media/avatar/pdf URLs left null/empty.");
-  console.log(`Upcoming sessions note: ${daysFromNow(7)} (reference only).`);
 }
 
 main().catch((err) => {
