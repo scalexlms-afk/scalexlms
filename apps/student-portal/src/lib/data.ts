@@ -9,20 +9,26 @@ import type {
   Announcement,
 } from "@scalex/db/types";
 
+import type {
+  CommunityChannel,
+  CommunityComment,
+  CommunityPost,
+  LiveSession,
+} from "@/lib/community-shared";
+export type {
+  CommunityChannel,
+  CommunityComment,
+  CommunityPost,
+  LiveSession,
+} from "@/lib/community-shared";
+export { COMMUNITY_CHANNELS } from "@/lib/community-shared";
+
 export type SubmissionStatus =
   | "not_started"
   | "submitted"
   | "under_review"
   | "approved"
   | "revision_required";
-
-export type CommunityChannel =
-  | "announcements"
-  | "product_hunting"
-  | "supplier_help"
-  | "ppc_discussion"
-  | "questions"
-  | "student_wins";
 
 export interface Task {
   id: string;
@@ -74,62 +80,6 @@ export interface Notification {
   read_at: string | null;
   created_at: string;
 }
-
-export interface LiveSession {
-  id: string;
-  type: string;
-  title: string;
-  description: string | null;
-  scheduled_at: string;
-  host_id: string;
-  meeting_url: string | null;
-  recording_url: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CommunityPost {
-  id: string;
-  channel: CommunityChannel;
-  author_id: string;
-  content: string;
-  status: "pending_approval" | "approved" | "rejected";
-  like_count: number;
-  media_urls?: string[];
-  created_at: string;
-  updated_at: string;
-  profiles?: {
-    name: string;
-    avatar_url?: string | null;
-    plan?: string | null;
-    level?: string | null;
-    role?: string | null;
-  } | null;
-  comments?: CommunityComment[];
-  liked_by_user?: boolean;
-  comment_count?: number;
-}
-
-export interface CommunityComment {
-  id: string;
-  post_id: string;
-  author_id: string;
-  content: string;
-  created_at: string;
-  profiles?: {
-    name: string;
-    avatar_url?: string | null;
-  } | null;
-}
-
-export const COMMUNITY_CHANNELS: { key: CommunityChannel; label: string }[] = [
-  { key: "announcements", label: "Announcements" },
-  { key: "product_hunting", label: "Product Hunting" },
-  { key: "supplier_help", label: "Supplier Help" },
-  { key: "ppc_discussion", label: "PPC Discussion" },
-  { key: "questions", label: "Questions" },
-  { key: "student_wins", label: "Student Wins" },
-];
 
 export async function isMilestoneUnlocked(
   studentId: string,

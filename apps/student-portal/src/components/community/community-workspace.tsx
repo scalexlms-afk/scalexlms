@@ -8,8 +8,11 @@ import { CreatePostCard } from "@/components/community/create-post-card";
 import { PostFeed } from "@/components/community/post-card";
 import { CommunityRail } from "@/components/community/community-rail";
 import { AskAiBanner } from "@/components/community/ask-ai-banner";
-import type { CommunityRailData } from "@/lib/community";
-import type { CommunityChannel, CommunityPost } from "@/lib/data";
+import type {
+  CommunityChannel,
+  CommunityPost,
+  CommunityRailData,
+} from "@/lib/community-shared";
 
 export function CommunityWorkspace({
   posts,

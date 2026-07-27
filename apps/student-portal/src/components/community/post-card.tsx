@@ -6,13 +6,11 @@ import { planLabel, planPillVariant, LEVEL_LABELS } from "@scalex/db";
 import { Card, Button, StatusPill } from "@scalex/ui";
 import {
   COMMUNITY_CHANNELS,
-  type CommunityChannel,
-  type CommunityPost,
-} from "@/lib/data";
-import {
   formatCommunityRelative,
   postSnippet,
-} from "@/lib/community";
+  type CommunityChannel,
+  type CommunityPost,
+} from "@/lib/community-shared";
 import {
   addCommentAction,
   toggleLikeAction,

@@ -14,7 +14,7 @@ import {
 import {
   COMMUNITY_CHANNELS,
   type CommunityChannel,
-} from "@/lib/data";
+} from "@/lib/community-shared";
 
 const CHANNEL_ICONS: Record<
   CommunityChannel | "latest",

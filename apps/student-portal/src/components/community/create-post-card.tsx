@@ -3,7 +3,10 @@
 import { forwardRef } from "react";
 import { Image as ImageIcon, PaperPlaneTilt } from "@phosphor-icons/react";
 import { Card } from "@scalex/ui";
-import { COMMUNITY_CHANNELS, type CommunityChannel } from "@/lib/data";
+import {
+  COMMUNITY_CHANNELS,
+  type CommunityChannel,
+} from "@/lib/community-shared";
 import { createPostAction } from "@/app/(portal)/community/actions";
 
 const composerInput =

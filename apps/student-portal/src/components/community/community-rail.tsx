@@ -12,13 +12,14 @@ import { Card } from "@scalex/ui";
 import { LEVEL_LABELS } from "@scalex/db";
 import type {
   CommunityContributor,
+  CommunityPost,
   CommunityRailData,
-} from "@/lib/community";
+  LiveSession,
+} from "@/lib/community-shared";
 import {
   formatCommunityRelative,
   postSnippet,
-} from "@/lib/community";
-import type { CommunityPost, LiveSession } from "@/lib/data";
+} from "@/lib/community-shared";
 
 function MiniAvatar({
   name,

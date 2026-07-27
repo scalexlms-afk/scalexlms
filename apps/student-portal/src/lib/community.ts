@@ -1,26 +1,23 @@
 import { createClient } from "@scalex/db/server";
-import {
-  getCommunityPosts,
-  getUpcomingSessions,
-  type CommunityPost,
-  type LiveSession,
-} from "@/lib/data";
+import { getCommunityPosts, getUpcomingSessions } from "@/lib/data";
+import type {
+  CommunityContributor,
+  CommunityRailData,
+} from "@/lib/community-shared";
 
-export type CommunityContributor = {
-  id: string;
-  name: string;
-  avatarUrl: string | null;
-  plan: string | null;
-  level: string | null;
-  postCount: number;
-};
-
-export type CommunityRailData = {
-  trending: CommunityPost[];
-  announcements: CommunityPost[];
-  upcomingSessions: (LiveSession & { registered: boolean })[];
-  topContributors: CommunityContributor[];
-};
+export type {
+  CommunityChannel,
+  CommunityComment,
+  CommunityContributor,
+  CommunityPost,
+  CommunityRailData,
+  LiveSession,
+} from "@/lib/community-shared";
+export {
+  COMMUNITY_CHANNELS,
+  formatCommunityRelative,
+  postSnippet,
+} from "@/lib/community-shared";
 
 export async function getTopContributors(
   limit = 5
@@ -92,35 +89,5 @@ export async function getCommunityRailData(
     announcements,
     upcomingSessions,
     topContributors,
-  };
-}
-
-export function formatCommunityRelative(value: string) {
-  const diff = Date.now() - new Date(value).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(value).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-  });
-}
-
-export function postSnippet(content: string): {
-  title: string | null;
-  body: string;
-} {
-  const trimmed = content.trim();
-  const newline = trimmed.indexOf("\n");
-  if (newline === -1) {
-    return { title: null, body: trimmed };
-  }
-  return {
-    title: trimmed.slice(0, newline).trim(),
-    body: trimmed.slice(newline + 1).trim(),
   };
 }
