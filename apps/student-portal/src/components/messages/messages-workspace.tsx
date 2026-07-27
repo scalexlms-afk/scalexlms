@@ -19,7 +19,7 @@ export function MessagesWorkspace({
     <div className="messages-theme space-y-6">
       <MessagesHero />
 
-      <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)_280px] xl:grid-cols-[260px_minmax(0,1fr)_300px] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)_220px] xl:grid-cols-[210px_minmax(0,1fr)_240px] lg:items-start">
         <div className="order-2 min-w-0 lg:order-1">
           <div className="lg:hidden">
             <ConversationRail
