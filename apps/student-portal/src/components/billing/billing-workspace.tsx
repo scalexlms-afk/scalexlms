@@ -18,10 +18,16 @@ export function BillingWorkspace({ data }: { data: BillingPageData }) {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start">
         <div className="flex min-w-0 flex-col gap-6">
-          <BillingSubscriptionCard subscription={data.subscription} />
+          <BillingSubscriptionCard
+            subscription={data.subscription}
+            stripeCustomerId={data.stripeCustomerId}
+          />
 
           <div className="grid gap-4 md:grid-cols-2 md:items-stretch">
-            <BillingPaymentMethod paidViaStripe={data.paidViaStripe} />
+            <BillingPaymentMethod
+              paidViaStripe={data.paidViaStripe}
+              stripeCustomerId={data.stripeCustomerId}
+            />
             <BillingBenefitsList features={data.features} />
           </div>
 

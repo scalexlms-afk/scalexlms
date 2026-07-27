@@ -1,3 +1,4 @@
+import Stripe from "stripe";
 import { createServiceClient } from "@scalex/db/server";
 import { createNotification } from "@scalex/db";
 import {
@@ -22,6 +23,71 @@ function centsLabel(cents: number) {
   return `$${(cents / 100).toFixed(0)}`;
 }
 
+function getStripe() {
+  if (!process.env.STRIPE_SECRET_KEY) return null;
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: "2025-08-27.basil",
+  });
+}
+
+async function resolveReceiptUrl(stripeSessionId: string): Promise<string | null> {
+  const stripe = getStripe();
+  if (!stripe) return null;
+  try {
+    const session = await stripe.checkout.sessions.retrieve(stripeSessionId, {
+      expand: ["payment_intent.latest_charge", "invoice"],
+    });
+
+    const invoice = session.invoice;
+    if (invoice && typeof invoice === "object") {
+      const pdf = invoice.invoice_pdf ?? invoice.hosted_invoice_url;
+      if (pdf) return pdf;
+    }
+
+    const pi = session.payment_intent;
+    if (pi && typeof pi === "object") {
+      const charge = pi.latest_charge;
+      if (charge && typeof charge === "object" && charge.receipt_url) {
+        return charge.receipt_url;
+      }
+    }
+  } catch (err) {
+    console.error(
+      "resolveReceiptUrl failed:",
+      err instanceof Error ? err.message : err
+    );
+  }
+  return null;
+}
+
+async function persistStripeCustomer(
+  studentId: string,
+  stripeSessionId: string
+) {
+  const stripe = getStripe();
+  if (!stripe) return;
+  try {
+    const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+    const customerId =
+      typeof session.customer === "string"
+        ? session.customer
+        : session.customer?.id;
+    if (!customerId) return;
+
+    const supabase = createServiceClient();
+    await supabase
+      .from("profiles")
+      .update({ stripe_customer_id: customerId } as never)
+      .eq("id", studentId)
+      .is("stripe_customer_id", null);
+  } catch (err) {
+    console.error(
+      "persistStripeCustomer failed:",
+      err instanceof Error ? err.message : err
+    );
+  }
+}
+
 export async function fulfillCheckoutPayment(input: {
   studentId: string;
   paymentId: string;
@@ -44,6 +110,11 @@ export async function fulfillCheckoutPayment(input: {
   const paymentAmount =
     (existingPayment as { amount?: number } | null)?.amount ?? 0;
 
+  await persistStripeCustomer(studentId, stripeSessionId);
+  const receiptUrl = alreadyPaid
+    ? null
+    : await resolveReceiptUrl(stripeSessionId);
+
   if (!alreadyPaid) {
     await supabase
       .from("payments")
@@ -65,7 +136,14 @@ export async function fulfillCheckoutPayment(input: {
       await supabase.from("invoices").insert({
         payment_id: paymentId,
         number: `INV-${Date.now()}`,
+        ...(receiptUrl ? { pdf_url: receiptUrl } : {}),
       } as never);
+    } else if (receiptUrl) {
+      await supabase
+        .from("invoices")
+        .update({ pdf_url: receiptUrl } as never)
+        .eq("payment_id", paymentId)
+        .is("pdf_url", null);
     }
   }
 

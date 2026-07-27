@@ -47,6 +47,38 @@ async function getPlanSettings(planType: "standard" | "premium") {
   };
 }
 
+async function ensureStripeCustomer(input: {
+  userId: string;
+  email: string;
+  name?: string | null;
+  existingCustomerId?: string | null;
+}) {
+  const stripe = getStripe();
+  const service = createServiceClient();
+
+  if (input.existingCustomerId) {
+    try {
+      await stripe.customers.retrieve(input.existingCustomerId);
+      return input.existingCustomerId;
+    } catch {
+      // fall through and create a new customer
+    }
+  }
+
+  const customer = await stripe.customers.create({
+    email: input.email,
+    name: input.name ?? undefined,
+    metadata: { student_id: input.userId },
+  });
+
+  await service
+    .from("profiles")
+    .update({ stripe_customer_id: customer.id } as never)
+    .eq("id", input.userId);
+
+  return customer.id;
+}
+
 export async function GET(request: Request) {
   try {
     const supabase = await createClient();
@@ -64,14 +96,20 @@ export async function GET(request: Request) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("plan, status")
+      .select("plan, status, name, email, stripe_customer_id")
       .eq("id", user.id)
       .maybeSingle();
 
-    const profilePlan = parsePlan(
-      (profile as { plan?: string | null } | null)?.plan ?? requestedPlan
-    );
-    const profileStatus = (profile as { status?: string } | null)?.status;
+    const profileRow = profile as {
+      plan?: string | null;
+      status?: string;
+      name?: string | null;
+      email?: string | null;
+      stripe_customer_id?: string | null;
+    } | null;
+
+    const profilePlan = parsePlan(profileRow?.plan ?? requestedPlan);
+    const profileStatus = profileRow?.status;
 
     let paymentType: "first_payment" | "remaining" | "installment" =
       "first_payment";
@@ -181,9 +219,17 @@ export async function GET(request: Request) {
       }
     }
 
+    const customerId = await ensureStripeCustomer({
+      userId: user.id,
+      email: profileRow?.email || user.email || "",
+      name: profileRow?.name,
+      existingCustomerId: profileRow?.stripe_customer_id,
+    });
+
     const stripe = getStripe();
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
+      customer: customerId,
       payment_method_types: ["card"],
       line_items: [
         {

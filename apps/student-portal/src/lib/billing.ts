@@ -59,6 +59,9 @@ export async function getBillingPageData(
   const premium = isPremiumPlan(profile.plan);
   const planKey = premium ? "premium" : "standard";
   const supabase = await createClient();
+  const profileRow = profile as Profile & {
+    stripe_customer_id?: string | null;
+  };
 
   const [journey, remainingRaw, { data: paymentRows }] = await Promise.all([
     getStudentJourneySummary(userId),
@@ -122,5 +125,6 @@ export async function getBillingPageData(
     remaining,
     history,
     paidViaStripe,
+    stripeCustomerId: profileRow.stripe_customer_id ?? null,
   };
 }

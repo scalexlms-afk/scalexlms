@@ -1,4 +1,5 @@
 import { getNotifications, type Notification } from "@/lib/data";
+import { ensureNotificationPreferences } from "@/lib/settings";
 import {
   isActionRequired,
   isAnnouncement,
@@ -17,6 +18,7 @@ export type {
   NotificationItem,
   NotificationSummary,
   NotificationsPageData,
+  NotificationPrefs,
 } from "@/lib/notifications-shared";
 export {
   NOTIFICATION_FILTERS,
@@ -69,10 +71,17 @@ function buildSummary(items: NotificationItem[]): NotificationSummary {
 export async function getNotificationsPageData(
   userId: string
 ): Promise<NotificationsPageData> {
-  const rows = await getNotifications(userId, 50);
+  const [rows, prefs] = await Promise.all([
+    getNotifications(userId, 50),
+    ensureNotificationPreferences(userId),
+  ]);
   const notifications = rows.map(mapNotification);
   return {
     notifications,
     summary: buildSummary(notifications),
+    prefs: {
+      inApp: prefs.inApp,
+      email: prefs.email,
+    },
   };
 }

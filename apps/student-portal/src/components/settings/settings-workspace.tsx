@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Card } from "@scalex/ui";
+import { useEffect, useState } from "react";
 import { SettingsHero } from "@/components/settings/settings-hero";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
 import { SettingsProfileForm } from "@/components/settings/settings-profile-form";
 import { SettingsLearningOverview } from "@/components/settings/settings-learning-overview";
+import { SettingsLearningForm } from "@/components/settings/settings-learning-form";
+import { SettingsNotificationsForm } from "@/components/settings/settings-notifications-form";
+import { SettingsSecurityForm } from "@/components/settings/settings-security-form";
+import { SettingsSubscriptionPanel } from "@/components/settings/settings-subscription-panel";
+import { SettingsAccountPanel } from "@/components/settings/settings-account-panel";
 import { SettingsHelp } from "@/components/settings/settings-help";
 import { SettingsRail } from "@/components/settings/settings-rail";
 import type {
@@ -13,33 +17,47 @@ import type {
   SettingsTabId,
 } from "@/lib/settings-shared";
 
-function ComingSoonPanel({ title }: { title: string }) {
-  return (
-    <Card className="flex flex-col items-center justify-center px-6 py-16 text-center">
-      <p className="font-display text-lg font-semibold text-foreground">
-        {title}
-      </p>
-      <p className="mt-2 max-w-md text-sm text-muted">
-        This section is coming soon. Profile details and billing are available
-        today.
-      </p>
-      <span className="mt-4 rounded-full bg-surface-3 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-subtle">
-        Coming soon
-      </span>
-    </Card>
-  );
-}
+const VALID_TABS = new Set<SettingsTabId>([
+  "profile",
+  "learning",
+  "notifications",
+  "security",
+  "subscription",
+  "account",
+]);
 
 export function SettingsWorkspace({
   data,
+  initialTab,
   updateAction,
+  uploadAvatarAction,
+  updateNotificationPreferencesAction,
+  updateLearningSettingsAction,
+  changePasswordAction,
+  deactivateAccountAction,
   flash,
 }: {
   data: SettingsPageData;
+  initialTab?: string | null;
   updateAction: (formData: FormData) => Promise<void>;
+  uploadAvatarAction: (formData: FormData) => Promise<void>;
+  updateNotificationPreferencesAction: (formData: FormData) => Promise<void>;
+  updateLearningSettingsAction: (formData: FormData) => Promise<void>;
+  changePasswordAction: (formData: FormData) => Promise<void>;
+  deactivateAccountAction: (formData: FormData) => Promise<void>;
   flash: { saved?: boolean; error?: string | null };
 }) {
-  const [tab, setTab] = useState<SettingsTabId>("profile");
+  const startTab =
+    initialTab && VALID_TABS.has(initialTab as SettingsTabId)
+      ? (initialTab as SettingsTabId)
+      : "profile";
+  const [tab, setTab] = useState<SettingsTabId>(startTab);
+
+  useEffect(() => {
+    if (initialTab && VALID_TABS.has(initialTab as SettingsTabId)) {
+      setTab(initialTab as SettingsTabId);
+    }
+  }, [initialTab]);
 
   return (
     <div className="settings-theme space-y-6">
@@ -52,7 +70,7 @@ export function SettingsWorkspace({
       ) : null}
       {flash.saved ? (
         <div className="rounded-2xl border border-accent-green/40 bg-accent-green/5 px-4 py-3">
-          <p className="text-sm text-accent-green">Profile saved successfully.</p>
+          <p className="text-sm text-accent-green">Settings saved successfully.</p>
         </div>
       ) : null}
 
@@ -65,6 +83,7 @@ export function SettingsWorkspace({
               <SettingsProfileForm
                 profile={data.profile}
                 updateAction={updateAction}
+                uploadAvatarAction={uploadAvatarAction}
               />
               <SettingsLearningOverview
                 percent={data.profileCompletionPercent}
@@ -76,23 +95,33 @@ export function SettingsWorkspace({
           ) : null}
 
           {tab === "learning" ? (
-            <ComingSoonPanel title="Learning Preferences" />
+            <SettingsLearningForm
+              prefs={data.learningPrefs}
+              updateAction={updateLearningSettingsAction}
+            />
           ) : null}
+
           {tab === "notifications" ? (
-            <ComingSoonPanel title="Notification Settings" />
+            <SettingsNotificationsForm
+              prefs={data.notificationPrefs}
+              updateAction={updateNotificationPreferencesAction}
+            />
           ) : null}
+
           {tab === "security" ? (
-            <ComingSoonPanel title="Security Settings" />
+            <SettingsSecurityForm changePasswordAction={changePasswordAction} />
           ) : null}
+
           {tab === "subscription" ? (
-            <ComingSoonPanel title="Subscription Settings" />
+            <SettingsSubscriptionPanel plan={data.plan} />
           ) : null}
+
           {tab === "account" ? (
-            <ComingSoonPanel title="Account Controls" />
+            <SettingsAccountPanel deactivateAction={deactivateAccountAction} />
           ) : null}
         </div>
 
-        <SettingsRail plan={data.plan} />
+        <SettingsRail plan={data.plan} onGoToAccount={() => setTab("account")} />
       </div>
     </div>
   );

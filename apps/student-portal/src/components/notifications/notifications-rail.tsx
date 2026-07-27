@@ -1,24 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useTransition } from "react";
 import { Sparkle } from "@phosphor-icons/react";
 import { Card } from "@scalex/ui";
-import type { NotificationSummary } from "@/lib/notifications-shared";
+import type {
+  NotificationPrefs,
+  NotificationSummary,
+} from "@/lib/notifications-shared";
 
-const PREF_ROWS = [
-  { id: "inApp", label: "In-App", defaultOn: true },
-  { id: "email", label: "Email", defaultOn: true },
-  { id: "browser", label: "Browser", defaultOn: true },
-  { id: "whatsapp", label: "WhatsApp", defaultOn: false },
-  { id: "push", label: "Push Notifications", defaultOn: true },
-] as const;
+type PrefRow = {
+  id: "inApp" | "email" | "browser" | "whatsapp" | "push";
+  channel?: "in_app" | "email";
+  label: string;
+  available: boolean;
+};
 
-function DisabledToggle({ on }: { on: boolean }) {
+const PREF_ROWS: PrefRow[] = [
+  { id: "inApp", channel: "in_app", label: "In-App", available: true },
+  { id: "email", channel: "email", label: "Email", available: true },
+  { id: "browser", label: "Browser", available: false },
+  { id: "whatsapp", label: "WhatsApp", available: false },
+  { id: "push", label: "Push Notifications", available: false },
+];
+
+function Toggle({
+  on,
+  disabled,
+  pending,
+}: {
+  on: boolean;
+  disabled?: boolean;
+  pending?: boolean;
+}) {
   return (
     <span
-      className={`relative inline-flex h-6 w-11 shrink-0 cursor-not-allowed rounded-full opacity-60 ${
-        on ? "bg-accent-purple" : "bg-surface-3"
-      }`}
+      className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition ${
+        disabled || pending ? "cursor-not-allowed opacity-60" : ""
+      } ${on ? "bg-accent-purple" : "bg-surface-3"}`}
       aria-hidden
     >
       <span
@@ -32,12 +50,31 @@ function DisabledToggle({ on }: { on: boolean }) {
 
 export function NotificationsRail({
   summary,
+  prefs,
+  togglePreferenceAction,
   onViewActionItems,
 }: {
   summary: NotificationSummary;
+  prefs: NotificationPrefs;
+  togglePreferenceAction: (formData: FormData) => Promise<void>;
   onViewActionItems: () => void;
 }) {
-  const [tipsDismissed, setTipsDismissed] = useState(false);
+  const [pending, startTransition] = useTransition();
+
+  function currentOn(id: PrefRow["id"]) {
+    if (id === "inApp") return prefs.inApp;
+    if (id === "email") return prefs.email;
+    return false;
+  }
+
+  function onToggle(channel: "in_app" | "email", next: boolean) {
+    const fd = new FormData();
+    fd.set("channel", channel);
+    fd.set("enabled", next ? "true" : "false");
+    startTransition(async () => {
+      await togglePreferenceAction(fd);
+    });
+  }
 
   return (
     <aside className="space-y-4 lg:sticky lg:top-20">
@@ -46,25 +83,43 @@ export function NotificationsRail({
           <p className="text-xs font-semibold uppercase tracking-wider text-muted">
             Notification Preferences
           </p>
-          <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-subtle">
-            Coming soon
-          </span>
         </div>
+        <p className="mt-2 text-[11px] text-subtle">
+          Payment and security alerts always stay on.
+        </p>
         <ul className="mt-4 space-y-3">
-          {PREF_ROWS.map((row) => (
-            <li
-              key={row.id}
-              className="flex items-center justify-between gap-3"
-            >
-              <div>
-                <p className="text-sm font-medium text-foreground">{row.label}</p>
-                {row.id === "whatsapp" ? (
-                  <p className="text-[11px] text-subtle">Coming soon</p>
-                ) : null}
-              </div>
-              <DisabledToggle on={row.defaultOn} />
-            </li>
-          ))}
+          {PREF_ROWS.map((row) => {
+            const on = currentOn(row.id);
+            return (
+              <li
+                key={row.id}
+                className="flex items-center justify-between gap-3"
+              >
+                <div>
+                  <p className="text-sm font-medium text-foreground">
+                    {row.label}
+                  </p>
+                  {!row.available ? (
+                    <p className="text-[11px] text-subtle">Not available yet</p>
+                  ) : null}
+                </div>
+                {row.available && row.channel ? (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => onToggle(row.channel!, !on)}
+                    aria-pressed={on}
+                    aria-label={`Toggle ${row.label}`}
+                    className="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-purple"
+                  >
+                    <Toggle on={on} pending={pending} />
+                  </button>
+                ) : (
+                  <Toggle on={false} disabled />
+                )}
+              </li>
+            );
+          })}
         </ul>
       </Card>
 
@@ -108,25 +163,16 @@ export function NotificationsRail({
         </button>
       </Card>
 
-      {!tipsDismissed ? (
-        <Card>
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-            Notification Tips
-          </p>
-          <ul className="mt-3 space-y-2 text-sm text-muted">
-            <li>· Check action items daily so reviews never stall.</li>
-            <li>· Mentor replies and live class alerts are highest priority.</li>
-            <li>· Prefer email digests? Preferences are coming soon.</li>
-          </ul>
-          <button
-            type="button"
-            onClick={() => setTipsDismissed(true)}
-            className="mt-4 w-full rounded-xl border border-line bg-surface-3/50 px-3 py-2 text-xs font-semibold text-muted transition hover:bg-surface-3 hover:text-foreground"
-          >
-            Got it, thanks!
-          </button>
-        </Card>
-      ) : null}
+      <Card>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted">
+          Notification Tips
+        </p>
+        <ul className="mt-3 space-y-2 text-sm text-muted">
+          <li>· Check action items daily so reviews never stall.</li>
+          <li>· Mentor replies and live class alerts are highest priority.</li>
+          <li>· Turn off email digests anytime from preferences above.</li>
+        </ul>
+      </Card>
     </aside>
   );
 }

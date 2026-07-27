@@ -9,10 +9,76 @@ export interface CreateNotificationInput {
   payload?: Json;
 }
 
+/** Payment and security alerts always deliver regardless of prefs. */
+export function isCriticalNotificationType(type: string): boolean {
+  if (type.startsWith("payment_")) return true;
+  if (type.startsWith("security_")) return true;
+  if (type === "security" || type === "enrollment") return true;
+  return false;
+}
+
+export type NotificationPreferenceFlags = {
+  in_app: boolean;
+  email: boolean;
+};
+
+const DEFAULT_PREFS: NotificationPreferenceFlags = {
+  in_app: true,
+  email: true,
+};
+
+export async function getNotificationPreferenceFlags(
+  userId: string
+): Promise<NotificationPreferenceFlags> {
+  try {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return DEFAULT_PREFS;
+    }
+    const supabase = createServiceClient();
+    const { data } = await supabase
+      .from("notification_preferences")
+      .select("in_app, email")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!data) return DEFAULT_PREFS;
+    const row = data as { in_app?: boolean; email?: boolean };
+    return {
+      in_app: row.in_app ?? true,
+      email: row.email ?? true,
+    };
+  } catch {
+    return DEFAULT_PREFS;
+  }
+}
+
+export async function userAllowsInAppNotification(
+  userId: string,
+  type: string
+): Promise<boolean> {
+  if (isCriticalNotificationType(type)) return true;
+  const prefs = await getNotificationPreferenceFlags(userId);
+  return prefs.in_app;
+}
+
+export async function userAllowsEmailNotification(
+  userId: string,
+  type: string
+): Promise<boolean> {
+  if (isCriticalNotificationType(type)) return true;
+  const prefs = await getNotificationPreferenceFlags(userId);
+  return prefs.email;
+}
+
 export async function createNotification(input: CreateNotificationInput) {
   try {
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error("createNotification skipped: missing SUPABASE_SERVICE_ROLE_KEY");
+      return null;
+    }
+
+    const allowed = await userAllowsInAppNotification(input.userId, input.type);
+    if (!allowed) {
       return null;
     }
 

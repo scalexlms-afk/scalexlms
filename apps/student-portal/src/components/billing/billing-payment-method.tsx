@@ -1,21 +1,48 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import { CheckCircle, CreditCard } from "@phosphor-icons/react";
 import { Card } from "@scalex/ui";
 
+async function openStripePortal() {
+  const res = await fetch("/api/stripe/portal", { method: "POST" });
+  const data = (await res.json()) as { url?: string; error?: string };
+  if (!res.ok || !data.url) {
+    throw new Error(data.error ?? "Could not open billing portal");
+  }
+  window.location.href = data.url;
+}
+
 export function BillingPaymentMethod({
   paidViaStripe,
+  stripeCustomerId,
 }: {
   paidViaStripe: boolean;
+  stripeCustomerId: string | null;
 }) {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const canManage = Boolean(stripeCustomerId);
+
+  function onManage() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await openStripePortal();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Portal failed");
+      }
+    });
+  }
+
   return (
     <Card className="h-full">
       <p className="text-xs font-semibold uppercase tracking-wider text-muted">
         Payment Method
       </p>
 
-      {paidViaStripe ? (
+      {paidViaStripe || canManage ? (
         <div className="mt-4 flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-blue/15 text-accent-blue">
             <CreditCard weight="duotone" className="h-5 w-5" aria-hidden />
@@ -29,7 +56,7 @@ export function BillingPaymentMethod({
               </span>
             </div>
             <p className="mt-1 text-sm text-muted">
-              Card details are managed securely in Stripe Checkout.
+              Card details are managed securely in the Stripe Customer Portal.
             </p>
           </div>
         </div>
@@ -42,29 +69,33 @@ export function BillingPaymentMethod({
             No saved card on file
           </p>
           <p className="mt-1 text-xs text-muted">
-            Payments are completed through Stripe Checkout.
+            Complete a Stripe Checkout payment to manage cards here.
           </p>
         </div>
       )}
 
       <div className="mt-4 flex flex-wrap gap-3">
-        <button
-          type="button"
-          disabled
-          title="Coming soon"
-          className="cursor-not-allowed text-sm font-semibold text-accent-purple opacity-60"
-        >
-          Change Card
-        </button>
-        <button
-          type="button"
-          disabled
-          title="Coming soon"
-          className="cursor-not-allowed text-sm font-semibold text-accent-purple opacity-60"
-        >
-          + Add New Card
-        </button>
+        {canManage ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onManage}
+            className="text-sm font-semibold text-accent-purple transition hover:underline disabled:opacity-60"
+          >
+            {pending ? "Opening…" : "Change Card"}
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled
+            title="Complete a payment first"
+            className="cursor-not-allowed text-sm font-semibold text-accent-purple opacity-60"
+          >
+            Change Card
+          </button>
+        )}
       </div>
+      {error ? <p className="mt-2 text-xs text-scalex-red">{error}</p> : null}
     </Card>
   );
 }

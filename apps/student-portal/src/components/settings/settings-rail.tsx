@@ -34,9 +34,7 @@ function ComingSoonRow({
       type="button"
       disabled
       title="Coming soon"
-      className={`flex w-full cursor-not-allowed items-start gap-3 rounded-xl px-2 py-2.5 text-left opacity-60 ${
-        danger ? "" : ""
-      }`}
+      className="flex w-full cursor-not-allowed items-start gap-3 rounded-xl px-2 py-2.5 text-left opacity-60"
     >
       <span
         className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
@@ -61,7 +59,13 @@ function ComingSoonRow({
   );
 }
 
-export function SettingsRail({ plan }: { plan: SettingsPlanSummary }) {
+export function SettingsRail({
+  plan,
+  onGoToAccount,
+}: {
+  plan: SettingsPlanSummary;
+  onGoToAccount?: () => void;
+}) {
   return (
     <aside className="space-y-4 lg:sticky lg:top-20">
       <Card className="border-accent-purple/20">
@@ -106,7 +110,7 @@ export function SettingsRail({ plan }: { plan: SettingsPlanSummary }) {
         </p>
         <div className="mt-2 space-y-1">
           <Link
-            href="/reset-password"
+            href="/settings?tab=security"
             className="flex w-full items-start gap-3 rounded-xl px-2 py-2.5 transition hover:bg-surface-3"
           >
             <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-3 text-muted">
@@ -127,11 +131,24 @@ export function SettingsRail({ plan }: { plan: SettingsPlanSummary }) {
             title="Two-Factor Authentication"
             description="Add an extra layer of security"
           />
-          <ComingSoonRow
-            icon={<DownloadSimple weight="duotone" className="h-4 w-4" />}
-            title="Download My Data"
-            description="Export your account information"
-          />
+
+          <a
+            href="/api/account/export"
+            className="flex w-full items-start gap-3 rounded-xl px-2 py-2.5 transition hover:bg-surface-3"
+          >
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-3 text-muted">
+              <DownloadSimple weight="duotone" className="h-4 w-4" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-foreground">
+                Download My Data
+              </span>
+              <span className="mt-0.5 block text-xs text-muted">
+                Export your account information
+              </span>
+            </span>
+          </a>
+
           <ComingSoonRow
             icon={<Desktop weight="duotone" className="h-4 w-4" />}
             title="Connected Devices"
@@ -145,12 +162,23 @@ export function SettingsRail({ plan }: { plan: SettingsPlanSummary }) {
           Danger Zone
         </p>
         <div className="mt-2">
-          <ComingSoonRow
-            danger
-            icon={<Trash weight="duotone" className="h-4 w-4" />}
-            title="Delete Account"
-            description="Permanently delete your account and all data."
-          />
+          <button
+            type="button"
+            onClick={onGoToAccount}
+            className="flex w-full items-start gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-scalex-red/5"
+          >
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-scalex-red/15 text-scalex-red">
+              <Trash weight="duotone" className="h-4 w-4" aria-hidden />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-scalex-red">
+                Deactivate Account
+              </span>
+              <span className="mt-0.5 block text-xs text-muted">
+                Soft-deactivate and sign out
+              </span>
+            </span>
+          </button>
         </div>
       </Card>
 

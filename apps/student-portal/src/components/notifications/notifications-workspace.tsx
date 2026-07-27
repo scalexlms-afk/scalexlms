@@ -16,10 +16,12 @@ export function NotificationsWorkspace({
   data,
   markReadAction,
   markAllAction,
+  togglePreferenceAction,
 }: {
   data: NotificationsPageData;
   markReadAction: (formData: FormData) => Promise<void>;
   markAllAction: () => Promise<void>;
+  togglePreferenceAction: (formData: FormData) => Promise<void>;
 }) {
   const [filter, setFilter] = useState<NotificationFilter>("all");
   const [pending, startTransition] = useTransition();
@@ -58,6 +60,8 @@ export function NotificationsWorkspace({
 
         <NotificationsRail
           summary={data.summary}
+          prefs={data.prefs}
+          togglePreferenceAction={togglePreferenceAction}
           onViewActionItems={handleViewActionItems}
         />
       </div>

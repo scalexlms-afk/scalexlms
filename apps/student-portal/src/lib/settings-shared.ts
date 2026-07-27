@@ -21,6 +21,7 @@ export type SettingsPlanSummary = {
   enrolledAt: string | null;
   monthsRemaining: number | null;
   accessUntil: string | null;
+  stripeCustomerId: string | null;
 };
 
 export type SettingsProfile = {
@@ -29,6 +30,21 @@ export type SettingsProfile = {
   email: string;
   phone: string | null;
   avatarUrl: string | null;
+  country: string | null;
+  language: string | null;
+};
+
+export type SettingsNotificationPrefs = {
+  inApp: boolean;
+  email: boolean;
+  browser: boolean;
+  push: boolean;
+  whatsapp: boolean;
+};
+
+export type SettingsLearningPrefs = {
+  digestCadence: "off" | "daily" | "weekly";
+  reminderHour: number;
 };
 
 export type SettingsPageData = {
@@ -37,6 +53,8 @@ export type SettingsPageData = {
   stats: SettingsLearningStats;
   profileCompletionPercent: number;
   checklist: Array<{ id: string; label: string; done: boolean }>;
+  notificationPrefs: SettingsNotificationPrefs;
+  learningPrefs: SettingsLearningPrefs;
 };
 
 export const SETTINGS_TABS: Array<{ id: SettingsTabId; label: string }> = [
@@ -46,6 +64,25 @@ export const SETTINGS_TABS: Array<{ id: SettingsTabId; label: string }> = [
   { id: "security", label: "Security" },
   { id: "subscription", label: "Subscription" },
   { id: "account", label: "Account" },
+];
+
+export const SETTINGS_COUNTRIES = [
+  "Pakistan",
+  "United States",
+  "United Kingdom",
+  "United Arab Emirates",
+  "Saudi Arabia",
+  "Canada",
+  "Australia",
+  "India",
+  "Germany",
+  "Other",
+] as const;
+
+export const SETTINGS_LANGUAGES: Array<{ value: string; label: string }> = [
+  { value: "en", label: "English" },
+  { value: "ur", label: "Urdu" },
+  { value: "ar", label: "Arabic" },
 ];
 
 export function formatSettingsDate(value: string | null) {

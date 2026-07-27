@@ -1,9 +1,12 @@
 "use client";
 
+import { useRef, useTransition } from "react";
 import Image from "next/image";
-import { Camera, CheckCircle, Moon } from "@phosphor-icons/react";
+import { Camera, CheckCircle, Moon, SpinnerGap } from "@phosphor-icons/react";
 import { Card } from "@scalex/ui";
 import {
+  SETTINGS_COUNTRIES,
+  SETTINGS_LANGUAGES,
   profileInitials,
   type SettingsProfile,
 } from "@/lib/settings-shared";
@@ -14,11 +17,24 @@ const inputClass =
 export function SettingsProfileForm({
   profile,
   updateAction,
+  uploadAvatarAction,
 }: {
   profile: SettingsProfile;
   updateAction: (formData: FormData) => Promise<void>;
+  uploadAvatarAction: (formData: FormData) => Promise<void>;
 }) {
   const initials = profileInitials(profile.name);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [pending, startTransition] = useTransition();
+
+  function onPickAvatar(file: File | undefined) {
+    if (!file) return;
+    const fd = new FormData();
+    fd.set("avatar", file);
+    startTransition(async () => {
+      await uploadAvatarAction(fd);
+    });
+  }
 
   return (
     <Card>
@@ -42,14 +58,25 @@ export function SettingsProfileForm({
               {initials}
             </div>
           )}
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            className="sr-only"
+            onChange={(e) => onPickAvatar(e.target.files?.[0])}
+          />
           <button
             type="button"
-            disabled
-            title="Coming soon"
-            className="absolute bottom-0 right-0 flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full bg-accent-purple text-white opacity-70 shadow-lg"
-            aria-label="Upload avatar (coming soon)"
+            disabled={pending}
+            onClick={() => fileRef.current?.click()}
+            className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-accent-purple text-white shadow-lg transition hover:bg-accent-purple/90 disabled:opacity-60"
+            aria-label="Upload avatar"
           >
-            <Camera weight="bold" className="h-4 w-4" aria-hidden />
+            {pending ? (
+              <SpinnerGap className="h-4 w-4 animate-spin" aria-hidden />
+            ) : (
+              <Camera weight="bold" className="h-4 w-4" aria-hidden />
+            )}
           </button>
           <p className="mt-2 max-w-[88px] text-center text-[10px] text-subtle">
             JPG, PNG or GIF. Max. 2MB
@@ -110,8 +137,17 @@ export function SettingsProfileForm({
               <span className="text-xs font-semibold uppercase tracking-wider text-muted">
                 Country
               </span>
-              <select disabled title="Coming soon" className={inputClass}>
-                <option>Pakistan</option>
+              <select
+                name="country"
+                defaultValue={profile.country ?? ""}
+                className={inputClass}
+              >
+                <option value="">Select country</option>
+                {SETTINGS_COUNTRIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
               </select>
             </label>
 
@@ -119,8 +155,16 @@ export function SettingsProfileForm({
               <span className="text-xs font-semibold uppercase tracking-wider text-muted">
                 Language
               </span>
-              <select disabled title="Coming soon" className={inputClass}>
-                <option>English</option>
+              <select
+                name="language"
+                defaultValue={profile.language ?? "en"}
+                className={inputClass}
+              >
+                {SETTINGS_LANGUAGES.map((l) => (
+                  <option key={l.value} value={l.value}>
+                    {l.label}
+                  </option>
+                ))}
               </select>
             </label>
 

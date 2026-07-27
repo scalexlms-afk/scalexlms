@@ -129,17 +129,24 @@ export async function reviewSubmissionAction(formData: FormData) {
     .maybeSingle();
   const student = studentProfile as { name?: string; email?: string } | null;
   if (student?.email) {
-    const { sendTaskReviewedEmail } = await import("@scalex/email");
-    const studentPortal =
-      process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL?.replace(/\/$/, "") ||
-      "http://localhost:3000";
-    await sendTaskReviewedEmail({
-      to: student.email,
-      name: student.name || "there",
-      decision,
-      feedback,
-      taskUrl: `${studentPortal}/roadmap`,
-    });
+    const { userAllowsEmailNotification } = await import("@scalex/db");
+    const allowEmail = await userAllowsEmailNotification(
+      row.student_id,
+      "submission_review"
+    );
+    if (allowEmail) {
+      const { sendTaskReviewedEmail } = await import("@scalex/email");
+      const studentPortal =
+        process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL?.replace(/\/$/, "") ||
+        "http://localhost:3000";
+      await sendTaskReviewedEmail({
+        to: student.email,
+        name: student.name || "there",
+        decision,
+        feedback,
+        taskUrl: `${studentPortal}/roadmap`,
+      });
+    }
   }
 
   if (decision === "approved") {

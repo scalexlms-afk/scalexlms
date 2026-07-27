@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import type { ReactNode } from "react";
 import {
   CalendarBlank,
@@ -36,11 +37,26 @@ function MetaCell({
   );
 }
 
+async function openStripePortal() {
+  const res = await fetch("/api/stripe/portal", { method: "POST" });
+  const data = (await res.json()) as { url?: string; error?: string };
+  if (!res.ok || !data.url) {
+    throw new Error(data.error ?? "Could not open billing portal");
+  }
+  window.location.href = data.url;
+}
+
 export function BillingSubscriptionCard({
   subscription,
+  stripeCustomerId,
 }: {
   subscription: BillingSubscription;
+  stripeCustomerId: string | null;
 }) {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const canManage = Boolean(stripeCustomerId);
+
   const remainingLabel =
     subscription.monthsRemaining == null
       ? "Not enrolled yet"
@@ -52,6 +68,17 @@ export function BillingSubscriptionCard({
     subscription.monthsRemaining == null
       ? 0
       : Math.min(100, Math.max(0, (subscription.monthsRemaining / 12) * 100));
+
+  function onManage() {
+    setError(null);
+    startTransition(async () => {
+      try {
+        await openStripePortal();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Portal failed");
+      }
+    });
+  }
 
   return (
     <Card className="border-accent-purple/20">
@@ -117,14 +144,26 @@ export function BillingSubscriptionCard({
         </div>
       </div>
 
-      <button
-        type="button"
-        disabled
-        title="Coming soon"
-        className="mt-5 inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-accent-purple px-4 py-2.5 text-sm font-semibold text-white opacity-60 shadow-[0_12px_28px_-16px_rgba(139,92,246,0.9)] sm:w-auto"
-      >
-        Manage Subscription
-      </button>
+      {canManage ? (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={onManage}
+          className="mt-5 inline-flex w-full items-center justify-center rounded-xl bg-accent-purple px-4 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_-16px_rgba(139,92,246,0.9)] transition hover:bg-accent-purple/90 disabled:opacity-60 sm:w-auto"
+        >
+          {pending ? "Opening…" : "Manage Subscription"}
+        </button>
+      ) : (
+        <button
+          type="button"
+          disabled
+          title="Complete a Stripe payment first"
+          className="mt-5 inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-accent-purple px-4 py-2.5 text-sm font-semibold text-white opacity-60 shadow-[0_12px_28px_-16px_rgba(139,92,246,0.9)] sm:w-auto"
+        >
+          Manage Subscription
+        </button>
+      )}
+      {error ? <p className="mt-2 text-xs text-scalex-red">{error}</p> : null}
     </Card>
   );
 }

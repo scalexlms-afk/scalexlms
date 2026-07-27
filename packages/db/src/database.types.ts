@@ -776,6 +776,44 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          browser: boolean
+          email: boolean
+          in_app: boolean
+          push: boolean
+          updated_at: string
+          user_id: string
+          whatsapp: boolean
+        }
+        Insert: {
+          browser?: boolean
+          email?: boolean
+          in_app?: boolean
+          push?: boolean
+          updated_at?: string
+          user_id: string
+          whatsapp?: boolean
+        }
+        Update: {
+          browser?: boolean
+          email?: boolean
+          in_app?: boolean
+          push?: boolean
+          updated_at?: string
+          user_id?: string
+          whatsapp?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string | null
@@ -972,10 +1010,12 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          country: string | null
           created_at: string
           current_stage: string | null
           email: string
           id: string
+          language: string | null
           level: Database["public"]["Enums"]["student_level"] | null
           mentor_id: string | null
           name: string
@@ -983,14 +1023,17 @@ export type Database = {
           plan: Database["public"]["Enums"]["plan_type"] | null
           role: Database["public"]["Enums"]["user_role"]
           status: Database["public"]["Enums"]["user_status"]
+          stripe_customer_id: string | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
+          country?: string | null
           created_at?: string
           current_stage?: string | null
           email: string
           id: string
+          language?: string | null
           level?: Database["public"]["Enums"]["student_level"] | null
           mentor_id?: string | null
           name: string
@@ -998,14 +1041,17 @@ export type Database = {
           plan?: Database["public"]["Enums"]["plan_type"] | null
           role?: Database["public"]["Enums"]["user_role"]
           status?: Database["public"]["Enums"]["user_status"]
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
+          country?: string | null
           created_at?: string
           current_stage?: string | null
           email?: string
           id?: string
+          language?: string | null
           level?: Database["public"]["Enums"]["student_level"] | null
           mentor_id?: string | null
           name?: string
@@ -1013,6 +1059,7 @@ export type Database = {
           plan?: Database["public"]["Enums"]["plan_type"] | null
           role?: Database["public"]["Enums"]["user_role"]
           status?: Database["public"]["Enums"]["user_status"]
+          stripe_customer_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -1248,6 +1295,32 @@ export type Database = {
             columns: ["milestone_id"]
             isOneToOne: true
             referencedRelation: "milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_settings: {
+        Row: {
+          learning: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          learning?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          learning?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1529,3 +1602,7 @@ export type Announcement =
   Database["public"]["Tables"]["announcements"]["Row"];
 export type PaymentPlanSetting =
   Database["public"]["Tables"]["payment_plan_settings"]["Row"];
+export type NotificationPreference =
+  Database["public"]["Tables"]["notification_preferences"]["Row"];
+export type UserSettings =
+  Database["public"]["Tables"]["user_settings"]["Row"];

@@ -36,6 +36,7 @@ export type BillingPageData = {
   remaining: BillingRemainingPayment;
   history: BillingHistoryItem[];
   paidViaStripe: boolean;
+  stripeCustomerId: string | null;
 };
 
 export function formatBillingMoney(cents: number, currency = "USD") {

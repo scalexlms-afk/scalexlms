@@ -30,9 +30,15 @@ export type NotificationSummary = {
   announcements: number;
 };
 
+export type NotificationPrefs = {
+  inApp: boolean;
+  email: boolean;
+};
+
 export type NotificationsPageData = {
   notifications: NotificationItem[];
   summary: NotificationSummary;
+  prefs: NotificationPrefs;
 };
 
 export const NOTIFICATION_FILTERS: Array<{

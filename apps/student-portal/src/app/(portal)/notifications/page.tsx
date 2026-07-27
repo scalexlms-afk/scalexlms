@@ -5,6 +5,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/app/(portal)/notifications/actions";
+import { toggleNotificationPreferenceAction } from "@/app/(portal)/settings/actions";
 
 export default async function NotificationsPage() {
   const { userId } = await requireStudentProfile();
@@ -16,6 +17,7 @@ export default async function NotificationsPage() {
         data={data}
         markReadAction={markNotificationRead}
         markAllAction={markAllNotificationsRead}
+        togglePreferenceAction={toggleNotificationPreferenceAction}
       />
     </div>
   );
