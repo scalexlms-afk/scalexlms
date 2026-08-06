@@ -14,6 +14,82 @@ export type Database = {
   }
   public: {
     Tables: {
+      academy_resources: {
+        Row: {
+          category: string
+          course_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          download_count: number
+          file_path: string | null
+          file_size_bytes: number | null
+          file_type: string
+          file_url: string | null
+          id: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          visibility: Database["public"]["Enums"]["resource_visibility"]
+        }
+        Insert: {
+          category?: string
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          download_count?: number
+          file_path?: string | null
+          file_size_bytes?: number | null
+          file_type?: string
+          file_url?: string | null
+          id?: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          visibility?: Database["public"]["Enums"]["resource_visibility"]
+        }
+        Update: {
+          category?: string
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          download_count?: number
+          file_path?: string | null
+          file_size_bytes?: number | null
+          file_type?: string
+          file_url?: string | null
+          id?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          visibility?: Database["public"]["Enums"]["resource_visibility"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "academy_resources_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_resources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_resources_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_chat_messages: {
         Row: {
           chat_id: string
@@ -72,6 +148,70 @@ export type Database = {
           {
             foreignKeyName: "ai_chats_student_id_fkey"
             columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_knowledge_articles: {
+        Row: {
+          body: string
+          category: Database["public"]["Enums"]["knowledge_category"]
+          course_id: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          status: Database["public"]["Enums"]["knowledge_status"]
+          title: string
+          updated_at: string
+          updated_by: string | null
+          view_count: number
+        }
+        Insert: {
+          body: string
+          category?: Database["public"]["Enums"]["knowledge_category"]
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["knowledge_status"]
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number
+        }
+        Update: {
+          body?: string
+          category?: Database["public"]["Enums"]["knowledge_category"]
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["knowledge_status"]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_knowledge_articles_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_knowledge_articles_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_knowledge_articles_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1365,6 +1505,14 @@ export type Database = {
         | "questions"
         | "student_wins"
       course_status: "draft" | "published" | "archived"
+      knowledge_category:
+        | "guide"
+        | "policy"
+        | "tutorial"
+        | "template"
+        | "faq"
+        | "case_study"
+      knowledge_status: "draft" | "published"
       lead_stage:
         | "new_lead"
         | "contacted"
@@ -1379,6 +1527,7 @@ export type Database = {
       payment_type: "first_payment" | "remaining" | "installment"
       plan_type: "standard" | "premium"
       post_status: "pending_approval" | "approved" | "rejected"
+      resource_visibility: "public" | "private" | "draft"
       review_decision: "approved" | "revision_required"
       session_audience: "all_premium" | "selected"
       student_level:
@@ -1533,6 +1682,15 @@ export const Constants = {
         "student_wins",
       ],
       course_status: ["draft", "published", "archived"],
+      knowledge_category: [
+        "guide",
+        "policy",
+        "tutorial",
+        "template",
+        "faq",
+        "case_study",
+      ],
+      knowledge_status: ["draft", "published"],
       lead_stage: [
         "new_lead",
         "contacted",
@@ -1548,6 +1706,7 @@ export const Constants = {
       payment_type: ["first_payment", "remaining", "installment"],
       plan_type: ["standard", "premium"],
       post_status: ["pending_approval", "approved", "rejected"],
+      resource_visibility: ["public", "private", "draft"],
       review_decision: ["approved", "revision_required"],
       session_audience: ["all_premium", "selected"],
       student_level: [
@@ -1582,6 +1741,12 @@ export type LessonContentType =
 export type PaymentType = Database["public"]["Enums"]["payment_type"];
 export type PaymentStatus = Database["public"]["Enums"]["payment_status"];
 export type LeadStage = Database["public"]["Enums"]["lead_stage"];
+export type ResourceVisibility =
+  Database["public"]["Enums"]["resource_visibility"];
+export type KnowledgeCategory =
+  Database["public"]["Enums"]["knowledge_category"];
+export type KnowledgeStatus =
+  Database["public"]["Enums"]["knowledge_status"];
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Course = Database["public"]["Tables"]["courses"]["Row"];
@@ -1606,3 +1771,7 @@ export type NotificationPreference =
   Database["public"]["Tables"]["notification_preferences"]["Row"];
 export type UserSettings =
   Database["public"]["Tables"]["user_settings"]["Row"];
+export type AcademyResource =
+  Database["public"]["Tables"]["academy_resources"]["Row"];
+export type AiKnowledgeArticle =
+  Database["public"]["Tables"]["ai_knowledge_articles"]["Row"];

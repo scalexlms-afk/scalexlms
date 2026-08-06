@@ -195,6 +195,59 @@ function keywordFallback(
   }));
 }
 
+export async function retrieveKnowledgeArticles(
+  supabase: SupabaseClient<Database>,
+  query: string,
+  limit = 4
+): Promise<LessonContext[]> {
+  const keywords = extractKeywords(query);
+  const { data, error } = await supabase
+    .from("ai_knowledge_articles")
+    .select("id, title, body, status")
+    .eq("status", "published")
+    .order("updated_at", { ascending: false })
+    .limit(40);
+
+  if (error || !data) return [];
+
+  const rows = data as {
+    id: string;
+    title: string;
+    body: string;
+    status: string;
+  }[];
+
+  if (keywords.length === 0) {
+    return rows.slice(0, limit).map((row, index) => ({
+      id: `kb:${row.id}`,
+      title: row.title,
+      content_text: row.body,
+      rank: 0.5 * (limit - index),
+    }));
+  }
+
+  const scored = rows
+    .map((row) => {
+      const hay = `${row.title}\n${row.body}`.toLowerCase();
+      let score = 0;
+      for (const kw of keywords) {
+        if (row.title.toLowerCase().includes(kw)) score += 6;
+        if (hay.includes(kw)) score += 1;
+      }
+      return { row, score };
+    })
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit);
+
+  return scored.map((item, index) => ({
+    id: `kb:${item.row.id}`,
+    title: item.row.title,
+    content_text: item.row.body,
+    rank: item.score + (limit - index) * 0.01,
+  }));
+}
+
 export async function retrieveContext(
   query: string,
   supabase: SupabaseClient<Database>
@@ -210,7 +263,10 @@ export async function retrieveContext(
     hits = await searchFts(supabase, keywords.join(" "), CONTEXT_LIMIT);
   }
 
-  const catalog = await listAccessibleLessons(supabase);
+  const [catalog, knowledge] = await Promise.all([
+    listAccessibleLessons(supabase),
+    retrieveKnowledgeArticles(supabase, trimmedQuery, 4),
+  ]);
 
   if (hits.length === 0 && catalog.length > 0) {
     hits = keywordFallback(catalog, keywords, CONTEXT_LIMIT);
@@ -227,7 +283,7 @@ export async function retrieveContext(
     }));
   }
 
-  return dedupeById(hits).slice(0, CONTEXT_LIMIT);
+  return dedupeById([...knowledge, ...hits]).slice(0, CONTEXT_LIMIT);
 }
 
 export async function retrieveCurriculumTitles(
@@ -260,7 +316,7 @@ export function formatContext(
       chunks
         .map(
           (chunk, index) =>
-            `[Lesson ${index + 1}: ${chunk.title}]\n${truncateExcerpt(chunk.content_text)}`
+            `[${chunk.id.startsWith("kb:") ? "Knowledge" : "Lesson"} ${index + 1}: ${chunk.title}]\n${truncateExcerpt(chunk.content_text)}`
         )
         .join("\n\n")
     );

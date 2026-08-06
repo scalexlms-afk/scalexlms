@@ -1,4 +1,5 @@
 export const LESSON_MEDIA_BUCKET = "lesson-media";
+export const ACADEMY_RESOURCES_BUCKET = "academy-resources";
 
 /** Signed URL lifetime for student playback (seconds). */
 export const MEDIA_SIGNED_URL_TTL = 60 * 60; // 1 hour

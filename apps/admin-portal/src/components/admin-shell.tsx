@@ -1,212 +1,197 @@
+import type { ReactNode } from "react";
 import type { NavGroup } from "@scalex/ui";
 import { getPermission, type Feature } from "@scalex/db/rbac";
 import type { UserRole } from "@scalex/db/types";
 import { requireAdminProfile } from "@/lib/auth";
-import { getAdminNotifications } from "@/lib/data";
+import { getAdminNotifications, getDashboardStats, getOpenSupportTicketCount } from "@/lib/data";
 import { markNotificationRead } from "@/app/notifications/actions";
 import { AdminChrome } from "@/components/admin-chrome";
 
 const iconClass = "h-4 w-4";
 
-const DashboardIcon = (
-  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
-    <path
-      d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z"
-      fill="currentColor"
-    />
-  </svg>
-);
+function Ico({ d }: { d: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden>
+      <path
+        d={d}
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
-const ReviewIcon = (
-  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
-    <path
-      d="m9 12 2 2 4-4M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const CommunityIcon = (
-  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
-    <path
-      d="M17 20h5v-2a4 4 0 0 0-3-3.87M9 20H4v-2a4 4 0 0 1 3-3.87M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM22 20v-2a4 4 0 0 0-3-3.87"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const SessionsIcon = (
-  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
-    <path
-      d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M5 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const StudentsIcon = (
-  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
-    <path
-      d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const ContentIcon = (
-  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
-    <path
-      d="M4 6h16M4 12h16M4 18h10"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-    />
-  </svg>
-);
-
-const CrmIcon = (
-  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
-    <path
-      d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const FinanceIcon = (
-  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
-    <path
-      d="M12 3v18M8 7h5a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const ReportsIcon = (
-  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
-    <path
-      d="M4 20V10M10 20V4M16 20v-8M22 20H2"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const SettingsIcon = (
-  <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden="true">
-    <path
-      d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    />
-    <path
-      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.6.77 1.03 1.41 1.03H21a2 2 0 1 1 0 4h-.09c-.64 0-1.15.43-1.41 1.03Z"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
+const icons = {
+  dashboard: (
+    <svg viewBox="0 0 24 24" fill="none" className={iconClass} aria-hidden>
+      <path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z" fill="currentColor" />
+    </svg>
+  ),
+  analytics: (
+    <Ico d="M4 20V10M10 20V4M16 20v-8M22 20H2" />
+  ),
+  courses: (
+    <Ico d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+  ),
+  resources: (
+    <Ico d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+  ),
+  ai: (
+    <Ico d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" />
+  ),
+  students: (
+    <Ico d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+  ),
+  reviews: (
+    <Ico d="m9 12 2 2 4-4M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+  ),
+  community: (
+    <Ico d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" />
+  ),
+  sessions: (
+    <Ico d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M5 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
+  ),
+  messages: (
+    <Ico d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" />
+  ),
+  support: (
+    <Ico d="M12 1a4 4 0 0 0-4 4v2H6a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h2v1a4 4 0 0 0 8 0v-1h2a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2V5a4 4 0 0 0-4-4Z" />
+  ),
+  crm: (
+    <Ico d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+  ),
+  finance: (
+    <Ico d="M12 3v18M8 7h5a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6" />
+  ),
+  team: (
+    <Ico d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+  ),
+  roles: (
+    <Ico d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+  ),
+  settings: (
+    <Ico d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
+  ),
+};
 
 type NavDef = {
   label: string;
   href: string;
   feature: Feature;
-  icon: React.ReactNode;
+  icon: ReactNode;
+  badgeKey?: "reviews" | "sessions" | "messages" | "support";
 };
 
 const NAV_CATALOG: { title: string; items: NavDef[] }[] = [
   {
+    title: "Overview",
+    items: [
+      { label: "Dashboard", href: "/", feature: "dashboard", icon: icons.dashboard },
+      { label: "Analytics", href: "/analytics", feature: "reports", icon: icons.analytics },
+    ],
+  },
+  {
     title: "Academy",
     items: [
-      { label: "Dashboard", href: "/", feature: "dashboard", icon: DashboardIcon },
+      { label: "Courses", href: "/content", feature: "course_content", icon: icons.courses },
+      { label: "Resources", href: "/resources", feature: "course_content", icon: icons.resources },
       {
-        label: "Task Review",
-        href: "/reviews",
-        feature: "task_review",
-        icon: ReviewIcon,
+        label: "AI Knowledge Base",
+        href: "/ai-knowledge",
+        feature: "ai_mentor",
+        icon: icons.ai,
       },
-      {
-        label: "Community",
-        href: "/community",
-        feature: "community",
-        icon: CommunityIcon,
-      },
-      {
-        label: "Live Sessions",
-        href: "/sessions",
-        feature: "live_sessions",
-        icon: SessionsIcon,
-      },
+    ],
+  },
+  {
+    title: "Students",
+    items: [
       {
         label: "Students",
         href: "/students",
         feature: "student_management",
-        icon: StudentsIcon,
+        icon: icons.students,
       },
       {
-        label: "Student Chat",
+        label: "Task Reviews",
+        href: "/reviews",
+        feature: "task_review",
+        icon: icons.reviews,
+        badgeKey: "reviews",
+      },
+    ],
+  },
+  {
+    title: "Engagement",
+    items: [
+      { label: "Community", href: "/community", feature: "community", icon: icons.community },
+      {
+        label: "Live Sessions",
+        href: "/sessions",
+        feature: "live_sessions",
+        icon: icons.sessions,
+        badgeKey: "sessions",
+      },
+      {
+        label: "Messages",
         href: "/messages",
         feature: "student_management",
-        icon: CommunityIcon,
+        icon: icons.messages,
+        badgeKey: "messages",
       },
       {
-        label: "Support",
+        label: "Support Tickets",
         href: "/support",
         feature: "student_management",
-        icon: ReviewIcon,
-      },
-      {
-        label: "Content Management",
-        href: "/content",
-        feature: "course_content",
-        icon: ContentIcon,
+        icon: icons.support,
+        badgeKey: "support",
       },
     ],
   },
   {
     title: "Business",
     items: [
-      { label: "CRM", href: "/crm", feature: "crm", icon: CrmIcon },
-      { label: "Finance", href: "/finance", feature: "finance", icon: FinanceIcon },
-      { label: "Reports", href: "/reports", feature: "reports", icon: ReportsIcon },
+      { label: "CRM", href: "/crm", feature: "crm", icon: icons.crm },
+      { label: "Finance", href: "/finance", feature: "finance", icon: icons.finance },
     ],
   },
   {
     title: "System",
     items: [
       {
-        label: "System Settings",
+        label: "Team Members",
+        href: "/team",
+        feature: "system_settings",
+        icon: icons.team,
+      },
+      {
+        label: "Roles & Permissions",
+        href: "/roles",
+        feature: "system_settings",
+        icon: icons.roles,
+      },
+      {
+        label: "Settings",
         href: "/settings",
         feature: "system_settings",
-        icon: SettingsIcon,
+        icon: icons.settings,
       },
     ],
   },
 ];
 
-function buildNavGroups(role: UserRole, activePath: string): NavGroup[] {
+function pathActive(activePath: string, href: string) {
+  if (href === "/") return activePath === "/";
+  return activePath === href || activePath.startsWith(`${href}/`);
+}
+
+function buildNavGroups(
+  role: UserRole,
+  activePath: string,
+  badges: Partial<Record<NonNullable<NavDef["badgeKey"]>, number>>
+): NavGroup[] {
   return NAV_CATALOG.map((group) => ({
     title: group.title,
     items: group.items
@@ -215,12 +200,17 @@ function buildNavGroups(role: UserRole, activePath: string): NavGroup[] {
         label: item.label,
         href: item.href,
         icon: item.icon,
-        active: activePath === item.href,
+        active: pathActive(activePath, item.href),
+        badge:
+          item.badgeKey && badges[item.badgeKey]
+            ? badges[item.badgeKey]
+            : undefined,
       })),
   })).filter((group) => group.items.length > 0);
 }
 
 function roleLabel(role: UserRole): string {
+  if (role === "super_admin") return "Super Admin";
   return role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
@@ -232,18 +222,43 @@ export async function AdminShell({
   activePath: string;
 }) {
   const { profile, userId } = await requireAdminProfile();
-  const groups = buildNavGroups(profile.role, activePath);
   const notifications = await getAdminNotifications(userId);
+  const [stats, openTickets] = await Promise.all([
+    getDashboardStats({ userId, role: profile.role }).catch(() => null),
+    getOpenSupportTicketCount({ userId, role: profile.role }).catch(() => 0),
+  ]);
+
+  const badges = {
+    reviews: stats?.pendingReviews ?? 0,
+    sessions: stats?.upcomingSessions ?? 0,
+    messages: notifications.filter((n) => !n.read_at).length,
+    support: openTickets,
+  };
+
+  const groups = buildNavGroups(profile.role, activePath, badges);
 
   const footer = (
     <div className="text-sm">
-      <p className="font-medium text-foreground">{profile.name}</p>
-      <p className="truncate text-xs text-muted">{profile.email}</p>
-      <p className="mt-0.5 text-xs text-subtle">{roleLabel(profile.role)}</p>
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-scalex-red/20 text-xs font-bold text-scalex-red">
+          {profile.name
+            .split(" ")
+            .map((p) => p[0])
+            .join("")
+            .slice(0, 2)
+            .toUpperCase()}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate font-medium text-foreground">
+            {roleLabel(profile.role)}
+          </p>
+          <p className="truncate text-xs text-muted">{profile.email}</p>
+        </div>
+      </div>
       <form action="/auth/signout" method="post" className="mt-3">
         <button
           type="submit"
-          className="text-xs text-scalex-red hover:underline"
+          className="text-xs font-medium text-accent-danger hover:underline"
         >
           Sign out
         </button>

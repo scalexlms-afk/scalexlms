@@ -239,6 +239,17 @@ User ──┬── Enrollment ── Course ── Milestone ── Module ─
 `lessons.search_vector` (tsvector) + `search_lessons_context()` RPC power AI
 Mentor grounding (Postgres FTS, not vector embeddings).
 
+### Academy resources + AI knowledge (`018_academy_resources_ai_knowledge.sql`)
+
+`academy_resources` — downloadable templates/guides for students (title, category,
+file metadata, `visibility` enum: public/private/draft, optional `course_id`,
+`download_count`, `created_by` / `updated_by` -> profiles).
+
+`ai_knowledge_articles` — curated articles grounding the AI Mentor (title, body,
+`knowledge_category` / `knowledge_status` enums, optional `course_id`,
+`view_count`, `created_by` / `updated_by` -> profiles). Published rows are
+retrieved via `retrieveKnowledgeArticles` in the AI context layer.
+
 ### `AuditLog`
 | Field | Type | Notes |
 |---|---|---|

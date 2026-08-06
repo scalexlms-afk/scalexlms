@@ -1373,3 +1373,151 @@ export async function getAdminNotifications(
   if (error) throw new Error(error.message);
   return (data ?? []) as AdminNotification[];
 }
+
+export type AcademyResourceRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  course_id: string | null;
+  file_type: string;
+  file_path: string | null;
+  file_url: string | null;
+  file_size_bytes: number | null;
+  visibility: "public" | "private" | "draft";
+  download_count: number;
+  updated_at: string;
+  course?: { title: string } | null;
+  updater?: { name: string } | null;
+};
+
+export async function getAcademyResources(): Promise<AcademyResourceRow[]> {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("academy_resources")
+    .select(
+      `
+      id, title, description, category, course_id, file_type, file_path, file_url,
+      file_size_bytes, visibility, download_count, updated_at,
+      course:courses(title),
+      updater:profiles!updated_by(name)
+    `
+    )
+    .order("updated_at", { ascending: false });
+  if (error) {
+    console.error("getAcademyResources:", error.message);
+    return [];
+  }
+  return (data ?? []) as unknown as AcademyResourceRow[];
+}
+
+export async function getAcademyResourceStats() {
+  const rows = await getAcademyResources();
+  const totalBytes = rows.reduce((sum, r) => sum + (r.file_size_bytes ?? 0), 0);
+  const categories = new Set(rows.map((r) => r.category)).size;
+  return {
+    total: rows.length,
+    publicCount: rows.filter((r) => r.visibility === "public").length,
+    privateCount: rows.filter((r) => r.visibility === "private").length,
+    draftCount: rows.filter((r) => r.visibility === "draft").length,
+    downloads: rows.reduce((sum, r) => sum + r.download_count, 0),
+    categories,
+    storageBytes: totalBytes,
+  };
+}
+
+export type KnowledgeArticleRow = {
+  id: string;
+  title: string;
+  body: string;
+  category:
+    | "guide"
+    | "policy"
+    | "tutorial"
+    | "template"
+    | "faq"
+    | "case_study";
+  course_id: string | null;
+  status: "draft" | "published";
+  view_count: number;
+  updated_at: string;
+  course?: { title: string } | null;
+  updater?: { name: string } | null;
+};
+
+export async function getKnowledgeArticles(): Promise<KnowledgeArticleRow[]> {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("ai_knowledge_articles")
+    .select(
+      `
+      id, title, body, category, course_id, status, view_count, updated_at,
+      course:courses(title),
+      updater:profiles!updated_by(name)
+    `
+    )
+    .order("updated_at", { ascending: false });
+  if (error) {
+    console.error("getKnowledgeArticles:", error.message);
+    return [];
+  }
+  return (data ?? []) as unknown as KnowledgeArticleRow[];
+}
+
+export async function getKnowledgeArticleStats() {
+  const rows = await getKnowledgeArticles();
+  const published = rows.filter((r) => r.status === "published");
+  const latest = rows[0]?.updated_at ?? null;
+  const views = rows.reduce((sum, r) => sum + r.view_count, 0);
+  const chars = published.reduce((sum, r) => sum + r.body.length, 0);
+  return {
+    total: rows.length,
+    published: published.length,
+    draft: rows.length - published.length,
+    views,
+    lastUpdated: latest,
+    approxBytes: chars,
+  };
+}
+
+export async function getOpenSupportTicketCount(
+  scope: AdminScope
+): Promise<number> {
+  const db = getServiceDb();
+  const scopedStudentIds = await getScopedStudentIds(scope);
+  let query = db
+    .from("support_tickets")
+    .select("*", { count: "exact", head: true })
+    .in("status", ["open", "in_progress"]);
+  if (scopedStudentIds) {
+    if (scopedStudentIds.length === 0) return 0;
+    query = query.in("student_id", scopedStudentIds);
+  }
+  const { count } = await query;
+  return count ?? 0;
+}
+
+export async function getAiUsageThisMonth(): Promise<number> {
+  const db = getServiceDb();
+  const start = new Date();
+  start.setUTCDate(1);
+  start.setUTCHours(0, 0, 0, 0);
+  const { count } = await db
+    .from("ai_chat_messages")
+    .select("*", { count: "exact", head: true })
+    .eq("role", "user")
+    .gte("created_at", start.toISOString());
+  return count ?? 0;
+}
+
+export async function getCoursesOptions(): Promise<
+  { id: string; title: string }[]
+> {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("courses")
+    .select("id, title")
+    .order("title", { ascending: true });
+  if (error) return [];
+  return data ?? [];
+}
