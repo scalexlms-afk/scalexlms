@@ -149,16 +149,18 @@ export function NavSidebar({
 }: NavSidebarProps) {
   return (
     <aside
-      className={`relative flex w-64 min-h-screen shrink-0 flex-col border-r border-line bg-surface/90 backdrop-blur-xl metallic-edge ${className}`}
+      className={`relative flex h-full min-h-0 w-64 shrink-0 flex-col overflow-hidden border-r border-line bg-surface/90 backdrop-blur-xl metallic-edge ${className}`}
     >
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-56 bg-[radial-gradient(circle_at_25%_0%,rgba(227,30,36,0.15),transparent_68%)]"
         aria-hidden
       />
       {brand && (
-        <div className="relative border-b border-line px-5 py-6">{brand}</div>
+        <div className="relative shrink-0 border-b border-line px-5 py-6">
+          {brand}
+        </div>
       )}
-      <nav className="relative flex-1 space-y-6 px-3 py-5">
+      <nav className="relative min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-3 py-5">
         {groups.map((group) => (
           <div key={group.title}>
             <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">
@@ -175,7 +177,7 @@ export function NavSidebar({
         ))}
       </nav>
       {footer && (
-        <div className="relative mt-auto border-t border-line bg-surface/35 px-5 py-4 backdrop-blur-sm">
+        <div className="relative shrink-0 border-t border-line bg-surface/35 px-5 py-4 backdrop-blur-sm">
           {footer}
         </div>
       )}

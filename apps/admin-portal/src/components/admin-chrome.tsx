@@ -51,19 +51,19 @@ export function AdminChrome({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-surface">
-      <div className="sticky top-0 z-20 hidden h-screen shrink-0 md:block">
+    <div className="flex h-dvh min-h-0 overflow-hidden bg-surface">
+      <div className="z-20 hidden h-full min-h-0 w-64 shrink-0 overflow-hidden md:block">
         <NavSidebar
           groups={groups}
           brand={<Logo size="md" showTagline />}
           linkComponent={AdminNavLink}
           footer={footer}
-          className="admin-sidebar-dark"
+          className="admin-sidebar-dark h-full min-h-0"
         />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col admin-main-canvas">
-        <header className="sticky top-0 z-10 flex items-center justify-between border-b border-line bg-surface-2/90 px-4 py-3 backdrop-blur">
+      <div className="admin-main-canvas flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="z-10 flex shrink-0 items-center justify-between border-b border-line bg-surface-2/90 px-4 py-3 backdrop-blur">
           <div className="flex items-center gap-3 md:hidden">
             <MobileNav
               groups={groups}
@@ -85,7 +85,7 @@ export function AdminChrome({
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 md:p-6 lg:p-8">
           <div className="mx-auto max-w-[1600px] animate-fade-in space-y-6">
             {children}
           </div>

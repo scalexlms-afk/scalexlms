@@ -154,7 +154,7 @@ export function PortalChrome({
               }
               footer={footer}
               linkComponent={PortalNavLink}
-              className="min-h-screen"
+              className="min-h-dvh"
             />
           </>
         ) : (
