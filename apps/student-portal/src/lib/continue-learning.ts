@@ -265,7 +265,7 @@ export async function getContinueLearningData(
         : allLessonsDone
           ? "current"
           : "upcoming",
-      href: `/tasks/${dashboard.currentMilestoneId}`,
+      href: `/tasks/${task.id}`,
       kind: "task",
     });
 
@@ -278,7 +278,7 @@ export async function getContinueLearningData(
           : status === "under_review" || status === "submitted"
             ? "current"
             : "upcoming",
-      href: `/tasks/${dashboard.currentMilestoneId}`,
+      href: `/tasks/${task.id}`,
       kind: "task",
     });
   }
@@ -312,7 +312,7 @@ export async function getContinueLearningData(
         id: `format-${format}`,
         title: `Submit as ${format}`,
         typeLabel: format.toUpperCase(),
-        href: `/tasks/${dashboard.currentMilestoneId}`,
+        href: `/tasks/${task.id}`,
       });
     }
   }

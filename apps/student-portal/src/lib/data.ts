@@ -32,10 +32,13 @@ export type SubmissionStatus =
 
 export interface Task {
   id: string;
-  milestone_id: string;
+  lesson_id: string;
+  milestone_id: string | null;
   title: string;
   description: string | null;
   accepted_formats: string[];
+  is_required?: boolean;
+  review_method?: string;
   created_at: string;
   updated_at: string;
 }
@@ -284,8 +287,9 @@ export const getStudentJourneySummary = cache(
   if (nextLesson) {
     continueHref = `/lessons/${nextLesson.id}`;
   } else {
-    const task = await getTaskByMilestoneId(currentMilestone.id);
-    if (task) continueHref = `/tasks/${currentMilestone.id}`;
+    const tasks = await getTasksByMilestoneId(currentMilestone.id);
+    const task = tasks[0] ?? null;
+    if (task) continueHref = `/tasks/${task.id}`;
   }
 
   return {
@@ -325,6 +329,77 @@ export async function getLessonById(lessonId: string) {
         };
       })
     | null;
+}
+
+export type StudentQuizQuestion = {
+  id: string;
+  prompt: string;
+  options: string[];
+};
+
+export type StudentLessonQuiz = {
+  id: string;
+  title: string;
+  pass_percent: number;
+  questions: StudentQuizQuestion[];
+};
+
+/** Quiz meta + questions for the student player (correct_index stripped). */
+export async function getLessonQuizForStudent(
+  lessonId: string
+): Promise<StudentLessonQuiz | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("quizzes")
+    .select(
+      "id, title, pass_percent, quiz_questions(id, prompt, options, order_index)"
+    )
+    .eq("lesson_id", lessonId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const row = data as {
+    id: string;
+    title: string;
+    pass_percent: number;
+    quiz_questions?:
+      | {
+          id: string;
+          prompt: string;
+          options: unknown;
+          order_index: number;
+        }[]
+      | null;
+  };
+
+  const questions = (row.quiz_questions ?? [])
+    .slice()
+    .sort((a, b) => a.order_index - b.order_index)
+    .map((q) => ({
+      id: q.id,
+      prompt: q.prompt,
+      options: Array.isArray(q.options)
+        ? q.options.map((o) => String(o))
+        : [],
+    }));
+
+  return {
+    id: row.id,
+    title: row.title,
+    pass_percent: Number(row.pass_percent),
+    questions,
+  };
+}
+
+export async function getTasksByLessonId(lessonId: string): Promise<Task[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("lesson_id", lessonId)
+    .order("created_at", { ascending: true });
+  return (data ?? []) as Task[];
 }
 
 export type PaymentPlanSettings = {
@@ -368,14 +443,24 @@ export async function getPaymentPlanByType(
   return (fallback as PaymentPlanSettings | null) ?? null;
 }
 
-export async function getTaskByMilestoneId(
+export async function getTasksByMilestoneId(
   milestoneId: string
-): Promise<Task | null> {
+): Promise<Task[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("tasks")
     .select("*")
     .eq("milestone_id", milestoneId)
+    .order("created_at", { ascending: true });
+  return (data ?? []) as Task[];
+}
+
+export async function getTaskById(taskId: string): Promise<Task | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("id", taskId)
     .maybeSingle();
   return data as Task | null;
 }

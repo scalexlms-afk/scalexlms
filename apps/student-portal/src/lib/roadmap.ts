@@ -5,7 +5,7 @@ import {
   getCompletedLessonIds,
   getCourseWithRoadmap,
   getPublishedCourse,
-  getTaskByMilestoneId,
+  getTasksByMilestoneId,
   isMilestoneUnlocked,
 } from "@/lib/data";
 
@@ -89,11 +89,14 @@ export async function getRoadmapPageData(
   );
 
   const unlockStates = await Promise.all(
-    ordered.map(async (ms) => ({
-      id: ms.id,
-      unlocked: await isMilestoneUnlocked(userId, ms.id),
-      task: await getTaskByMilestoneId(ms.id),
-    }))
+    ordered.map(async (ms) => {
+      const tasks = await getTasksByMilestoneId(ms.id);
+      return {
+        id: ms.id,
+        unlocked: await isMilestoneUnlocked(userId, ms.id),
+        task: tasks[0] ?? null,
+      };
+    })
   );
   const unlockById = new Map(unlockStates.map((s) => [s.id, s]));
 

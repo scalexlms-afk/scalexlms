@@ -8,12 +8,12 @@ import { inputClasses } from "@/components/field";
 import { submitTaskAction } from "@/app/(portal)/tasks/actions";
 
 export function TaskSubmitForm({
-  milestoneId,
+  taskId,
   acceptedFormats,
   canSubmit,
   lockedMessage,
 }: {
-  milestoneId: string;
+  taskId: string;
   acceptedFormats: string[];
   canSubmit: boolean;
   lockedMessage?: string;
@@ -61,7 +61,7 @@ export function TaskSubmitForm({
     setError(null);
 
     const formData = new FormData();
-    formData.set("milestoneId", milestoneId);
+    formData.set("taskId", taskId);
     if (comments.trim()) formData.set("comments", comments.trim());
 
     if (allowsFile && file) {

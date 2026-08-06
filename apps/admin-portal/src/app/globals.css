@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap");
 @import "tailwindcss";
 @import "@scalex/ui/styles.css";
 
@@ -7,10 +7,111 @@
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
+/*
+  Adminpics mock theme (admin-portal only).
+  Remaps brand red utilities → purple so shared @scalex/ui keeps working
+  without turning the student portal purple.
+*/
+:root,
+:root[data-theme="light"],
+:root[data-theme="dark"],
+html[data-admin-mock] {
+  --color-scalex-red: #6d28d9;
+  --color-scalex-red-dark: #5b21b6;
+  --color-accent-purple: #7c3aed;
+
+  /* Photo: light main canvas */
+  --color-surface: #f3f4f6;
+  --color-surface-2: #ffffff;
+  --color-surface-3: #eef0f4;
+  --color-foreground: #0b0b10;
+  --color-muted: #4b5563;
+  --color-subtle: #6b7280;
+  --color-line: rgba(15, 17, 26, 0.1);
+  --color-line-strong: rgba(15, 17, 26, 0.16);
+
+  --metallic-red: linear-gradient(
+    160deg,
+    #8b5cf6 0%,
+    #6d28d9 45%,
+    #5b21b6 100%
+  );
+  --shadow-glow-red: 0 8px 30px -10px rgba(109, 40, 217, 0.45);
+  color-scheme: light;
+}
+
 body {
   font-family: var(--font-body);
 }
 
 .font-display {
   font-family: var(--font-display);
+}
+
+/* Dark sidebar (photo) while main stays light */
+.admin-sidebar-dark {
+  background-color: #0b0b10 !important;
+  color: #f5f5f7;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.admin-sidebar-dark .text-foreground {
+  color: #f5f5f7 !important;
+}
+
+.admin-sidebar-dark .text-muted {
+  color: #9ca3af !important;
+}
+
+.admin-sidebar-dark .text-subtle {
+  color: #6b7280 !important;
+}
+
+.admin-sidebar-dark .border-line {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.admin-sidebar-dark [class*="from-scalex-red"],
+.admin-sidebar-dark [class*="via-scalex-red"] {
+  /* active row already uses remapped purple tokens */
+}
+
+.admin-sidebar-dark > div.pointer-events-none {
+  background: radial-gradient(
+    circle at 25% 0%,
+    rgba(109, 40, 217, 0.22),
+    transparent 68%
+  ) !important;
+}
+
+.admin-main-canvas {
+  background: #f3f4f6;
+}
+
+.admin-card {
+  @apply rounded-2xl border border-line bg-surface-2 shadow-sm;
+}
+
+.admin-kpi {
+  @apply rounded-2xl border border-line bg-surface-2 p-4 shadow-sm;
+}
+
+.admin-btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl bg-scalex-red px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_-10px_rgba(109,40,217,0.55)] transition hover:bg-scalex-red-dark;
+}
+
+.admin-btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-surface-2 px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-surface-3;
+}
+
+.admin-input {
+  @apply w-full rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-subtle focus:border-scalex-red focus:ring-2 focus:ring-scalex-red/20;
+}
+
+.admin-tab {
+  @apply rounded-lg px-3 py-1.5 text-sm font-medium text-muted transition;
+}
+
+.admin-tab-active {
+  @apply bg-scalex-red/10 text-scalex-red;
 }

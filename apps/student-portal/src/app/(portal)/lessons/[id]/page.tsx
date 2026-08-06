@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProtectedMediaPlayer } from "@/components/protected-media-player";
+import { QuizPlayer } from "@/components/lessons/quiz-player";
 import { requireStudentProfile } from "@/lib/auth";
-import { getLessonById, isMilestoneUnlocked } from "@/lib/data";
+import {
+  getLessonById,
+  getLessonQuizForStudent,
+  getTasksByLessonId,
+  isMilestoneUnlocked,
+} from "@/lib/data";
 import { getSecureMediaUrl } from "@/lib/secure-media";
 import { createClient } from "@scalex/db/server";
 import { isLessonStorageMedia } from "@scalex/db/media";
@@ -30,8 +36,8 @@ export default async function LessonPage({
 
   if (!unlocked) {
     return (
-    <>
-      <div className="mx-auto max-w-2xl">
+      <>
+        <div className="mx-auto max-w-2xl">
           <Link
             href="/roadmap"
             className="inline-flex items-center gap-1 text-sm text-muted transition-colors hover:text-scalex-red"
@@ -54,7 +60,7 @@ export default async function LessonPage({
             </Link>
           </Card>
         </div>
-    </>
+      </>
     );
   }
 
@@ -75,6 +81,14 @@ export default async function LessonPage({
     .maybeSingle();
 
   const isComplete = !!completion;
+  const completionType = lesson.completion_type ?? "view_only";
+
+  const [quiz, lessonTasks] = await Promise.all([
+    completionType === "quiz_pass" ? getLessonQuizForStudent(id) : null,
+    completionType === "upload_file" || completionType === "mentor_task"
+      ? getTasksByLessonId(id)
+      : Promise.resolve([]),
+  ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mod = (lesson as any).modules;
@@ -140,25 +154,76 @@ export default async function LessonPage({
           )}
         </Card>
 
-        <div className="flex items-center justify-between rounded-[var(--radius-card)] border border-line bg-surface-2 px-5 py-4">
-          {isComplete ? (
-            <p className="flex items-center gap-2 text-sm text-accent-green">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-green/15">
-                ✓
-              </span>
-              You&apos;ve completed this lesson
+        {completionType === "quiz_pass" && quiz ? (
+          <QuizPlayer
+            lessonId={id}
+            quiz={quiz}
+            alreadyPassed={isComplete}
+          />
+        ) : completionType === "quiz_pass" ? (
+          <Card>
+            <p className="text-sm text-muted">
+              A quiz is required to complete this lesson, but none is published
+              yet. Check back soon.
             </p>
-          ) : (
-            <>
-              <p className="text-sm text-muted">
-                Finished? Mark this lesson complete to update your progress.
+          </Card>
+        ) : completionType === "upload_file" ||
+          completionType === "mentor_task" ? (
+          <div className="rounded-[var(--radius-card)] border border-line bg-surface-2 px-5 py-4">
+            {isComplete ? (
+              <p className="flex items-center gap-2 text-sm text-accent-green">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-green/15">
+                  ✓
+                </span>
+                You&apos;ve completed this lesson
               </p>
-              <form action={markLessonComplete.bind(null, id)}>
-                <Button type="submit">Mark as Complete</Button>
-              </form>
-            </>
-          )}
-        </div>
+            ) : lessonTasks.length > 0 ? (
+              <div className="space-y-3">
+                <p className="text-sm text-muted">
+                  {completionType === "mentor_task"
+                    ? "Submit the mentor task below to progress."
+                    : "Upload your deliverable via the task below."}
+                </p>
+                <ul className="space-y-2">
+                  {lessonTasks.map((task) => (
+                    <li key={task.id}>
+                      <Link
+                        href={`/tasks/${task.id}`}
+                        className="text-sm font-medium text-scalex-red hover:underline"
+                      >
+                        {task.title} →
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-sm text-muted">
+                No tasks are linked to this lesson yet.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-between rounded-[var(--radius-card)] border border-line bg-surface-2 px-5 py-4">
+            {isComplete ? (
+              <p className="flex items-center gap-2 text-sm text-accent-green">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-green/15">
+                  ✓
+                </span>
+                You&apos;ve completed this lesson
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-muted">
+                  Finished? Mark this lesson complete to update your progress.
+                </p>
+                <form action={markLessonComplete.bind(null, id)}>
+                  <Button type="submit">Mark as Complete</Button>
+                </form>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </>
   );

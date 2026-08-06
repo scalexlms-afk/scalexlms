@@ -6,7 +6,7 @@ import {
   getCourseWithRoadmap,
   getPublishedCourse,
   getSubmissionForTask,
-  getTaskByMilestoneId,
+  getTasksByMilestoneId,
   isMilestoneUnlocked,
   type SubmissionStatus,
   type Task,
@@ -305,25 +305,26 @@ export async function getTasksHubData(
   const allTasks: HubTaskItem[] = [];
 
   for (const ms of ordered) {
-    const [task, unlocked] = await Promise.all([
-      getTaskByMilestoneId(ms.id),
+    const [tasks, unlocked] = await Promise.all([
+      getTasksByMilestoneId(ms.id),
       isMilestoneUnlocked(userId, ms.id),
     ]);
-    if (!task) continue;
 
-    const submission = await getSubmissionForTask(task.id, userId);
-    const status = (submission?.status ?? "not_started") as SubmissionStatus;
-    const latestReview = submission?.reviews?.[0] ?? null;
+    for (const task of tasks) {
+      const submission = await getSubmissionForTask(task.id, userId);
+      const status = (submission?.status ?? "not_started") as SubmissionStatus;
+      const latestReview = submission?.reviews?.[0] ?? null;
 
-    allTasks.push({
-      milestoneId: ms.id,
-      milestoneTitle: ms.title,
-      task,
-      status,
-      unlocked,
-      submittedAt: submission?.submitted_at ?? null,
-      reviewedAt: latestReview?.reviewed_at ?? null,
-    });
+      allTasks.push({
+        milestoneId: ms.id,
+        milestoneTitle: ms.title,
+        task,
+        status,
+        unlocked,
+        submittedAt: submission?.submitted_at ?? null,
+        reviewedAt: latestReview?.reviewed_at ?? null,
+      });
+    }
   }
 
   let pending = 0;
@@ -399,7 +400,7 @@ export async function getTasksHubData(
   const firstIncomplete = remaining[0];
   const lessonHref = firstIncomplete
     ? `/lessons/${firstIncomplete.id}`
-    : `/tasks/${currentItem.milestoneId}`;
+    : `/tasks/${currentItem.task.id}`;
 
   const taskPrompts = [
     `Explain this task: ${currentItem.task.title}`,

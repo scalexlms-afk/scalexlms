@@ -64,7 +64,7 @@ export default async function TasksHubPage() {
                 <ReviewTimeline stages={current.timeline} />
               </div>
               <TaskSubmitForm
-                milestoneId={current.milestoneId}
+                taskId={current.task.id}
                 acceptedFormats={current.task.accepted_formats}
                 canSubmit={current.canSubmit}
                 lockedMessage={

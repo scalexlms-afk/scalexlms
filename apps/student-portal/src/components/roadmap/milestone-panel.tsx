@@ -95,7 +95,7 @@ export function MilestonePanel({
           </p>
           {milestone.unlocked ? (
             <AcademyCtaLink
-              href={`/tasks/${milestone.id}`}
+              href={`/tasks/${milestone.task.id}`}
               className="mt-3 !px-4 !py-2"
             >
               Continue Task →

@@ -9,7 +9,7 @@ import {
   getStudentBadges,
   getStudentJourneySummary,
   getSubmissionForTask,
-  getTaskByMilestoneId,
+  getTasksByMilestoneId,
   getUpcomingSessions,
   type Badge,
   type LiveSession,
@@ -171,7 +171,8 @@ export async function getDashboardData(
   let currentTask: Task | null = null;
   let currentSubmission: Submission | null = null;
   if (journey.currentMilestoneId) {
-    currentTask = await getTaskByMilestoneId(journey.currentMilestoneId);
+    const tasks = await getTasksByMilestoneId(journey.currentMilestoneId);
+    currentTask = tasks[0] ?? null;
     if (currentTask) {
       currentSubmission = await getSubmissionForTask(currentTask.id, userId);
     }

@@ -3,7 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { writeAuditLog } from "@scalex/db";
-import type { CourseStatus, LessonContentType } from "@scalex/db/types";
+import type {
+  CourseStatus,
+  LessonCompletionType,
+  LessonContentType,
+} from "@scalex/db/types";
 import { requireAdminProfile, requireFeature } from "@/lib/auth";
 import { getServiceDb } from "@/lib/admin-db";
 import {
@@ -15,7 +19,11 @@ import { buildPdfLessonContentText } from "@/lib/pdf-extract";
 function revalidateContent(courseId?: string | null) {
   revalidatePath("/content");
   revalidatePath("/content", "layout");
-  if (courseId) revalidatePath(`/content/courses/${courseId}`);
+  if (courseId) {
+    revalidatePath(`/content/courses/${courseId}`, "layout");
+    revalidatePath(`/content/courses/${courseId}`);
+    revalidatePath(`/content/courses/${courseId}/structure`);
+  }
 }
 
 async function removeStorageFileIfOwned(url: string | null) {
@@ -105,6 +113,7 @@ export async function deleteCourseAction(formData: FormData) {
   });
 
   revalidateContent();
+  redirect("/content");
 }
 
 export async function createMilestoneAction(formData: FormData) {
@@ -435,19 +444,59 @@ export async function deleteLessonAction(formData: FormData) {
 }
 
 export async function createTaskAction(formData: FormData) {
-  const milestoneId = formData.get("milestoneId") as string;
+  const lessonId = formData.get("lessonId") as string;
   const title = (formData.get("title") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
+  const isRequiredRaw = formData.get("isRequired");
+  const is_required =
+    isRequiredRaw === "on" ||
+    isRequiredRaw === "true" ||
+    isRequiredRaw === "1";
+  const review_method =
+    ((formData.get("reviewMethod") as string)?.trim() || "mentor");
+  const formatsRaw = formData.getAll("acceptedFormats");
+  const accepted_formats = formatsRaw
+    .filter((v): v is string => typeof v === "string" && v.length > 0)
+    .map((v) => v as "image" | "excel" | "pdf" | "link" | "text");
 
-  if (!milestoneId || !title) throw new Error("Invalid task");
+  if (!lessonId || !title) throw new Error("Invalid task");
 
   const { userId, profile } = await requireAdminProfile();
   requireFeature(profile.role, "course_content", "full");
 
   const db = getServiceDb();
+
+  // Keep milestone_id for unlock gating (is_milestone_unlocked).
+  const { data: lessonRow, error: lessonErr } = await db
+    .from("lessons")
+    .select("id, module_id")
+    .eq("id", lessonId)
+    .single();
+  if (lessonErr || !lessonRow) throw new Error("Lesson not found");
+
+  const { data: moduleRow, error: moduleErr } = await db
+    .from("modules")
+    .select("milestone_id")
+    .eq("id", lessonRow.module_id)
+    .single();
+  if (moduleErr || !moduleRow) throw new Error("Module not found");
+
+  const milestone_id = moduleRow.milestone_id;
+
   const { data, error } = await db
     .from("tasks")
-    .insert({ milestone_id: milestoneId, title, description })
+    .insert({
+      lesson_id: lessonId,
+      milestone_id,
+      title,
+      description,
+      is_required,
+      review_method,
+      accepted_formats:
+        accepted_formats.length > 0
+          ? accepted_formats
+          : (["image", "pdf", "link", "text"] as const),
+    })
     .select("id")
     .single();
 
@@ -458,7 +507,7 @@ export async function createTaskAction(formData: FormData) {
     action: "task.created",
     targetType: "task",
     targetId: data.id,
-    metadata: { title, milestoneId },
+    metadata: { title, lessonId, milestone_id },
   });
 
   revalidateContent();
@@ -571,6 +620,13 @@ export async function updateTaskAction(formData: FormData) {
   const courseId = (formData.get("courseId") as string) || null;
   const title = (formData.get("title") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
+  const isRequiredRaw = formData.get("isRequired");
+  const is_required =
+    isRequiredRaw === "on" ||
+    isRequiredRaw === "true" ||
+    isRequiredRaw === "1";
+  const review_method =
+    ((formData.get("reviewMethod") as string)?.trim() || "mentor");
   const formatsRaw = formData.getAll("acceptedFormats");
   const accepted_formats = formatsRaw
     .filter((v): v is string => typeof v === "string" && v.length > 0)
@@ -587,6 +643,8 @@ export async function updateTaskAction(formData: FormData) {
     .update({
       title,
       description,
+      is_required,
+      review_method,
       accepted_formats:
         accepted_formats.length > 0
           ? accepted_formats
@@ -600,14 +658,14 @@ export async function updateTaskAction(formData: FormData) {
     action: "task.updated",
     targetType: "task",
     targetId: taskId,
-    metadata: { title },
+    metadata: { title, is_required, review_method },
   });
 
   revalidateContent(courseId);
 }
 
 async function swapOrder(
-  table: "milestones" | "modules" | "lessons",
+  table: "milestones" | "modules" | "lessons" | "quiz_questions",
   id: string,
   direction: "up" | "down",
   parentColumn: string,
@@ -704,6 +762,495 @@ export async function reorderLessonAction(formData: FormData) {
     action: "lesson.reordered",
     targetType: "lesson",
     targetId: lessonId,
+    metadata: { direction },
+  });
+  revalidateContent(courseId);
+}
+
+export async function createLessonResourceAction(formData: FormData) {
+  const lessonId = formData.get("lessonId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const title = (formData.get("title") as string)?.trim();
+  const description = (formData.get("description") as string)?.trim() || null;
+  const filePath = (formData.get("filePath") as string)?.trim() || null;
+  const fileUrl = (formData.get("fileUrl") as string)?.trim() || null;
+  const fileName = (formData.get("fileName") as string)?.trim() || null;
+  const sizeRaw = (formData.get("fileSizeBytes") as string)?.trim();
+  const fileSizeBytes = sizeRaw ? Number(sizeRaw) : null;
+
+  if (!lessonId || !title) throw new Error("Invalid resource");
+  if (!filePath && !fileUrl) throw new Error("Upload a file or provide a URL");
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { data: existing } = await db
+    .from("lesson_resources")
+    .select("order_index")
+    .eq("lesson_id", lessonId)
+    .order("order_index", { ascending: false })
+    .limit(1);
+
+  const order_index = (existing?.[0]?.order_index ?? 0) + 1;
+
+  const { data, error } = await db
+    .from("lesson_resources")
+    .insert({
+      lesson_id: lessonId,
+      title,
+      description,
+      file_path: filePath,
+      file_url: fileUrl,
+      file_name: fileName || (filePath ? filePath.split("/").pop() ?? null : null),
+      file_size_bytes:
+        fileSizeBytes != null && Number.isFinite(fileSizeBytes)
+          ? fileSizeBytes
+          : null,
+      order_index,
+      created_by: userId,
+    })
+    .select("id")
+    .single();
+
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "lesson_resource.created",
+    targetType: "lesson_resource",
+    targetId: data.id,
+    metadata: { title, lessonId },
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function deleteLessonResourceAction(formData: FormData) {
+  const resourceId = formData.get("resourceId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  if (!resourceId) throw new Error("Resource required");
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { data } = await db
+    .from("lesson_resources")
+    .select("file_path")
+    .eq("id", resourceId)
+    .maybeSingle();
+
+  const { error } = await db
+    .from("lesson_resources")
+    .delete()
+    .eq("id", resourceId);
+  if (error) throw new Error(error.message);
+
+  if (data?.file_path) {
+    await db.storage.from(LESSON_MEDIA_BUCKET).remove([data.file_path]);
+  }
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "lesson_resource.deleted",
+    targetType: "lesson_resource",
+    targetId: resourceId,
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function updateLessonAiPromptAction(formData: FormData) {
+  const lessonId = formData.get("lessonId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const aiPrompt = (formData.get("aiPrompt") as string)?.trim() || null;
+
+  if (!lessonId) throw new Error("Lesson required");
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { error } = await db
+    .from("lessons")
+    .update({ ai_prompt: aiPrompt })
+    .eq("id", lessonId);
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "lesson.ai_prompt_updated",
+    targetType: "lesson",
+    targetId: lessonId,
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function updateLessonMetaAction(formData: FormData) {
+  const lessonId = formData.get("lessonId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const completionType = formData.get(
+    "completionType"
+  ) as LessonCompletionType;
+  const status = (formData.get("status") as string)?.trim() || "draft";
+  const xpRaw = (formData.get("xpPoints") as string)?.trim();
+  const minutesRaw = (formData.get("estimatedMinutes") as string)?.trim();
+  const level = (formData.get("level") as string)?.trim() || null;
+  const objectivesRaw = (formData.get("learningObjectives") as string) ?? "";
+  const learning_objectives = objectivesRaw
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (!lessonId || !completionType) throw new Error("Invalid lesson meta");
+  if (status !== "draft" && status !== "published") {
+    throw new Error("Invalid lesson status");
+  }
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { error } = await db
+    .from("lessons")
+    .update({
+      completion_type: completionType,
+      status,
+      xp_points: xpRaw ? Number(xpRaw) : 0,
+      estimated_minutes: minutesRaw ? Number(minutesRaw) : null,
+      level,
+      learning_objectives:
+        learning_objectives.length > 0 ? learning_objectives : null,
+    })
+    .eq("id", lessonId);
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "lesson.meta_updated",
+    targetType: "lesson",
+    targetId: lessonId,
+    metadata: { completionType, status },
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function updateUnlockRuleAction(formData: FormData) {
+  const ruleId = formData.get("ruleId") as string;
+  const milestoneId = formData.get("milestoneId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const enabled =
+    formData.get("enabled") === "on" ||
+    formData.get("enabled") === "true" ||
+    formData.get("enabled") === "1";
+  const ruleType =
+    (formData.get("ruleType") as string)?.trim() ||
+    "previous_milestone_required_tasks";
+
+  if (!milestoneId) throw new Error("Milestone required");
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+
+  if (ruleId) {
+    const { error } = await db
+      .from("unlock_rules")
+      .update({ enabled, rule_type: ruleType })
+      .eq("id", ruleId);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await db.from("unlock_rules").upsert(
+      {
+        milestone_id: milestoneId,
+        enabled,
+        rule_type: ruleType,
+        config: {},
+      },
+      { onConflict: "milestone_id" }
+    );
+    if (error) throw new Error(error.message);
+  }
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "unlock_rule.updated",
+    targetType: "unlock_rule",
+    targetId: ruleId || milestoneId,
+    metadata: { enabled, ruleType, milestoneId },
+  });
+
+  revalidateContent(courseId);
+}
+
+function parseQuizOptions(formData: FormData): string[] {
+  const optionsRaw = (formData.get("options") as string) ?? "";
+  const fromTextarea = optionsRaw
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (fromTextarea.length > 0) return fromTextarea;
+
+  const indexed: string[] = [];
+  for (let i = 0; i < 8; i++) {
+    const value = (formData.get(`option${i}`) as string)?.trim();
+    if (value) indexed.push(value);
+  }
+  return indexed;
+}
+
+export async function createQuizAction(formData: FormData) {
+  const lessonId = formData.get("lessonId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const title = (formData.get("title") as string)?.trim();
+  const passRaw = (formData.get("passPercent") as string)?.trim();
+  const pass_percent = passRaw ? Number(passRaw) : 70;
+
+  if (!lessonId || !title) throw new Error("Invalid quiz");
+  if (!Number.isFinite(pass_percent) || pass_percent < 0 || pass_percent > 100) {
+    throw new Error("Pass percent must be 0–100");
+  }
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { count, error: countErr } = await db
+    .from("quizzes")
+    .select("*", { count: "exact", head: true })
+    .eq("lesson_id", lessonId);
+  if (countErr) throw new Error(countErr.message);
+  if ((count ?? 0) > 0) {
+    throw new Error("This lesson already has a quiz (one quiz per lesson)");
+  }
+
+  const { data, error } = await db
+    .from("quizzes")
+    .insert({
+      lesson_id: lessonId,
+      title,
+      pass_percent: Math.round(pass_percent),
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "quiz.created",
+    targetType: "quiz",
+    targetId: data.id,
+    metadata: { title, lessonId, pass_percent },
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function updateQuizAction(formData: FormData) {
+  const quizId = formData.get("quizId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const title = (formData.get("title") as string)?.trim();
+  const passRaw = (formData.get("passPercent") as string)?.trim();
+  const pass_percent = passRaw ? Number(passRaw) : 70;
+
+  if (!quizId || !title) throw new Error("Invalid quiz");
+  if (!Number.isFinite(pass_percent) || pass_percent < 0 || pass_percent > 100) {
+    throw new Error("Pass percent must be 0–100");
+  }
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { error } = await db
+    .from("quizzes")
+    .update({
+      title,
+      pass_percent: Math.round(pass_percent),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", quizId);
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "quiz.updated",
+    targetType: "quiz",
+    targetId: quizId,
+    metadata: { title, pass_percent },
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function deleteQuizAction(formData: FormData) {
+  const quizId = formData.get("quizId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  if (!quizId) throw new Error("Quiz required");
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { error } = await db.from("quizzes").delete().eq("id", quizId);
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "quiz.deleted",
+    targetType: "quiz",
+    targetId: quizId,
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function createQuizQuestionAction(formData: FormData) {
+  const quizId = formData.get("quizId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const prompt = (formData.get("prompt") as string)?.trim();
+  const options = parseQuizOptions(formData);
+  const correctRaw = (formData.get("correctIndex") as string)?.trim();
+  const correct_index = correctRaw ? Number(correctRaw) : 0;
+
+  if (!quizId || !prompt) throw new Error("Invalid question");
+  if (options.length < 2) throw new Error("At least two options required");
+  if (
+    !Number.isInteger(correct_index) ||
+    correct_index < 0 ||
+    correct_index >= options.length
+  ) {
+    throw new Error("Correct answer index out of range");
+  }
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { data: existing } = await db
+    .from("quiz_questions")
+    .select("order_index")
+    .eq("quiz_id", quizId)
+    .order("order_index", { ascending: false })
+    .limit(1);
+  const order_index = (existing?.[0]?.order_index ?? -1) + 1;
+
+  const { data, error } = await db
+    .from("quiz_questions")
+    .insert({
+      quiz_id: quizId,
+      prompt,
+      options,
+      correct_index,
+      order_index,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "quiz_question.created",
+    targetType: "quiz_question",
+    targetId: data.id,
+    metadata: { quizId, prompt },
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function updateQuizQuestionAction(formData: FormData) {
+  const questionId = formData.get("questionId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const prompt = (formData.get("prompt") as string)?.trim();
+  const options = parseQuizOptions(formData);
+  const correctRaw = (formData.get("correctIndex") as string)?.trim();
+  const correct_index = correctRaw ? Number(correctRaw) : 0;
+
+  if (!questionId || !prompt) throw new Error("Invalid question");
+  if (options.length < 2) throw new Error("At least two options required");
+  if (
+    !Number.isInteger(correct_index) ||
+    correct_index < 0 ||
+    correct_index >= options.length
+  ) {
+    throw new Error("Correct answer index out of range");
+  }
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { error } = await db
+    .from("quiz_questions")
+    .update({ prompt, options, correct_index })
+    .eq("id", questionId);
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "quiz_question.updated",
+    targetType: "quiz_question",
+    targetId: questionId,
+    metadata: { prompt },
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function deleteQuizQuestionAction(formData: FormData) {
+  const questionId = formData.get("questionId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  if (!questionId) throw new Error("Question required");
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  const db = getServiceDb();
+  const { error } = await db
+    .from("quiz_questions")
+    .delete()
+    .eq("id", questionId);
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "quiz_question.deleted",
+    targetType: "quiz_question",
+    targetId: questionId,
+  });
+
+  revalidateContent(courseId);
+}
+
+export async function reorderQuizQuestionAction(formData: FormData) {
+  const questionId = formData.get("questionId") as string;
+  const quizId = formData.get("quizId") as string;
+  const courseId = (formData.get("courseId") as string) || null;
+  const direction = formData.get("direction") as "up" | "down";
+  if (!questionId || !quizId || !["up", "down"].includes(direction)) {
+    throw new Error("Invalid reorder");
+  }
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "course_content", "full");
+
+  await swapOrder(
+    "quiz_questions",
+    questionId,
+    direction,
+    "quiz_id",
+    quizId
+  );
+  await writeAuditLog({
+    actorId: userId,
+    action: "quiz_question.reordered",
+    targetType: "quiz_question",
+    targetId: questionId,
     metadata: { direction },
   });
   revalidateContent(courseId);

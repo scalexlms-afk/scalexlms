@@ -309,6 +309,45 @@ export type Database = {
           },
         ]
       }
+      certificates: {
+        Row: {
+          course_id: string
+          id: string
+          issued_at: string
+          pdf_url: string | null
+          student_id: string
+        }
+        Insert: {
+          course_id: string
+          id?: string
+          issued_at?: string
+          pdf_url?: string | null
+          student_id: string
+        }
+        Update: {
+          course_id?: string
+          id?: string
+          issued_at?: string
+          pdf_url?: string | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificates_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           author_id: string
@@ -647,45 +686,129 @@ export type Database = {
           },
         ]
       }
+      lesson_resources: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          file_name: string | null
+          file_path: string | null
+          file_size_bytes: number | null
+          file_url: string | null
+          id: string
+          lesson_id: string
+          mime_type: string | null
+          order_index: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
+          file_url?: string | null
+          id?: string
+          lesson_id: string
+          mime_type?: string | null
+          order_index?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size_bytes?: number | null
+          file_url?: string | null
+          id?: string
+          lesson_id?: string
+          mime_type?: string | null
+          order_index?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_resources_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_resources_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
+          ai_prompt: string | null
+          completion_type: Database["public"]["Enums"]["lesson_completion_type"]
           content_text: string | null
           content_type: Database["public"]["Enums"]["lesson_content_type"]
           content_url: string | null
           created_at: string
           duration_seconds: number | null
+          estimated_minutes: number | null
           id: string
+          learning_objectives: string[] | null
+          level: string | null
           module_id: string
           order_index: number
           search_vector: unknown
+          status: string
           title: string
           updated_at: string
+          xp_points: number
         }
         Insert: {
+          ai_prompt?: string | null
+          completion_type?: Database["public"]["Enums"]["lesson_completion_type"]
           content_text?: string | null
           content_type: Database["public"]["Enums"]["lesson_content_type"]
           content_url?: string | null
           created_at?: string
           duration_seconds?: number | null
+          estimated_minutes?: number | null
           id?: string
+          learning_objectives?: string[] | null
+          level?: string | null
           module_id: string
           order_index: number
           search_vector?: unknown
+          status?: string
           title: string
           updated_at?: string
+          xp_points?: number
         }
         Update: {
+          ai_prompt?: string | null
+          completion_type?: Database["public"]["Enums"]["lesson_completion_type"]
           content_text?: string | null
           content_type?: Database["public"]["Enums"]["lesson_content_type"]
           content_url?: string | null
           created_at?: string
           duration_seconds?: number | null
+          estimated_minutes?: number | null
           id?: string
+          learning_objectives?: string[] | null
+          level?: string | null
           module_id?: string
           order_index?: number
           search_vector?: unknown
+          status?: string
           title?: string
           updated_at?: string
+          xp_points?: number
         }
         Relationships: [
           {
@@ -1114,6 +1237,35 @@ export type Database = {
           },
         ]
       }
+      platform_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       post_likes: {
         Row: {
           created_at: string
@@ -1208,6 +1360,134 @@ export type Database = {
             columns: ["mentor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_attempts: {
+        Row: {
+          answers: Json
+          created_at: string
+          id: string
+          lesson_id: string
+          passed: boolean
+          quiz_id: string
+          score_percent: number
+          student_id: string
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          lesson_id: string
+          passed: boolean
+          quiz_id: string
+          score_percent: number
+          student_id: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          passed?: boolean
+          quiz_id?: string
+          score_percent?: number
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          correct_index: number
+          created_at: string
+          id: string
+          options: Json
+          order_index: number
+          prompt: string
+          quiz_id: string
+        }
+        Insert: {
+          correct_index: number
+          created_at?: string
+          id?: string
+          options?: Json
+          order_index?: number
+          prompt: string
+          quiz_id: string
+        }
+        Update: {
+          correct_index?: number
+          created_at?: string
+          id?: string
+          options?: Json
+          order_index?: number
+          prompt?: string
+          quiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quizzes: {
+        Row: {
+          created_at: string
+          id: string
+          lesson_id: string
+          pass_percent: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lesson_id: string
+          pass_percent?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          pass_percent?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quizzes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
             referencedColumns: ["id"]
           },
         ]
@@ -1407,7 +1687,10 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
-          milestone_id: string
+          is_required: boolean
+          lesson_id: string
+          milestone_id: string | null
+          review_method: string
           title: string
           updated_at: string
         }
@@ -1416,7 +1699,10 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          milestone_id: string
+          is_required?: boolean
+          lesson_id: string
+          milestone_id?: string | null
+          review_method?: string
           title: string
           updated_at?: string
         }
@@ -1425,13 +1711,61 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          milestone_id?: string
+          is_required?: boolean
+          lesson_id?: string
+          milestone_id?: string | null
+          review_method?: string
           title?: string
           updated_at?: string
         }
         Relationships: [
           {
+            foreignKeyName: "tasks_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "tasks_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unlock_rules: {
+        Row: {
+          config: Json
+          created_at: string
+          enabled: boolean
+          id: string
+          milestone_id: string
+          rule_type: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          milestone_id: string
+          rule_type?: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          enabled?: boolean
+          id?: string
+          milestone_id?: string
+          rule_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "unlock_rules_milestone_id_fkey"
             columns: ["milestone_id"]
             isOneToOne: true
             referencedRelation: "milestones"
@@ -1520,6 +1854,11 @@ export type Database = {
         | "demo"
         | "payment_pending"
         | "enrolled"
+      lesson_completion_type:
+        | "view_only"
+        | "upload_file"
+        | "quiz_pass"
+        | "mentor_task"
       lesson_content_type: "video" | "pdf" | "text" | "link"
       live_session_type: "batch_class" | "masterclass" | "qa" | "case_study"
       mentor_call_status: "scheduled" | "completed" | "cancelled" | "no_show"
@@ -1699,6 +2038,12 @@ export const Constants = {
         "payment_pending",
         "enrolled",
       ],
+      lesson_completion_type: [
+        "view_only",
+        "upload_file",
+        "quiz_pass",
+        "mentor_task",
+      ],
       lesson_content_type: ["video", "pdf", "text", "link"],
       live_session_type: ["batch_class", "masterclass", "qa", "case_study"],
       mentor_call_status: ["scheduled", "completed", "cancelled", "no_show"],
@@ -1738,6 +2083,8 @@ export type StudentLevel = Database["public"]["Enums"]["student_level"];
 export type CourseStatus = Database["public"]["Enums"]["course_status"];
 export type LessonContentType =
   Database["public"]["Enums"]["lesson_content_type"];
+export type LessonCompletionType =
+  Database["public"]["Enums"]["lesson_completion_type"];
 export type PaymentType = Database["public"]["Enums"]["payment_type"];
 export type PaymentStatus = Database["public"]["Enums"]["payment_status"];
 export type LeadStage = Database["public"]["Enums"]["lead_stage"];
@@ -1763,6 +2110,15 @@ export type Submission = Database["public"]["Tables"]["submissions"]["Row"];
 export type AuditLog = Database["public"]["Tables"]["audit_log"]["Row"];
 export type LessonCompletion =
   Database["public"]["Tables"]["lesson_completions"]["Row"];
+export type LessonResource =
+  Database["public"]["Tables"]["lesson_resources"]["Row"];
+export type UnlockRule = Database["public"]["Tables"]["unlock_rules"]["Row"];
+export type Certificate = Database["public"]["Tables"]["certificates"]["Row"];
+export type Quiz = Database["public"]["Tables"]["quizzes"]["Row"];
+export type QuizQuestion =
+  Database["public"]["Tables"]["quiz_questions"]["Row"];
+export type QuizAttempt =
+  Database["public"]["Tables"]["quiz_attempts"]["Row"];
 export type Announcement =
   Database["public"]["Tables"]["announcements"]["Row"];
 export type PaymentPlanSetting =
@@ -1775,3 +2131,5 @@ export type AcademyResource =
   Database["public"]["Tables"]["academy_resources"]["Row"];
 export type AiKnowledgeArticle =
   Database["public"]["Tables"]["ai_knowledge_articles"]["Row"];
+export type PlatformSetting =
+  Database["public"]["Tables"]["platform_settings"]["Row"];

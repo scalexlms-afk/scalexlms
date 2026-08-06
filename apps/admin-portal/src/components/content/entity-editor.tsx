@@ -5,7 +5,6 @@ import type { ContentCourse } from "@/lib/data";
 import {
   createMilestoneAction,
   createModuleAction,
-  createTaskAction,
   deleteCourseAction,
   deleteMilestoneAction,
   deleteModuleAction,
@@ -20,6 +19,7 @@ import {
 } from "@/app/content/actions";
 import { Button, StatusPill } from "@scalex/ui";
 import type { ContentEntityType } from "./content-tree";
+import type { ContentTask } from "@/lib/data";
 
 const FORMAT_OPTIONS = ["image", "excel", "pdf", "link", "text"] as const;
 
@@ -60,50 +60,57 @@ export function ContentEntityEditor({
   entityId,
   canEdit,
   mediaPreviews,
+  hideCourseSettings = false,
 }: {
   course: ContentCourse;
   entity: ContentEntityType;
   entityId: string;
   canEdit: boolean;
   mediaPreviews: Record<string, string>;
+  /** When true, skip title/status/delete forms (moved to Settings tab). */
+  hideCourseSettings?: boolean;
 }) {
   if (entity === "course") {
     return (
       <div className="space-y-6">
         <div>
           <h2 className="font-display text-xl font-semibold">{course.title}</h2>
-          <p className="mt-1 text-sm text-muted">Course settings</p>
+          <p className="mt-1 text-sm text-muted">
+            {hideCourseSettings ? "Course root" : "Course settings"}
+          </p>
         </div>
         {canEdit ? (
           <>
-            <form action={updateCourseAction} className="grid gap-4 sm:grid-cols-2">
-              <input type="hidden" name="courseId" value={course.id} />
-              <Field label="Title" name="title" defaultValue={course.title} required />
-              <div>
-                <label htmlFor="status" className="mb-1.5 block text-sm font-medium text-muted">
-                  Status
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  defaultValue={course.status}
-                  className={inputClasses}
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </div>
-              <div className="sm:col-span-2">
-                <TextArea
-                  label="Description"
-                  name="description"
-                  rows={3}
-                  defaultValue={course.description ?? ""}
-                />
-              </div>
-              <Button type="submit">Save course</Button>
-            </form>
+            {!hideCourseSettings ? (
+              <form action={updateCourseAction} className="grid gap-4 sm:grid-cols-2">
+                <input type="hidden" name="courseId" value={course.id} />
+                <Field label="Title" name="title" defaultValue={course.title} required />
+                <div>
+                  <label htmlFor="status" className="mb-1.5 block text-sm font-medium text-muted">
+                    Status
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    defaultValue={course.status}
+                    className={inputClasses}
+                  >
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+                <div className="sm:col-span-2">
+                  <TextArea
+                    label="Description"
+                    name="description"
+                    rows={3}
+                    defaultValue={course.description ?? ""}
+                  />
+                </div>
+                <Button type="submit">Save course</Button>
+              </form>
+            ) : null}
             <form action={createMilestoneAction} className="grid gap-3 rounded-lg border border-line p-4 sm:grid-cols-2">
               <input type="hidden" name="courseId" value={course.id} />
               <input
@@ -121,12 +128,14 @@ export function ContentEntityEditor({
                 </Button>
               </div>
             </form>
-            <form action={deleteCourseAction}>
-              <input type="hidden" name="courseId" value={course.id} />
-              <Button type="submit" variant="destructive" size="sm">
-                Delete course
-              </Button>
-            </form>
+            {!hideCourseSettings ? (
+              <form action={deleteCourseAction}>
+                <input type="hidden" name="courseId" value={course.id} />
+                <Button type="submit" variant="destructive" size="sm">
+                  Delete course
+                </Button>
+              </form>
+            ) : null}
           </>
         ) : (
           <div className="space-y-2 text-sm text-muted">
@@ -184,18 +193,12 @@ export function ContentEntityEditor({
                 </Button>
               </div>
             </form>
-            <form
-              action={createTaskAction}
-              className="grid gap-3 rounded-lg border border-line p-4"
-            >
-              <input type="hidden" name="milestoneId" value={ms.id} />
-              <p className="text-sm font-medium">Add gating task</p>
-              <Field label="Title" name="title" required />
-              <TextArea label="Description" name="description" rows={2} />
-              <Button type="submit" size="sm">
-                Add task
-              </Button>
-            </form>
+            <p className="text-sm text-muted">
+              Tasks attach to lessons (use a lesson&apos;s Tasks tab).{" "}
+              {(ms.tasks?.length ?? 0) > 0
+                ? `${ms.tasks.length} task(s) still linked via milestone_id for unlock gating.`
+                : "No milestone-linked tasks yet."}
+            </p>
             <form action={deleteMilestoneAction}>
               <input type="hidden" name="milestoneId" value={ms.id} />
               <Button type="submit" variant="destructive" size="sm">
@@ -205,7 +208,11 @@ export function ContentEntityEditor({
           </>
         ) : (
           <p className="text-sm text-muted">
-            {ms.modules?.length ?? 0} modules · {ms.tasks?.length ?? 0} tasks
+            {ms.modules?.length ?? 0} modules · {ms.tasks?.length ?? 0}{" "}
+            milestone-linked tasks
+            {ms.unlock_rule
+              ? ` · unlock ${ms.unlock_rule.enabled ? "on" : "off"}`
+              : ""}
           </p>
         )}
       </div>
@@ -344,12 +351,22 @@ export function ContentEntityEditor({
     );
   }
 
-  // task
-  let task: ContentCourse["milestones"][0]["tasks"][0] | null = null;
+  // task — search lesson-scoped tasks first, then milestone-linked
+  let task: ContentTask | null = null;
   for (const ms of course.milestones ?? []) {
-    const found = ms.tasks?.find((t) => t.id === entityId);
-    if (found) {
-      task = found;
+    for (const mod of ms.modules ?? []) {
+      const found = mod.lessons
+        ?.flatMap((l) => l.tasks ?? [])
+        .find((t) => t.id === entityId);
+      if (found) {
+        task = found;
+        break;
+      }
+    }
+    if (task) break;
+    const msTask = ms.tasks?.find((t) => t.id === entityId);
+    if (msTask) {
+      task = msTask;
       break;
     }
   }
@@ -360,7 +377,10 @@ export function ContentEntityEditor({
     <div className="space-y-6">
       <div>
         <h2 className="font-display text-xl font-semibold">{task.title}</h2>
-        <p className="mt-1 text-sm text-muted">Gating task</p>
+        <p className="mt-1 text-sm text-muted">
+          Lesson task
+          {task.is_required ? " · required for unlock" : " · optional"}
+        </p>
       </div>
       {canEdit ? (
         <>
@@ -374,6 +394,32 @@ export function ContentEntityEditor({
               rows={3}
               defaultValue={task.description ?? ""}
             />
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="isRequired"
+                defaultChecked={task.is_required}
+              />
+              Required for milestone unlock
+            </label>
+            <div>
+              <label
+                htmlFor="reviewMethod"
+                className="mb-1.5 block text-sm font-medium text-muted"
+              >
+                Review method
+              </label>
+              <select
+                id="reviewMethod"
+                name="reviewMethod"
+                defaultValue={task.review_method || "mentor"}
+                className={inputClasses}
+              >
+                <option value="mentor">Mentor review</option>
+                <option value="ai_assist">AI assist + mentor</option>
+                <option value="auto">Auto (non-gating)</option>
+              </select>
+            </div>
             <fieldset>
               <legend className="mb-2 text-sm font-medium text-muted">
                 Accepted formats
@@ -405,6 +451,7 @@ export function ContentEntityEditor({
         <div className="space-y-2 text-sm text-muted">
           <p>{task.description || "No description."}</p>
           <p>Formats: {formats.join(", ") || "default"}</p>
+          <p>Review: {task.review_method}</p>
         </div>
       )}
     </div>

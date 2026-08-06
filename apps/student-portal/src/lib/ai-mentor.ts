@@ -5,7 +5,7 @@ import {
   getCourseWithRoadmap,
   getEnrollment,
   getPublishedCourse,
-  getTaskByMilestoneId,
+  getTasksByMilestoneId,
 } from "@/lib/data";
 
 export type AiMentorContext = {
@@ -74,11 +74,12 @@ export const getAiMentorContext = cache(
       );
 
     const nextLesson = orderedLessons.find((l) => !completedIds.has(l.id));
-    const task = await getTaskByMilestoneId(currentMilestone.id);
+    const tasks = await getTasksByMilestoneId(currentMilestone.id);
+    const task = tasks[0] ?? null;
 
     let continueHref = "/roadmap";
     if (nextLesson) continueHref = `/lessons/${nextLesson.id}`;
-    else if (task) continueHref = `/tasks/${currentMilestone.id}`;
+    else if (task) continueHref = `/tasks/${task.id}`;
 
     return {
       courseTitle: course.title,

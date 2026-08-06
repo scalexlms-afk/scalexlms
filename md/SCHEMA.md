@@ -9,15 +9,16 @@
 ## Entity Overview
 
 ```
-User ──┬── Enrollment ── Course ── Milestone ── Module ── Lesson
-       │                                │
-       │                                └── Task ── Submission ── Review
+User ──┬── Enrollment ── Course ── Milestone ── Module ── Lesson ──┬── Task ── Submission ── Review
+       │                                │                         ├── LessonResource
+       │                                │                         └── Quiz ── QuizQuestion
+       │                                └── UnlockRule
        │
        ├── Payment ── Invoice
        ├── Lead (if role = student, links back to originating lead)
        ├── CommunityPost ── Comment
        ├── Message (mentor <-> student)
-       ├── Certificate
+       ├── Certificate (student × course)
        ├── Badge (earned)
        └── Notification
 ```
@@ -76,15 +77,47 @@ User ──┬── Enrollment ── Course ── Milestone ── Module ─
 | content_url | string | |
 | duration_seconds | int | nullable, for video |
 | order_index | int | |
+| ai_prompt | text | nullable — grounds AI Mentor for this lesson |
+| completion_type | enum | `view_only \| upload_file \| quiz_pass \| mentor_task` |
+| xp_points | int | default 0 |
+| level | string | nullable |
+| learning_objectives | text[] | nullable |
+| estimated_minutes | int | nullable |
+| status | string | `draft \| published` — students only see published |
+
+### `LessonResource` (migration `019`)
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| lesson_id | uuid FK → Lesson | |
+| title | string | |
+| description | text | nullable |
+| file_path / file_url / file_name | string | storage path and/or external URL |
+| order_index | int | |
 
 ### `Task`
 | Field | Type | Notes |
 |---|---|---|
 | id | uuid | PK |
-| milestone_id | uuid FK → Milestone | one gating task per milestone |
+| lesson_id | uuid FK → Lesson | **required** — tasks are lesson-scoped |
+| milestone_id | uuid FK → Milestone | nullable audit/unlock link; still set so `is_milestone_unlocked` can count required approvals on the prior milestone |
 | title | string | e.g. "Upload Product Sheet" |
 | description | text | instructions |
 | accepted_formats | string[] | `image \| excel \| pdf \| link \| text` |
+| is_required | boolean | default true — gates next milestone when unlock rule enabled |
+| review_method | string | e.g. `mentor \| ai_assist \| auto` |
+
+### `UnlockRule` (migration `019`)
+| Field | Type | Notes |
+|---|---|---|
+| id | uuid | PK |
+| milestone_id | uuid FK → Milestone | unique — one rule per milestone |
+| rule_type | string | default `previous_milestone_required_tasks` |
+| config | jsonb | |
+| enabled | boolean | when false, milestone opens without prior required approvals |
+
+### `Quiz` / `QuizQuestion` / `Certificate` (migration `019`)
+Quizzes attach to lessons (`pass_percent`). Certificates are unique per `(student_id, course_id)` with optional `pdf_url`. See `019_lesson_structure_certificates.sql`.
 
 ### `Submission`
 | Field | Type | Notes |
@@ -249,6 +282,13 @@ file metadata, `visibility` enum: public/private/draft, optional `course_id`,
 `knowledge_category` / `knowledge_status` enums, optional `course_id`,
 `view_count`, `created_by` / `updated_by` -> profiles). Published rows are
 retrieved via `retrieveKnowledgeArticles` in the AI context layer.
+
+### Lesson structure + certificates (`019_lesson_structure_certificates.sql`)
+
+Adds lesson completion metadata, `lesson_resources`, lesson-scoped `tasks`
+(`lesson_id` required; `milestone_id` retained for unlock), `quizzes` /
+`quiz_questions`, per-milestone `unlock_rules`, and `certificates`. Progression
+helper: `is_milestone_unlocked(student_id, milestone_id)`.
 
 ### `AuditLog`
 | Field | Type | Notes |

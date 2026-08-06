@@ -13,7 +13,7 @@ function treeHref(
   entity: ContentEntityType,
   id: string
 ) {
-  return `/content/courses/${courseId}?entity=${entity}&id=${id}`;
+  return `/content/courses/${courseId}/structure?entity=${entity}&id=${id}`;
 }
 
 function isActive(
@@ -75,22 +75,30 @@ export function ContentTree({
         const modules = [...(ms.modules ?? [])].sort(
           (a, b) => a.order_index - b.order_index
         );
-        const tasks = ms.tasks ?? [];
+        const milestoneTasks = ms.tasks ?? [];
+        const unlockMuted =
+          ms.unlock_rule?.enabled === false
+            ? "unlocked"
+            : ms.unlock_rule
+              ? "gated"
+              : undefined;
         return (
           <div key={ms.id} className="ml-2 border-l border-line pl-2">
             <NodeLink
               href={treeHref(course.id, "milestone", ms.id)}
               label={ms.title}
               active={isActive(selected, "milestone", ms.id)}
-              muted={`M${ms.order_index}`}
+              muted={[`M${ms.order_index}`, unlockMuted]
+                .filter(Boolean)
+                .join(" · ")}
             />
 
-            {tasks.length > 0 && (
+            {milestoneTasks.length > 0 && (
               <div className="ml-2 mt-0.5 space-y-0.5">
                 <p className="px-2 text-[10px] font-semibold uppercase tracking-wider text-subtle">
-                  Tasks
+                  Milestone tasks
                 </p>
-                {tasks.map((task) => (
+                {milestoneTasks.map((task) => (
                   <NodeLink
                     key={task.id}
                     href={treeHref(course.id, "task", task.id)}
@@ -114,15 +122,32 @@ export function ContentTree({
                     muted={`${lessons.length}L`}
                   />
                   <div className="ml-1 space-y-0.5">
-                    {lessons.map((lesson) => (
-                      <NodeLink
-                        key={lesson.id}
-                        href={treeHref(course.id, "lesson", lesson.id)}
-                        label={lesson.title}
-                        active={isActive(selected, "lesson", lesson.id)}
-                        muted={lesson.content_type}
-                      />
-                    ))}
+                    {lessons.map((lesson) => {
+                      const lessonTasks = lesson.tasks ?? [];
+                      return (
+                        <div key={lesson.id}>
+                          <NodeLink
+                            href={treeHref(course.id, "lesson", lesson.id)}
+                            label={lesson.title}
+                            active={isActive(selected, "lesson", lesson.id)}
+                            muted={lesson.content_type}
+                          />
+                          {lessonTasks.length > 0 ? (
+                            <div className="ml-2 space-y-0.5 border-l border-line/40 pl-2">
+                              {lessonTasks.map((task) => (
+                                <NodeLink
+                                  key={task.id}
+                                  href={treeHref(course.id, "task", task.id)}
+                                  label={task.title}
+                                  active={isActive(selected, "task", task.id)}
+                                  muted={task.is_required ? "req" : "opt"}
+                                />
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );

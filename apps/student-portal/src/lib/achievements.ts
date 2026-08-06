@@ -8,7 +8,7 @@ import {
   getEnrollment,
   getPublishedCourse,
   getSubmissionForTask,
-  getTaskByMilestoneId,
+  getTasksByMilestoneId,
   type Badge,
 } from "@/lib/data";
 
@@ -216,7 +216,8 @@ export async function getAchievementsHubData(
     const specialKey = SPECIAL_BADGE_BY_ORDER[order] ?? null;
     const catalogKey = specialKey ?? `milestone_${order}`;
     const lessons = orderedLessons(ms.modules);
-    const task = await getTaskByMilestoneId(ms.id);
+    const tasks = await getTasksByMilestoneId(ms.id);
+    const task = tasks[0] ?? null;
     const submission = task
       ? await getSubmissionForTask(task.id, userId)
       : null;
@@ -293,7 +294,7 @@ export async function getAchievementsHubData(
       estimatedTimeLabel,
       milestoneId: ms.id,
       milestoneOrder: order,
-      href: task ? `/tasks/${ms.id}` : `/continue-learning`,
+      href: task ? `/tasks/${task.id}` : `/continue-learning`,
     });
   }
 

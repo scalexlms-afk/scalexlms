@@ -10,7 +10,7 @@ import {
 import { scoreSubmission } from "@scalex/ai";
 import { requireStudentProfile } from "@/lib/auth";
 import {
-  getTaskByMilestoneId,
+  getTaskById,
   getSubmissionForTask,
   isMilestoneUnlocked,
 } from "@/lib/data";
@@ -24,26 +24,45 @@ function buildSubmissionText(content: Record<string, unknown>): string {
   return JSON.stringify(content);
 }
 
+async function resolveMilestoneId(
+  task: { milestone_id: string | null; lesson_id: string }
+): Promise<string | null> {
+  if (task.milestone_id) return task.milestone_id;
+  const supabase = await createClient();
+  const { data: lesson } = await supabase
+    .from("lessons")
+    .select("modules(milestone_id)")
+    .eq("id", task.lesson_id)
+    .maybeSingle();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return ((lesson as any)?.modules?.milestone_id as string | undefined) ?? null;
+}
+
 export async function submitTaskAction(formData: FormData) {
   const { userId, profile } = await requireStudentProfile();
-  const milestoneId = formData.get("milestoneId");
+  const taskId = formData.get("taskId");
   const submissionType = formData.get("submissionType");
 
-  if (typeof milestoneId !== "string" || !milestoneId) {
-    throw new Error("Milestone id is required");
+  if (typeof taskId !== "string" || !taskId) {
+    throw new Error("Task id is required");
   }
   if (typeof submissionType !== "string" || !submissionType) {
     throw new Error("Submission type is required");
   }
 
+  const task = await getTaskById(taskId);
+  if (!task) {
+    throw new Error("Task not found");
+  }
+
+  const milestoneId = await resolveMilestoneId(task);
+  if (!milestoneId) {
+    throw new Error("Task is missing milestone context");
+  }
+
   const unlocked = await isMilestoneUnlocked(userId, milestoneId);
   if (!unlocked) {
     throw new Error("This milestone task is locked");
-  }
-
-  const task = await getTaskByMilestoneId(milestoneId);
-  if (!task) {
-    throw new Error("Task not found for this milestone");
   }
 
   const supabase = await createClient();
@@ -175,7 +194,7 @@ export async function submitTaskAction(formData: FormData) {
     });
   }
 
-  revalidatePath(`/tasks/${milestoneId}`);
+  revalidatePath(`/tasks/${task.id}`);
   revalidatePath("/tasks");
   revalidatePath("/dashboard");
   revalidatePath("/roadmap");

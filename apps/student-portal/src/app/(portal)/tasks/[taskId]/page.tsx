@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ReviewTimeline } from "@/components/tasks/review-timeline";
 import { TaskSubmitForm } from "@/components/tasks/task-submit-form";
 import { requireStudentProfile } from "@/lib/auth";
 import {
-  getTaskByMilestoneId,
+  getTaskById,
+  getTasksByMilestoneId,
   getSubmissionForTask,
   isMilestoneUnlocked,
 } from "@/lib/data";
@@ -61,13 +62,46 @@ function SubmissionContent({
   );
 }
 
+async function resolveMilestoneIdForTask(
+  task: { milestone_id: string | null; lesson_id: string }
+): Promise<string | null> {
+  if (task.milestone_id) return task.milestone_id;
+
+  const supabase = await createClient();
+  const { data: lesson } = await supabase
+    .from("lessons")
+    .select("module_id, modules(milestone_id)")
+    .eq("id", task.lesson_id)
+    .maybeSingle();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const milestoneId = (lesson as any)?.modules?.milestone_id as
+    | string
+    | undefined;
+  return milestoneId ?? null;
+}
+
 export default async function TaskDetailPage({
   params,
 }: {
-  params: Promise<{ milestoneId: string }>;
+  params: Promise<{ taskId: string }>;
 }) {
-  const { milestoneId } = await params;
+  const { taskId } = await params;
   const { userId } = await requireStudentProfile();
+
+  let task = await getTaskById(taskId);
+
+  // Compatibility: old URLs used milestoneId. If exactly one task, redirect.
+  if (!task) {
+    const byMilestone = await getTasksByMilestoneId(taskId);
+    if (byMilestone.length === 1) {
+      redirect(`/tasks/${byMilestone[0]!.id}`);
+    }
+    notFound();
+  }
+
+  const milestoneId = await resolveMilestoneIdForTask(task);
+  if (!milestoneId) notFound();
 
   const supabase = await createClient();
   const { data: milestone } = await supabase
@@ -77,9 +111,6 @@ export default async function TaskDetailPage({
     .single();
 
   if (!milestone) notFound();
-
-  const task = await getTaskByMilestoneId(milestoneId);
-  if (!task) notFound();
 
   const unlocked = await isMilestoneUnlocked(userId, milestoneId);
   const submission = await getSubmissionForTask(task.id, userId);
@@ -210,7 +241,7 @@ export default async function TaskDetailPage({
         ) : null}
 
         <TaskSubmitForm
-          milestoneId={milestoneId}
+          taskId={task.id}
           acceptedFormats={task.accepted_formats}
           canSubmit={canSubmit}
           lockedMessage={

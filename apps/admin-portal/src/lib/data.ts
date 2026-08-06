@@ -471,7 +471,7 @@ export async function getContentHealthStats() {
   const { data: courses, error } = await db
     .from("courses")
     .select(
-      "id, status, milestones(id, modules(id, lessons(id)), tasks(id))"
+      "id, status, milestones(id, modules(id, lessons(id, tasks(id))), tasks(id))"
     );
   if (error) {
     console.error("getContentHealthStats:", error.message);
@@ -489,16 +489,35 @@ export async function getContentHealthStats() {
   let draft = 0;
   const asArray = <T,>(value: T | T[] | null | undefined): T[] =>
     Array.isArray(value) ? value : value ? [value] : [];
+  const seenTasks = new Set<string>();
   for (const course of courses ?? []) {
     if (course.status === "published") published += 1;
     if (course.status === "draft") draft += 1;
     for (const ms of asArray(course.milestones as unknown) as Array<{
-      tasks?: unknown;
-      modules?: Array<{ lessons?: unknown }> | null;
+      tasks?: Array<{ id: string }> | { id: string } | null;
+      modules?: Array<{
+        lessons?: Array<{
+          id: string;
+          tasks?: Array<{ id: string }> | { id: string } | null;
+        }> | { id: string; tasks?: unknown } | null;
+      }> | null;
     }>) {
-      taskCount += asArray(ms.tasks as unknown).length;
+      for (const t of asArray(ms.tasks)) {
+        if (!seenTasks.has(t.id)) {
+          seenTasks.add(t.id);
+          taskCount += 1;
+        }
+      }
       for (const mod of asArray(ms.modules)) {
-        lessonCount += asArray(mod.lessons as unknown).length;
+        for (const lesson of asArray(mod.lessons)) {
+          lessonCount += 1;
+          for (const t of asArray(lesson.tasks as Array<{ id: string }> | null)) {
+            if (!seenTasks.has(t.id)) {
+              seenTasks.add(t.id);
+              taskCount += 1;
+            }
+          }
+        }
       }
     }
   }
@@ -972,7 +991,7 @@ export async function getCoursesSummary(): Promise<CourseSummary[]> {
       milestones(
         id,
         tasks(id),
-        modules(id, lessons(id))
+        modules(id, lessons(id, tasks(id)))
       )
     `
     )
@@ -987,18 +1006,26 @@ export async function getCoursesSummary(): Promise<CourseSummary[]> {
     const milestones = asArray(course.milestones as unknown);
     let lessonCount = 0;
     let moduleCount = 0;
-    let taskCount = 0;
+    const seenTasks = new Set<string>();
     for (const ms of milestones as Array<{
       tasks?: { id: string }[] | { id: string } | null;
       modules?: Array<{
-        lessons?: { id: string }[] | { id: string } | null;
+        lessons?:
+          | Array<{ id: string; tasks?: { id: string }[] | { id: string } | null }>
+          | { id: string; tasks?: unknown }
+          | null;
       }> | null;
     }>) {
-      taskCount += asArray(ms.tasks).length;
+      for (const t of asArray(ms.tasks)) seenTasks.add(t.id);
       const modules = asArray(ms.modules);
       moduleCount += modules.length;
       for (const mod of modules) {
-        lessonCount += asArray(mod.lessons).length;
+        for (const lesson of asArray(mod.lessons)) {
+          lessonCount += 1;
+          for (const t of asArray(lesson.tasks as { id: string }[] | null)) {
+            seenTasks.add(t.id);
+          }
+        }
       }
     }
     return {
@@ -1010,10 +1037,72 @@ export async function getCoursesSummary(): Promise<CourseSummary[]> {
       milestoneCount: milestones.length,
       lessonCount,
       moduleCount,
-      taskCount,
+      taskCount: seenTasks.size,
     };
   });
 }
+
+export type ContentTask = {
+  id: string;
+  title: string;
+  description: string | null;
+  accepted_formats: string[];
+  is_required: boolean;
+  review_method: string;
+  lesson_id: string | null;
+  milestone_id: string | null;
+};
+
+export type ContentLessonResource = {
+  id: string;
+  title: string;
+  description: string | null;
+  file_path: string | null;
+  file_url: string | null;
+  file_name: string | null;
+  order_index: number;
+};
+
+export type ContentUnlockRule = {
+  id: string;
+  rule_type: string;
+  enabled: boolean;
+  config: unknown;
+};
+
+export type ContentQuizQuestion = {
+  id: string;
+  prompt: string;
+  options: string[];
+  correct_index: number;
+  order_index: number;
+};
+
+export type ContentQuiz = {
+  id: string;
+  title: string;
+  pass_percent: number;
+  questions: ContentQuizQuestion[];
+};
+
+export type ContentLesson = {
+  id: string;
+  title: string;
+  content_type: string;
+  content_url: string | null;
+  content_text: string | null;
+  order_index: number;
+  ai_prompt: string | null;
+  completion_type: string;
+  xp_points: number;
+  level: string | null;
+  learning_objectives: string[] | null;
+  estimated_minutes: number | null;
+  status: string;
+  lesson_resources: ContentLessonResource[];
+  tasks: ContentTask[];
+  quizzes: ContentQuiz[];
+};
 
 export type ContentCourse = {
   id: string;
@@ -1024,27 +1113,29 @@ export type ContentCourse = {
     id: string;
     title: string;
     order_index: number;
-    tasks: Array<{
-      id: string;
-      title: string;
-      description: string | null;
-      accepted_formats: string[];
-    }>;
+    tasks: ContentTask[];
+    unlock_rule: ContentUnlockRule | null;
     modules: Array<{
       id: string;
       title: string;
       order_index: number;
-      lessons: Array<{
-        id: string;
-        title: string;
-        content_type: string;
-        content_url: string | null;
-        content_text: string | null;
-        order_index: number;
-      }>;
+      lessons: ContentLesson[];
     }>;
   }>;
 };
+
+function mapContentTask(t: Record<string, unknown>): ContentTask {
+  return {
+    id: t.id as string,
+    title: t.title as string,
+    description: (t.description as string | null) ?? null,
+    accepted_formats: (t.accepted_formats as string[]) ?? [],
+    is_required: Boolean(t.is_required ?? true),
+    review_method: (t.review_method as string) || "mentor",
+    lesson_id: (t.lesson_id as string | null) ?? null,
+    milestone_id: (t.milestone_id as string | null) ?? null,
+  };
+}
 
 export async function getContentTree(courseId?: string): Promise<ContentCourse[]> {
   const db = getServiceDb();
@@ -1055,10 +1146,21 @@ export async function getContentTree(courseId?: string): Promise<ContentCourse[]
       id, title, description, status,
       milestones(
         id, title, order_index,
-        tasks(id, title, description, accepted_formats),
+        tasks(id, title, description, accepted_formats, is_required, review_method, lesson_id, milestone_id),
+        unlock_rules(id, rule_type, enabled, config),
         modules(
           id, title, order_index,
-          lessons(id, title, content_type, content_url, content_text, order_index)
+          lessons(
+            id, title, content_type, content_url, content_text, order_index,
+            ai_prompt, completion_type, xp_points, level, learning_objectives,
+            estimated_minutes, status,
+            lesson_resources(id, title, description, file_path, file_url, file_name, order_index),
+            tasks(id, title, description, accepted_formats, is_required, review_method, lesson_id, milestone_id),
+            quizzes(
+              id, title, pass_percent,
+              quiz_questions(id, prompt, options, correct_index, order_index)
+            )
+          )
         )
       )
     `
@@ -1080,19 +1182,25 @@ export async function getContentTree(courseId?: string): Promise<ContentCourse[]
     (raw) => {
       const milestones = asArray(raw.milestones as unknown).map((msRaw) => {
         const ms = msRaw as Record<string, unknown>;
+        const unlockRaw = ms.unlock_rules;
+        const unlockOne = Array.isArray(unlockRaw)
+          ? (unlockRaw[0] as Record<string, unknown> | undefined)
+          : (unlockRaw as Record<string, unknown> | null);
         return {
           id: ms.id as string,
           title: ms.title as string,
           order_index: ms.order_index as number,
-          tasks: asArray(ms.tasks as unknown).map((tRaw) => {
-            const t = tRaw as Record<string, unknown>;
-            return {
-              id: t.id as string,
-              title: t.title as string,
-              description: (t.description as string | null) ?? null,
-              accepted_formats: (t.accepted_formats as string[]) ?? [],
-            };
-          }),
+          tasks: asArray(ms.tasks as unknown).map((tRaw) =>
+            mapContentTask(tRaw as Record<string, unknown>)
+          ),
+          unlock_rule: unlockOne
+            ? {
+                id: unlockOne.id as string,
+                rule_type: unlockOne.rule_type as string,
+                enabled: Boolean(unlockOne.enabled),
+                config: unlockOne.config ?? {},
+              }
+            : null,
           modules: asArray(ms.modules as unknown).map((modRaw) => {
             const mod = modRaw as Record<string, unknown>;
             return {
@@ -1108,7 +1216,58 @@ export async function getContentTree(courseId?: string): Promise<ContentCourse[]
                   content_url: (l.content_url as string | null) ?? null,
                   content_text: (l.content_text as string | null) ?? null,
                   order_index: l.order_index as number,
-                };
+                  ai_prompt: (l.ai_prompt as string | null) ?? null,
+                  completion_type:
+                    (l.completion_type as string) || "view_only",
+                  xp_points: Number(l.xp_points ?? 0),
+                  level: (l.level as string | null) ?? null,
+                  learning_objectives:
+                    (l.learning_objectives as string[] | null) ?? null,
+                  estimated_minutes:
+                    (l.estimated_minutes as number | null) ?? null,
+                  status: (l.status as string) || "draft",
+                  lesson_resources: asArray(l.lesson_resources as unknown)
+                    .map((rRaw) => {
+                      const r = rRaw as Record<string, unknown>;
+                      return {
+                        id: r.id as string,
+                        title: r.title as string,
+                        description: (r.description as string | null) ?? null,
+                        file_path: (r.file_path as string | null) ?? null,
+                        file_url: (r.file_url as string | null) ?? null,
+                        file_name: (r.file_name as string | null) ?? null,
+                        order_index: Number(r.order_index ?? 0),
+                      };
+                    })
+                    .sort((a, b) => a.order_index - b.order_index),
+                  tasks: asArray(l.tasks as unknown).map((tRaw) =>
+                    mapContentTask(tRaw as Record<string, unknown>)
+                  ),
+                  quizzes: asArray(l.quizzes as unknown).map((qRaw) => {
+                    const q = qRaw as Record<string, unknown>;
+                    return {
+                      id: q.id as string,
+                      title: q.title as string,
+                      pass_percent: Number(q.pass_percent ?? 70),
+                      questions: asArray(q.quiz_questions as unknown)
+                        .map((qqRaw) => {
+                          const qq = qqRaw as Record<string, unknown>;
+                          const opts = qq.options;
+                          const options = Array.isArray(opts)
+                            ? opts.map((o) => String(o))
+                            : [];
+                          return {
+                            id: qq.id as string,
+                            prompt: qq.prompt as string,
+                            options,
+                            correct_index: Number(qq.correct_index ?? 0),
+                            order_index: Number(qq.order_index ?? 0),
+                          };
+                        })
+                        .sort((a, b) => a.order_index - b.order_index),
+                    };
+                  }),
+                } satisfies ContentLesson;
               }),
             };
           }),
@@ -1129,6 +1288,187 @@ export async function getContentTree(courseId?: string): Promise<ContentCourse[]
 export async function getCourseById(courseId: string): Promise<ContentCourse | null> {
   const courses = await getContentTree(courseId);
   return courses[0] ?? null;
+}
+
+export type CourseStudentRow = {
+  id: string;
+  completion_percent: number;
+  plan: string | null;
+  enrolled_at: string;
+  student: {
+    id: string;
+    name: string;
+    email: string;
+    status: string;
+  } | null;
+};
+
+export async function getCourseStudents(
+  courseId: string
+): Promise<CourseStudentRow[]> {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("enrollments")
+    .select(
+      `
+      id,
+      completion_percent,
+      plan,
+      enrolled_at,
+      student:profiles!student_id(id, name, email, status)
+    `
+    )
+    .eq("course_id", courseId)
+    .order("enrolled_at", { ascending: false });
+
+  if (error) {
+    console.error("getCourseStudents:", error.message);
+    return [];
+  }
+
+  return (data ?? []).map((row) => {
+    const studentRaw = row.student as
+      | { id: string; name: string; email: string; status: string }
+      | { id: string; name: string; email: string; status: string }[]
+      | null;
+    const student = Array.isArray(studentRaw)
+      ? (studentRaw[0] ?? null)
+      : studentRaw;
+
+    return {
+      id: row.id as string,
+      completion_percent: Number(row.completion_percent ?? 0),
+      plan: (row.plan as string | null) ?? null,
+      enrolled_at: row.enrolled_at as string,
+      student,
+    };
+  });
+}
+
+export type CourseAnalytics = {
+  enrolledCount: number;
+  avgCompletion: number;
+  submissionCount: number;
+};
+
+export async function getCourseAnalytics(
+  courseId: string
+): Promise<CourseAnalytics> {
+  const db = getServiceDb();
+
+  const { data: enrollments, error: enrollError } = await db
+    .from("enrollments")
+    .select("completion_percent")
+    .eq("course_id", courseId);
+
+  if (enrollError) {
+    console.error("getCourseAnalytics enrollments:", enrollError.message);
+  }
+
+  const enrolled = enrollments ?? [];
+  const enrolledCount = enrolled.length;
+  const avgCompletion =
+    enrolledCount > 0
+      ? enrolled.reduce(
+          (sum, e) => sum + Number(e.completion_percent ?? 0),
+          0
+        ) / enrolledCount
+      : 0;
+
+  const { data: milestones, error: msError } = await db
+    .from("milestones")
+    .select("id, tasks(id), modules(lessons(tasks(id)))")
+    .eq("course_id", courseId);
+
+  if (msError) {
+    console.error("getCourseAnalytics milestones:", msError.message);
+  }
+
+  const asArray = <T,>(value: T | T[] | null | undefined): T[] =>
+    Array.isArray(value) ? value : value ? [value] : [];
+
+  const taskIds = new Set<string>();
+  for (const ms of milestones ?? []) {
+    for (const task of asArray(
+      ms.tasks as { id: string } | { id: string }[] | null
+    )) {
+      taskIds.add(task.id);
+    }
+    for (const mod of asArray(
+      (ms as { modules?: unknown }).modules as
+        | Array<{ lessons?: unknown }>
+        | null
+    )) {
+      for (const lesson of asArray(mod.lessons as Array<{ tasks?: unknown }> | null)) {
+        for (const task of asArray(
+          lesson.tasks as { id: string } | { id: string }[] | null
+        )) {
+          taskIds.add(task.id);
+        }
+      }
+    }
+  }
+
+  let submissionCount = 0;
+  if (taskIds.size > 0) {
+    const { count, error: subError } = await db
+      .from("submissions")
+      .select("*", { count: "exact", head: true })
+      .in("task_id", [...taskIds]);
+    if (subError) {
+      console.error("getCourseAnalytics submissions:", subError.message);
+    } else {
+      submissionCount = count ?? 0;
+    }
+  }
+
+  return { enrolledCount, avgCompletion, submissionCount };
+}
+
+export type CourseCertificateRow = {
+  id: string;
+  issued_at: string;
+  pdf_url: string | null;
+  student: { id: string; name: string; email: string } | null;
+};
+
+export async function getCourseCertificates(
+  courseId: string
+): Promise<CourseCertificateRow[]> {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("certificates")
+    .select(
+      `
+      id,
+      issued_at,
+      pdf_url,
+      student:profiles!student_id(id, name, email)
+    `
+    )
+    .eq("course_id", courseId)
+    .order("issued_at", { ascending: false });
+
+  if (error) {
+    console.error("getCourseCertificates:", error.message);
+    return [];
+  }
+
+  return (data ?? []).map((row) => {
+    const studentRaw = row.student as
+      | { id: string; name: string; email: string }
+      | { id: string; name: string; email: string }[]
+      | null;
+    const student = Array.isArray(studentRaw)
+      ? (studentRaw[0] ?? null)
+      : studentRaw;
+    return {
+      id: row.id as string,
+      issued_at: row.issued_at as string,
+      pdf_url: (row.pdf_url as string | null) ?? null,
+      student,
+    };
+  });
 }
 
 export async function getReportsSummary(scope: AdminScope) {
@@ -1170,6 +1510,98 @@ export async function getRecentAuditLogs(limit = 20) {
   return data ?? [];
 }
 
+export type StaffNotificationPrefs = {
+  in_app: boolean;
+  email: boolean;
+  browser: boolean;
+  push: boolean;
+  whatsapp: boolean;
+};
+
+export async function getStaffNotificationPrefs(
+  userId: string
+): Promise<StaffNotificationPrefs> {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("notification_preferences")
+    .select("in_app, email, browser, push, whatsapp")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) {
+    console.error("getStaffNotificationPrefs:", error.message);
+  }
+  const row = data as StaffNotificationPrefs | null;
+  return {
+    in_app: row?.in_app ?? true,
+    email: row?.email ?? true,
+    browser: row?.browser ?? false,
+    push: row?.push ?? false,
+    whatsapp: row?.whatsapp ?? false,
+  };
+}
+
+export type PlatformSettingsMap = Record<string, Record<string, unknown>>;
+
+export async function getPlatformSettings(
+  keys: string[]
+): Promise<PlatformSettingsMap> {
+  if (keys.length === 0) return {};
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("platform_settings")
+    .select("key, value")
+    .in("key", keys);
+  if (error) {
+    console.error("getPlatformSettings:", error.message);
+    return {};
+  }
+  const map: PlatformSettingsMap = {};
+  for (const row of data ?? []) {
+    const r = row as { key: string; value: unknown };
+    map[r.key] =
+      r.value && typeof r.value === "object" && !Array.isArray(r.value)
+        ? (r.value as Record<string, unknown>)
+        : {};
+  }
+  return map;
+}
+
+export async function getCommunityTopContributors(limit = 5) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("community_posts")
+    .select("author_id, author:profiles!author_id(name, role)")
+    .eq("status", "approved")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) {
+    console.error("getCommunityTopContributors:", error.message);
+    return [];
+  }
+  const counts = new Map<
+    string,
+    { name: string; role: string | null; posts: number }
+  >();
+  for (const row of data ?? []) {
+    const id = (row as { author_id: string }).author_id;
+    const author = (row as { author: { name: string; role: string } | null })
+      .author;
+    if (!id || !author) continue;
+    const prev = counts.get(id);
+    if (prev) prev.posts += 1;
+    else
+      counts.set(id, {
+        name: author.name,
+        role: author.role ?? null,
+        posts: 1,
+      });
+  }
+  return [...counts.entries()]
+    .map(([id, v]) => ({ id, ...v }))
+    .sort((a, b) => b.posts - a.posts)
+    .slice(0, limit);
+}
+
 // --- Phase 2 queries (typed, no casts) ---
 
 export type PendingSubmission = {
@@ -1192,11 +1624,48 @@ export type PendingSubmission = {
   } | null;
 };
 
-export async function getPendingSubmissions(
+export type ReviewFilter =
+  | "all"
+  | "pending"
+  | "reviewed"
+  | "returned"
+  | "approved";
+
+const REVIEW_STATUS_MAP: Record<ReviewFilter, string[]> = {
+  all: ["submitted", "under_review", "approved", "revision_required"],
+  pending: ["submitted", "under_review"],
+  reviewed: ["approved", "revision_required"],
+  returned: ["revision_required"],
+  approved: ["approved"],
+};
+
+function filterMentorSubmissions(
+  submissions: PendingSubmission[],
   userId: string,
   role: UserRole
+) {
+  if (role !== "mentor") return submissions;
+  return submissions.filter((s) => s.student?.mentor_id === userId);
+}
+
+function sortReviewQueue(submissions: PendingSubmission[]) {
+  return [...submissions].sort((a, b) => {
+    const aPremium = a.student?.plan === "premium" ? 0 : 1;
+    const bPremium = b.student?.plan === "premium" ? 0 : 1;
+    if (aPremium !== bPremium) return aPremium - bPremium;
+    const aTime = a.submitted_at ? new Date(a.submitted_at).getTime() : 0;
+    const bTime = b.submitted_at ? new Date(b.submitted_at).getTime() : 0;
+    return aTime - bTime;
+  });
+}
+
+export async function getReviewQueue(
+  userId: string,
+  role: UserRole,
+  filter: ReviewFilter = "pending"
 ): Promise<PendingSubmission[]> {
   const supabase = await createClient();
+  const statuses = REVIEW_STATUS_MAP[filter] ?? REVIEW_STATUS_MAP.pending;
   const { data, error } = await supabase
     .from("submissions")
     .select(
@@ -1212,27 +1681,107 @@ export async function getPendingSubmissions(
       task:tasks(title, milestone:milestones(order_index, title))
     `
     )
-    .in("status", ["submitted", "under_review"])
-    .order("submitted_at", { ascending: true });
+    .in("status", statuses)
+    .order("submitted_at", { ascending: filter === "pending" })
+    .limit(100);
 
   if (error) throw new Error(error.message);
 
-  let submissions = (data ?? []) as PendingSubmission[];
+  return sortReviewQueue(
+    filterMentorSubmissions((data ?? []) as PendingSubmission[], userId, role)
+  );
+}
 
-  if (role === "mentor") {
-    submissions = submissions.filter((s) => s.student?.mentor_id === userId);
-  }
+export async function getReviewQueueStats(userId: string, role: UserRole) {
+  const supabase = await createClient();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const startOfMonth = new Date(
+    startOfToday.getFullYear(),
+    startOfToday.getMonth(),
+    1
+  );
 
-  submissions.sort((a, b) => {
-    const aPremium = a.student?.plan === "premium" ? 0 : 1;
-    const bPremium = b.student?.plan === "premium" ? 0 : 1;
-    if (aPremium !== bPremium) return aPremium - bPremium;
-    const aTime = a.submitted_at ? new Date(a.submitted_at).getTime() : 0;
-    const bTime = b.submitted_at ? new Date(b.submitted_at).getTime() : 0;
-    return aTime - bTime;
-  });
+  type RecentSubmissionRow = {
+    id: string;
+    status: string;
+    submitted_at: string | null;
+    updated_at: string;
+    student: { mentor_id: string | null; plan: string | null } | null;
+  };
 
-  return submissions;
+  const [pendingRows, allRecent, reviewsToday] = await Promise.all([
+    getReviewQueue(userId, role, "pending"),
+    (async (): Promise<RecentSubmissionRow[]> => {
+      const { data, error } = await supabase
+        .from("submissions")
+        .select(
+          `
+          id,
+          status,
+          submitted_at,
+          updated_at,
+          student:profiles!student_id(mentor_id, plan)
+        `
+        )
+        .in("status", [
+          "submitted",
+          "under_review",
+          "approved",
+          "revision_required",
+        ])
+        .order("updated_at", { ascending: false })
+        .limit(500);
+      if (error) return [];
+      let rows = (data ?? []) as RecentSubmissionRow[];
+      if (role === "mentor") {
+        rows = rows.filter((s) => s.student?.mentor_id === userId);
+      }
+      return rows;
+    })(),
+    (async () => {
+      const { count, error } = await supabase
+        .from("reviews")
+        .select("id", { count: "exact", head: true })
+        .gte("reviewed_at", startOfToday.toISOString());
+      if (error) return 0;
+      return count ?? 0;
+    })(),
+  ]);
+
+  const returned = allRecent.filter((s) => s.status === "revision_required")
+    .length;
+  const approved = allRecent.filter((s) => s.status === "approved").length;
+  const reviewed = returned + approved;
+  const thisMonth = allRecent.filter((s) => {
+    const t = s.submitted_at ?? s.updated_at;
+    return t ? new Date(t) >= startOfMonth : false;
+  }).length;
+  const premiumPending = pendingRows.filter(
+    (s) => s.student?.plan === "premium"
+  ).length;
+  const withAi = pendingRows.filter((s) => s.ai_score != null).length;
+
+  return {
+    pending: pendingRows.length,
+    reviewedToday: reviewsToday,
+    tasksThisMonth: thisMonth,
+    returned,
+    approved,
+    reviewed,
+    premiumPending,
+    withAi,
+    /** No task due dates in schema yet */
+    overdue: 0,
+    avgReviewHours: null as number | null,
+  };
+}
+
+export async function getPendingSubmissions(
+  userId: string,
+  role: UserRole
+): Promise<PendingSubmission[]> {
+  return getReviewQueue(userId, role, "pending");
 }
 
 export type CommunityModerationStatus =

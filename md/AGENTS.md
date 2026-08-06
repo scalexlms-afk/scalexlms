@@ -159,12 +159,16 @@ module-by-module matrix lives in `ROLES.md`. Rules of thumb:
 **Learning hierarchy:** `Course → Milestone → Module → Lesson → Task`
 Example — Course "Amazon FBA Private Label" → Milestone "Product Research" →
 Module "Finding Winning Products" → Lessons ("Demand Analysis", "Competition
-Research", "Profit Calculation") → Task "Upload Product Sheet".
+Research", "Profit Calculation") → Task "Upload Product Sheet" (on a lesson).
+A milestone may have multiple required lesson tasks; unlock of the *next*
+milestone is gated by `is_milestone_unlocked` when prior required tasks are
+approved (see `unlock_rules` + `tasks.is_required`).
 
 **Task lifecycle** (implement as an explicit state machine, not free text):
 `Not Started → Submitted → Under Review → Approved | Revision Required`
 Submissions accept images, Excel, PDF, links, and text. Review is AI-assisted
-and mentor-approved.
+and mentor-approved. Tasks attach to **lessons** (`lesson_id` required);
+`milestone_id` remains for unlock accounting.
 
 **Student journey (top-level funnel):**
 `Registration Payment → Account Activation → Welcome Dashboard → Learning
