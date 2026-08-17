@@ -102,28 +102,12 @@ export default async function StudentsPage({
         eyebrow="All students"
         title="All students"
         description="Manage all students, track their progress and activity."
-        primaryAction={{ label: "+ Add Student" }}
-        secondaryAction={
-          <form method="get" className="flex flex-wrap items-center gap-2">
-            {tab !== "all" ? (
-              <input type="hidden" name="tab" value={tab} />
-            ) : null}
-            <input
-              type="search"
-              name="q"
-              defaultValue={sp.q ?? ""}
-              placeholder="Search students..."
-              className="admin-input max-w-xs"
-              aria-label="Search students"
-            />
-            <button type="submit" className="admin-btn-secondary">
-              Search
-            </button>
-            <button type="button" className="admin-btn-secondary">
-              Export
-            </button>
-          </form>
-        }
+        search={{
+          action: "/students",
+          placeholder: "Search students...",
+          defaultValue: sp.q ?? "",
+          hiddenFields: tab !== "all" ? { tab } : undefined,
+        }}
       />
 
       <AdminKpiGrid

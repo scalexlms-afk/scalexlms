@@ -1,5 +1,6 @@
 import {
   AdminDetailRail,
+  AdminEmptyState,
   AdminFilterTabs,
   AdminKpiGrid,
   AdminPageHeader,
@@ -34,7 +35,7 @@ const TABS: {
 export default async function CommunityModerationPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string }>;
 }) {
   const { profile } = await requireAdminProfile();
   requireFeaturePage(profile.role, "community");
@@ -44,6 +45,7 @@ export default async function CommunityModerationPage({
     TABS.find((t) => t.key === params.tab)?.key ?? "pending";
   const status =
     TABS.find((t) => t.key === activeTab)?.status ?? "pending_approval";
+  const q = (params.q ?? "").trim().toLowerCase();
 
   const [posts, stats, topContributors, announcements] = await Promise.all([
     getCommunityPostsByStatus(status),
@@ -53,6 +55,14 @@ export default async function CommunityModerationPage({
       rows.filter((p) => p.channel === "announcements").slice(0, 4)
     ),
   ]);
+  const visiblePosts = q
+    ? posts.filter(
+        (post) =>
+          post.content.toLowerCase().includes(q) ||
+          (post.author?.name ?? "").toLowerCase().includes(q) ||
+          (post.author?.email ?? "").toLowerCase().includes(q)
+      )
+    : posts;
 
   return (
     <>
@@ -60,8 +70,13 @@ export default async function CommunityModerationPage({
         eyebrow="Engagement"
         title="Community"
         description="Moderate the student feed, approve posts, and publish staff guidance."
-        searchPlaceholder="Search posts..."
-        primaryAction={{ label: "+ Staff Post" }}
+        search={{
+          action: "/community",
+          placeholder: "Search posts...",
+          defaultValue: params.q ?? "",
+          hiddenFields: activeTab !== "pending" ? { tab: activeTab } : undefined,
+        }}
+        primaryAction={{ label: "+ Staff Post", href: "/community#staff-post" }}
       />
 
       <AdminKpiGrid
@@ -105,8 +120,9 @@ export default async function CommunityModerationPage({
                 badge.
               </p>
               <form
+                id="staff-post"
                 action={createStaffPostAction}
-                className="space-y-3"
+                className="space-y-3 scroll-mt-24"
                 encType="multipart/form-data"
               >
                 <div>
@@ -147,13 +163,20 @@ export default async function CommunityModerationPage({
               </form>
             </AdminPanel>
 
-            {posts.length === 0 ? (
+            {visiblePosts.length === 0 ? (
               <AdminPanel>
-                <p className="text-sm text-muted">No posts in this tab.</p>
+                <AdminEmptyState
+                  title={q ? "No matching posts" : "No posts in this tab"}
+                  hint={
+                    q
+                      ? "Try another search."
+                      : "Approved, pending, and rejected posts show up here."
+                  }
+                />
               </AdminPanel>
             ) : (
               <div className="space-y-4">
-                {posts.map((post) => (
+                {visiblePosts.map((post) => (
                   <AdminPanel key={post.id}>
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
@@ -259,7 +282,10 @@ export default async function CommunityModerationPage({
           <div className="space-y-4">
             <AdminDetailRail title="Announcements">
               {announcements.length === 0 ? (
-                <p className="text-sm text-muted">No recent announcements.</p>
+                <AdminEmptyState
+                  title="No announcements"
+                  hint="Publish a staff post in the Announcements channel."
+                />
               ) : (
                 <ul className="space-y-3">
                   {announcements.map((post) => (
@@ -277,7 +303,10 @@ export default async function CommunityModerationPage({
             </AdminDetailRail>
             <AdminDetailRail title="Top contributors">
               {topContributors.length === 0 ? (
-                <p className="text-sm text-muted">No approved posts yet.</p>
+                <AdminEmptyState
+                  title="No contributors yet"
+                  hint="Approved posts will rank students here."
+                />
               ) : (
                 <ul className="space-y-2 text-sm">
                   {topContributors.map((c) => (

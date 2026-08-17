@@ -2,6 +2,7 @@ import Link from "next/link";
 import { StaffChatPanel } from "@/components/staff-chat-panel";
 import {
   AdminDetailRail,
+  AdminEmptyState,
   AdminFilterTabs,
   AdminKpiGrid,
   AdminPageHeader,
@@ -27,28 +28,30 @@ import {
 export default async function MentorMessagesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ student?: string; sent?: string; tab?: string }>;
+  searchParams: Promise<{ student?: string; sent?: string; tab?: string; q?: string }>;
 }) {
   const { profile, userId } = await requireAdminProfile();
   requireFeaturePage(profile.role, "student_management");
 
   const params = await searchParams;
-  const tab =
-    params.tab === "unread" || params.tab === "students" ? params.tab : "all";
+  const tab = params.tab === "students" ? "students" : "all";
+  const q = (params.q ?? "").trim().toLowerCase();
   const threads = await getMentorMessageInbox({ userId, role: profile.role });
+  const visibleThreads = threads.filter((thread) => {
+    if (tab === "students" && thread.plan !== "premium") return false;
+    if (!q) return true;
+    return (
+      thread.studentName.toLowerCase().includes(q) ||
+      thread.studentEmail.toLowerCase().includes(q)
+    );
+  });
   const selectedId =
-    params.student && threads.some((t) => t.studentId === params.student)
+    params.student && visibleThreads.some((t) => t.studentId === params.student)
       ? params.student
-      : (threads.find((t) => t.lastMessage)?.studentId ??
-        threads[0]?.studentId);
+      : (visibleThreads.find((t) => t.lastMessage)?.studentId ??
+        visibleThreads[0]?.studentId);
 
-  const selected = threads.find((t) => t.studentId === selectedId) ?? null;
-  // Unread counts require a dedicated read-receipt query; UI tab is ready.
-  const unread = 0;
-  const visibleThreads =
-    tab === "students"
-      ? threads.filter((t) => t.plan === "premium")
-      : threads;
+  const selected = visibleThreads.find((t) => t.studentId === selectedId) ?? null;
 
   let conversation: Awaited<ReturnType<typeof getConversationWithStudent>> = [];
   if (selected) {
@@ -74,25 +77,26 @@ export default async function MentorMessagesPage({
         eyebrow="Engagement"
         title="Messages"
         description="Mentor and staff conversations with Premium students."
-        searchPlaceholder="Search conversations..."
-        primaryAction={{ label: "New Message" }}
+        search={{
+          action: "/messages",
+          placeholder: "Search conversations...",
+          defaultValue: params.q ?? "",
+          hiddenFields: tab !== "all" ? { tab } : undefined,
+        }}
       />
 
       <AdminKpiGrid
         items={[
           { label: "Total Conversations", value: String(threads.length) },
           {
-            label: "Unread",
-            value: String(unread),
-            tone: unread > 0 ? "danger" : "default",
-          },
-          {
             label: "Active Threads",
             value: String(threads.filter((t) => t.lastMessage).length),
+            tone: "info",
           },
           {
             label: "Premium Students",
             value: String(threads.filter((t) => t.plan === "premium").length),
+            tone: "success",
           },
         ]}
       />
@@ -105,21 +109,23 @@ export default async function MentorMessagesPage({
 
       {threads.length === 0 ? (
         <AdminPanel>
-          <p className="text-sm text-muted">No Premium students assigned yet.</p>
+          <AdminEmptyState
+            title="No student threads yet"
+            hint="Premium students with an assigned mentor appear here."
+            action={
+              <Link href="/students" className="admin-btn-secondary">
+                Open students
+              </Link>
+            }
+          />
         </AdminPanel>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)_300px]">
+        <div className="grid min-h-[560px] gap-4 lg:grid-cols-[260px_minmax(0,1fr)_300px]">
           <AdminPanel>
             <AdminFilterTabs
               active={tab}
               tabs={[
                 { id: "all", label: "All", href: "/messages?tab=all" },
-                {
-                  id: "unread",
-                  label: "Unread",
-                  count: unread,
-                  href: "/messages?tab=unread",
-                },
                 {
                   id: "students",
                   label: "Premium",
@@ -128,27 +134,34 @@ export default async function MentorMessagesPage({
               ]}
             />
             <div className="mt-3">
-              <ConversationList>
-                {visibleThreads.map((thread) => (
-                  <ConversationListItem
-                    key={thread.studentId}
-                    href={`/messages?tab=${tab}&student=${thread.studentId}`}
-                    active={thread.studentId === selectedId}
-                    title={thread.studentName}
-                    preview={
-                      thread.lastMessage
-                        ? `${thread.lastMessage.fromStudent ? "Student" : "You"}: ${thread.lastMessage.content}`
-                        : "No messages yet"
-                    }
-                    badge={
-                      <StatusPill
-                        label={planLabel(thread.plan, true)}
-                        variant={planPillVariant(thread.plan)}
-                      />
-                    }
-                  />
-                ))}
-              </ConversationList>
+              {visibleThreads.length === 0 ? (
+                <AdminEmptyState
+                  title="No matching conversations"
+                  hint="Try another search or switch tabs."
+                />
+              ) : (
+                <ConversationList>
+                  {visibleThreads.map((thread) => (
+                    <ConversationListItem
+                      key={thread.studentId}
+                      href={`/messages?tab=${tab}&student=${thread.studentId}`}
+                      active={thread.studentId === selectedId}
+                      title={thread.studentName}
+                      preview={
+                        thread.lastMessage
+                          ? `${thread.lastMessage.fromStudent ? "Student" : "You"}: ${thread.lastMessage.content}`
+                          : "No messages yet"
+                      }
+                      badge={
+                        <StatusPill
+                          label={planLabel(thread.plan, true)}
+                          variant={planPillVariant(thread.plan)}
+                        />
+                      }
+                    />
+                  ))}
+                </ConversationList>
+              )}
             </div>
           </AdminPanel>
 
@@ -163,18 +176,23 @@ export default async function MentorMessagesPage({
               }
             >
               <p className="mb-3 text-sm text-muted">{selected.studentEmail}</p>
-              <StaffChatPanel
-                userId={userId}
-                peerId={selected.studentId}
-                peerName={selected.studentName}
-                initialMessages={(conversation ?? []) as never}
-                sendAction={sendAction}
-                markReadAction={markReadAction}
-              />
+              <div className="min-h-[420px]">
+                <StaffChatPanel
+                  userId={userId}
+                  peerId={selected.studentId}
+                  peerName={selected.studentName}
+                  initialMessages={(conversation ?? []) as never}
+                  sendAction={sendAction}
+                  markReadAction={markReadAction}
+                />
+              </div>
             </AdminPanel>
           ) : (
             <AdminPanel>
-              <p className="text-sm text-muted">Select a student thread.</p>
+              <AdminEmptyState
+                title="Pick a student"
+                hint="Select a conversation from the list to reply."
+              />
             </AdminPanel>
           )}
 
@@ -204,7 +222,10 @@ export default async function MentorMessagesPage({
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted">Select a conversation.</p>
+              <AdminEmptyState
+                title="No conversation selected"
+                hint="Choose a thread to see student details."
+              />
             )}
           </AdminDetailRail>
         </div>

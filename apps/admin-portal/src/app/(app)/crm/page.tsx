@@ -1,5 +1,6 @@
 import {
   AdminDetailRail,
+  AdminEmptyState,
   AdminFilterTabs,
   AdminKpiGrid,
   AdminPageHeader,
@@ -24,7 +25,7 @@ type CrmTab = "pipeline" | "new" | "demo" | "enrolled" | "all";
 export default async function CrmPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; lead?: string }>;
+  searchParams: Promise<{ tab?: string; lead?: string; q?: string }>;
 }) {
   const { profile, userId } = await requireAdminProfile();
   requireFeaturePage(profile.role, "crm");
@@ -58,9 +59,18 @@ export default async function CrmPage({
         : tab === "enrolled"
           ? enrolled
           : leads;
+  const q = (params.q ?? "").trim().toLowerCase();
+  const searched = q
+    ? listForTab.filter(
+        (lead) =>
+          lead.name.toLowerCase().includes(q) ||
+          (lead.email ?? "").toLowerCase().includes(q) ||
+          (lead.source ?? "").toLowerCase().includes(q)
+      )
+    : listForTab;
 
   const selected =
-    listForTab.find((l) => l.id === params.lead) ?? listForTab[0] ?? null;
+    searched.find((l) => l.id === params.lead) ?? searched[0] ?? null;
 
   return (
     <>
@@ -68,8 +78,13 @@ export default async function CrmPage({
         eyebrow="Business"
         title="Lead Pipeline"
         description="Track prospects from first contact through enrollment."
-        searchPlaceholder="Search leads..."
-        primaryAction={{ label: "+ Add Lead" }}
+        search={{
+          action: "/crm",
+          placeholder: "Search leads...",
+          defaultValue: params.q ?? "",
+          hiddenFields: tab !== "pipeline" ? { tab } : undefined,
+        }}
+        primaryAction={{ label: "+ Add Lead", href: "/crm?tab=pipeline#new-lead" }}
       />
 
       <AdminKpiGrid
@@ -134,8 +149,9 @@ export default async function CrmPage({
         <div className="space-y-4">
           <AdminPanel title="Add Lead">
             <form
+              id="new-lead"
               action={createLeadAction}
-              className="grid gap-4 sm:grid-cols-2"
+              className="grid scroll-mt-24 gap-4 sm:grid-cols-2"
             >
               <Field label="Name" name="name" required />
               <Field label="Email" name="email" type="email" />
@@ -259,9 +275,13 @@ export default async function CrmPage({
           main={
             <AdminPanel title="Leads">
               <DataTable
-                rows={listForTab}
+                rows={searched}
                 getRowKey={(row) => row.id}
-                emptyMessage="No leads in this stage."
+                emptyMessage={
+                  q
+                    ? "No leads match your search."
+                    : "No leads in this stage."
+                }
                 columns={[
                   {
                     key: "name",
@@ -379,7 +399,10 @@ export default async function CrmPage({
               </AdminDetailRail>
             ) : (
               <AdminPanel>
-                <p className="text-sm text-muted">Select a lead.</p>
+                <AdminEmptyState
+                  title="Select a lead"
+                  hint="Pick someone from the table to update stage and notes."
+                />
               </AdminPanel>
             )
           }

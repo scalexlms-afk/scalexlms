@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Field, TextArea } from "@/components/field";
 import {
   AdminDetailRail,
+  AdminEmptyState,
   AdminKpiGrid,
   AdminPageHeader,
   AdminPanel,
@@ -251,7 +252,10 @@ export default async function StudentDetailPage({
               <AdminPanel title="Recent Messages">
                 <div className="space-y-3">
                   {detail.messages.length === 0 ? (
-                    <p className="text-sm text-muted">No messages yet.</p>
+                    <AdminEmptyState
+                      title="No messages yet"
+                      hint="Premium students can chat with their assigned mentor."
+                    />
                   ) : (
                     detail.messages.map((msg) => (
                       <div
@@ -286,7 +290,10 @@ export default async function StudentDetailPage({
               <AdminPanel title="Mentor calls">
                 <div className="space-y-3">
                   {detail.mentorCalls.length === 0 ? (
-                    <p className="text-sm text-muted">No calls logged yet.</p>
+                    <AdminEmptyState
+                      title="No calls logged"
+                      hint="Log a mentor call after a private session."
+                    />
                   ) : (
                     detail.mentorCalls.map((call) => (
                       <div
@@ -364,7 +371,10 @@ export default async function StudentDetailPage({
             <AdminPanel title="Activity">
               <div className="space-y-3">
                 {detail.activity.length === 0 ? (
-                  <p className="text-sm text-muted">No audit activity yet.</p>
+                  <AdminEmptyState
+                    title="No audit activity yet"
+                    hint="Mentorship actions on this student will log here."
+                  />
                 ) : (
                   detail.activity.map((entry) => (
                     <div
@@ -433,9 +443,16 @@ export default async function StudentDetailPage({
                       ))}
                     </select>
                   </div>
-                  <Button type="submit" className="w-full">
-                    Save assignment
-                  </Button>
+                  {mentors.length === 0 ? (
+                    <AdminEmptyState
+                      title="No mentors on staff"
+                      hint="Add a mentor role from Team Members first."
+                    />
+                  ) : (
+                    <Button type="submit" className="w-full">
+                      Save assignment
+                    </Button>
+                  )}
                 </form>
               </AdminPanel>
             ) : null}

@@ -100,6 +100,18 @@ body {
   @apply rounded-2xl border border-line bg-surface-2 p-4 shadow-sm;
 }
 
+.admin-empty {
+  @apply rounded-xl border border-dashed border-line bg-surface-3/60 px-4 py-10 text-center;
+}
+
+.admin-main-canvas table tbody tr:nth-child(even) td {
+  background: rgba(15, 17, 26, 0.03);
+}
+
+.admin-main-canvas table tbody tr:hover td {
+  background: rgba(109, 40, 217, 0.06);
+}
+
 .admin-btn-primary {
   @apply inline-flex items-center justify-center gap-2 rounded-xl bg-scalex-red px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_24px_-10px_rgba(109,40,217,0.55)] transition hover:bg-scalex-red-dark;
 }

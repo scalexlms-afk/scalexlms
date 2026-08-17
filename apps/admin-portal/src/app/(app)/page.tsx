@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  AdminEmptyState,
   AdminKpiGrid,
   AdminPageHeader,
   AdminPanel,
@@ -123,7 +124,6 @@ export default async function AdminDashboardPage() {
       <AdminPageHeader
         title="Dashboard"
         description="Track performance, manage students and grow ScaleX Academy."
-        searchPlaceholder="Search anything..."
       />
 
       <div className="rounded-2xl border border-scalex-red/20 bg-scalex-red/5 px-5 py-4 sm:px-6">
@@ -333,7 +333,10 @@ export default async function AdminDashboardPage() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted">No milestone progress yet.</p>
+            <AdminEmptyState
+              title="No milestone progress yet"
+              hint="Completion rates appear as students move through the course."
+            />
           )}
         </AdminPanel>
       </div>
@@ -351,7 +354,10 @@ export default async function AdminDashboardPage() {
           }
         >
           {activity.length === 0 ? (
-            <p className="text-sm text-muted">No recent activity.</p>
+            <AdminEmptyState
+              title="No recent activity"
+              hint="Staff actions will show up here as the academy runs."
+            />
           ) : (
             <ul className="divide-y divide-line">
               {activity.map((entry) => {
@@ -417,7 +423,10 @@ export default async function AdminDashboardPage() {
                 ) : null}
               </div>
             ) : (
-              <p className="text-sm text-muted">No upcoming live classes.</p>
+              <AdminEmptyState
+                title="No upcoming live classes"
+                hint="Schedule the next Premium session from Live Sessions."
+              />
             )}
             {upcomingSessions.length > 1 ? (
               <ul className="mt-4 space-y-2">
@@ -438,7 +447,10 @@ export default async function AdminDashboardPage() {
         ) : (
           <AdminPanel title="AI Insights">
             {insights.length === 0 ? (
-              <p className="text-sm text-muted">No insights yet.</p>
+              <AdminEmptyState
+                title="No insights yet"
+                hint="Signals appear as students submit work and stall."
+              />
             ) : (
               <div className="space-y-3">
                 {insights.slice(0, 4).map((item) => (
@@ -540,7 +552,10 @@ export default async function AdminDashboardPage() {
           }
         >
           {insights.length === 0 ? (
-            <p className="text-sm text-muted">No insights yet.</p>
+            <AdminEmptyState
+              title="No insights yet"
+              hint="Signals appear as students submit work and stall."
+            />
           ) : (
             <div className="space-y-3">
               {insights.slice(0, 4).map((item) => (

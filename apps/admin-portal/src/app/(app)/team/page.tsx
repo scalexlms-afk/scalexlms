@@ -5,6 +5,7 @@ import {
   AdminPanel,
   AdminSplit,
   AdminDetailRail,
+  AdminEmptyState,
 } from "@/components/admin-ui";
 import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { getAdminUsers } from "@/lib/data";
@@ -18,7 +19,7 @@ type TeamTab = "all" | "admins" | "mentors" | "sales";
 export default async function TeamMembersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; member?: string }>;
+  searchParams: Promise<{ tab?: string; member?: string; q?: string }>;
 }) {
   const { profile } = await requireAdminProfile();
   requireFeaturePage(profile.role, "system_settings", "full");
@@ -48,9 +49,18 @@ export default async function TeamMembersPage({
         : tab === "sales"
           ? sales
           : users;
+  const q = (params.q ?? "").trim().toLowerCase();
+  const searched = q
+    ? visible.filter(
+        (user) =>
+          user.name.toLowerCase().includes(q) ||
+          user.email.toLowerCase().includes(q) ||
+          user.role.replace(/_/g, " ").includes(q)
+      )
+    : visible;
 
   const selected =
-    visible.find((u) => u.id === params.member) ?? visible[0] ?? null;
+    searched.find((u) => u.id === params.member) ?? searched[0] ?? null;
 
   return (
     <>
@@ -58,8 +68,12 @@ export default async function TeamMembersPage({
         eyebrow="System"
         title="Team Members"
         description="Invite and manage staff across academy operations."
-        searchPlaceholder="Search by name, email or role..."
-        primaryAction={{ label: "+ Invite Member" }}
+        search={{
+          action: "/team",
+          placeholder: "Search by name, email or role...",
+          defaultValue: params.q ?? "",
+          hiddenFields: tab !== "all" ? { tab } : undefined,
+        }}
       />
 
       <AdminKpiGrid
@@ -119,9 +133,11 @@ export default async function TeamMembersPage({
             />
             <AdminPanel>
               <DataTable
-                rows={visible}
+                rows={searched}
                 getRowKey={(row) => row.id}
-                emptyMessage="No team members found."
+                emptyMessage={
+                  q ? "No team members match your search." : "No team members found."
+                }
                 columns={[
                   {
                     key: "member",
@@ -214,18 +230,17 @@ export default async function TeamMembersPage({
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-muted">Select a member.</p>
+                <AdminEmptyState
+                  title="Select a member"
+                  hint="Choose someone from the list to see role details."
+                />
               )}
             </AdminDetailRail>
             <AdminPanel title="Quick Actions">
               <div className="space-y-2">
-                <button
-                  type="button"
-                  disabled
-                  className="admin-btn-primary w-full opacity-60"
-                >
-                  Invite New Member
-                </button>
+                <p className="text-sm text-muted">
+                  Create staff accounts in Supabase Auth, then assign roles here.
+                </p>
                 <Link href="/roles" className="admin-btn-secondary w-full">
                   Manage Roles
                 </Link>

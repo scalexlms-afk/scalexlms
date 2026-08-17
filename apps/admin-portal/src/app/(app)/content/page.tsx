@@ -50,25 +50,14 @@ export default async function ContentPage({
         eyebrow="Academy"
         title="Courses"
         description="Create a course, then add milestones and lessons."
-        secondaryAction={
-          <form method="get" className="flex flex-wrap items-center gap-2">
-            {statusFilter !== "all" ? (
-              <input type="hidden" name="status" value={statusFilter} />
-            ) : null}
-            <input
-              type="search"
-              name="q"
-              defaultValue={sp.q ?? ""}
-              placeholder="Search courses..."
-              className="admin-input max-w-xs"
-              aria-label="Search courses"
-            />
-            <button type="submit" className="admin-btn-secondary">
-              Search
-            </button>
-            {canEdit ? <NewCourseDialog /> : null}
-          </form>
-        }
+        search={{
+          action: "/content",
+          placeholder: "Search courses...",
+          defaultValue: sp.q ?? "",
+          hiddenFields:
+            statusFilter !== "all" ? { status: statusFilter } : undefined,
+        }}
+        secondaryAction={canEdit ? <NewCourseDialog /> : null}
       />
 
       <AdminKpiGrid

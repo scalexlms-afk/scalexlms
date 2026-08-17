@@ -36,7 +36,7 @@ function formatBytes(bytes: number) {
 export default async function ResourcesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ visibility?: string }>;
+  searchParams: Promise<{ visibility?: string; q?: string }>;
 }) {
   const { profile } = await requireAdminProfile();
   requireFeaturePage(profile.role, "course_content");
@@ -55,6 +55,15 @@ export default async function ResourcesPage({
     visibilityFilter === "all"
       ? rows
       : rows.filter((r) => r.visibility === visibilityFilter);
+  const q = (params.q ?? "").trim().toLowerCase();
+  const searched = q
+    ? filtered.filter(
+        (r) =>
+          r.title.toLowerCase().includes(q) ||
+          (r.description ?? "").toLowerCase().includes(q) ||
+          r.category.toLowerCase().includes(q)
+      )
+    : filtered;
 
   return (
     <>
@@ -62,7 +71,13 @@ export default async function ResourcesPage({
         eyebrow="Academy"
         title="Resources"
         description="Manage and organize learning resources for students."
-        searchPlaceholder="Search resources..."
+        search={{
+          action: "/resources",
+          placeholder: "Search resources...",
+          defaultValue: params.q ?? "",
+          hiddenFields:
+            visibilityFilter !== "all" ? { visibility: visibilityFilter } : undefined,
+        }}
       />
 
       <AdminKpiGrid
@@ -184,9 +199,13 @@ export default async function ResourcesPage({
 
       <AdminPanel>
         <DataTable
-          rows={filtered}
+          rows={searched}
           getRowKey={(r) => r.id}
-          emptyMessage="No resources yet. Upload a file or add a link."
+          emptyMessage={
+            q
+              ? "No resources match your search."
+              : "No resources yet. Upload a file or add a link."
+          }
           columns={[
             {
               key: "title",

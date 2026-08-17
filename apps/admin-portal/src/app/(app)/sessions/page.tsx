@@ -1,5 +1,6 @@
 import {
   AdminDetailRail,
+  AdminEmptyState,
   AdminFilterTabs,
   AdminKpiGrid,
   AdminPageHeader,
@@ -42,7 +43,7 @@ function sessionVariant(scheduledAt: string): "active" | "pending" | "inactive" 
 export default async function SessionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string }>;
 }) {
   const { profile } = await requireAdminProfile();
   requireFeaturePage(profile.role, "live_sessions");
@@ -75,6 +76,15 @@ export default async function SessionsPage({
       : tab === "past"
         ? pastSessions
         : sessions;
+  const q = (params.q ?? "").trim().toLowerCase();
+  const searched = q
+    ? visible.filter(
+        (session) =>
+          session.title.toLowerCase().includes(q) ||
+          typeLabel(session.type).toLowerCase().includes(q) ||
+          (session.host?.name ?? "").toLowerCase().includes(q)
+      )
+    : visible;
   const withRecording = sessions.filter((s) => s.recording_url).length;
 
   return (
@@ -83,8 +93,17 @@ export default async function SessionsPage({
         eyebrow="Engagement"
         title="Live Sessions"
         description="Schedule Premium classes, Q&As, and masterclasses for your cohort."
-        searchPlaceholder="Search sessions..."
-        primaryAction={canCreate ? { label: "+ Schedule Session" } : undefined}
+        search={{
+          action: "/sessions",
+          placeholder: "Search sessions...",
+          defaultValue: params.q ?? "",
+          hiddenFields: tab !== "all" ? { tab } : undefined,
+        }}
+        primaryAction={
+          canCreate
+            ? { label: "+ Schedule Session", href: "/sessions#schedule-session" }
+            : undefined
+        }
       />
 
       <AdminKpiGrid
@@ -138,8 +157,9 @@ export default async function SessionsPage({
             {canCreate && (
               <AdminPanel title="Schedule a session">
                 <form
+                  id="schedule-session"
                   action={createSessionAction}
-                  className="grid gap-4 sm:grid-cols-2"
+                  className="grid scroll-mt-24 gap-4 sm:grid-cols-2"
                 >
                   <Field
                     label="Title"
@@ -197,15 +217,16 @@ export default async function SessionsPage({
               </AdminPanel>
             )}
 
-            {visible.length === 0 ? (
+            {searched.length === 0 ? (
               <AdminPanel>
-                <p className="text-sm text-muted">
-                  No live sessions in this view.
-                </p>
+                <AdminEmptyState
+                  title={q ? "No matching sessions" : "No live sessions in this view"}
+                  hint="Schedule a Premium class, Q&A, or masterclass for the cohort."
+                />
               </AdminPanel>
             ) : (
-              <div className="space-y-4">
-                {visible.map((session) => {
+              <div className="space-y-3">
+                {searched.map((session) => {
                   const variant = sessionVariant(session.scheduled_at);
                   const statusLabel =
                     variant === "pending"
@@ -284,7 +305,10 @@ export default async function SessionsPage({
         rail={
           <AdminDetailRail title="Next up">
             {upcoming.length === 0 ? (
-              <p className="text-sm text-muted">No upcoming sessions.</p>
+              <AdminEmptyState
+                title="Nothing upcoming"
+                hint="New sessions will show here once scheduled."
+              />
             ) : (
               <ul className="space-y-3 text-sm">
                 {upcoming.slice(0, 5).map((s) => (

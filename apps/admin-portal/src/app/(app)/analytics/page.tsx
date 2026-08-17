@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  AdminEmptyState,
   AdminFilterTabs,
   AdminKpiGrid,
   AdminPageHeader,
@@ -42,9 +43,6 @@ export default async function AnalyticsPage({
         eyebrow="All academy"
         title="Academy analytics"
         description="Track academy performance and student success with data-driven insights."
-        secondaryAction={
-          <span className="admin-btn-secondary text-xs">All Courses</span>
-        }
       />
 
       <AdminKpiGrid
@@ -137,7 +135,10 @@ export default async function AnalyticsPage({
           {milestoneRates.length > 0 ? (
             <DonutChart title="" data={milestoneRates} />
           ) : (
-            <p className="text-sm text-muted">No milestone data yet.</p>
+            <AdminEmptyState
+              title="No milestone data yet"
+              hint="Funnel numbers fill in as enrollments progress."
+            />
           )}
         </AdminPanel>
       )}

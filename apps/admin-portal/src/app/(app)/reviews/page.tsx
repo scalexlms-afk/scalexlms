@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TextArea } from "@/components/field";
 import {
   AdminDetailRail,
+  AdminEmptyState,
   AdminFilterTabs,
   AdminKpiGrid,
   AdminPageHeader,
@@ -101,27 +102,12 @@ export default async function ReviewsPage({
         eyebrow="Students"
         title="Task Reviews"
         description="Review and provide feedback on student tasks and submissions."
-        secondaryAction={
-          <form method="get" className="flex flex-wrap items-center gap-2">
-            {tab !== "pending" ? (
-              <input type="hidden" name="tab" value={tab} />
-            ) : null}
-            <input
-              type="search"
-              name="q"
-              defaultValue={params.q ?? ""}
-              placeholder="Search tasks or students..."
-              className="admin-input max-w-xs"
-              aria-label="Search tasks or students"
-            />
-            <button type="submit" className="admin-btn-secondary">
-              Search
-            </button>
-            <button type="button" className="admin-btn-secondary">
-              Export
-            </button>
-          </form>
-        }
+        search={{
+          action: "/reviews",
+          placeholder: "Search tasks or students...",
+          defaultValue: params.q ?? "",
+          hiddenFields: tab !== "pending" ? { tab } : undefined,
+        }}
       />
 
       <AdminKpiGrid
@@ -193,10 +179,20 @@ export default async function ReviewsPage({
 
       {filtered.length === 0 ? (
         <AdminPanel>
-          <p className="text-sm text-muted">
-            No submissions in this queue. Check another tab or wait for new
-            student submissions.
-          </p>
+          <AdminEmptyState
+            title={
+              q
+                ? "No matching submissions"
+                : tab === "pending"
+                  ? "Queue is clear"
+                  : "No submissions in this view"
+            }
+            hint={
+              q
+                ? "Try another student or task name."
+                : "New student submissions will land in Pending."
+            }
+          />
         </AdminPanel>
       ) : (
         <AdminSplit
@@ -442,7 +438,10 @@ export default async function ReviewsPage({
               </AdminDetailRail>
             ) : (
               <AdminPanel>
-                <p className="text-sm text-muted">Select a submission.</p>
+                <AdminEmptyState
+                  title="Select a submission"
+                  hint="Pick a task from the queue to review and send feedback."
+                />
               </AdminPanel>
             )
           }

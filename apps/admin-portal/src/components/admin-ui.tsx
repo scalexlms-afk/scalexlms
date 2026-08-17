@@ -1,11 +1,35 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
+const KPI_CHIP: Record<
+  "default" | "danger" | "success" | "info" | "warning",
+  string
+> = {
+  default: "bg-scalex-red/15 text-scalex-red",
+  danger: "bg-accent-danger/15 text-accent-danger",
+  success: "bg-accent-green/15 text-accent-green",
+  info: "bg-accent-blue/15 text-accent-blue",
+  warning: "bg-accent-amber/15 text-accent-amber",
+};
+
+function DefaultKpiGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden>
+      <path
+        d="M4 19V9M10 19V5M16 19v-7M22 19H2"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function AdminPageHeader({
   eyebrow,
   title,
   description,
-  searchPlaceholder,
+  search,
   primaryAction,
   secondaryAction,
   children,
@@ -13,8 +37,13 @@ export function AdminPageHeader({
   eyebrow?: string;
   title: string;
   description?: string;
-  searchPlaceholder?: string;
-  primaryAction?: { label: string; href?: string };
+  search?: {
+    action: string;
+    placeholder: string;
+    defaultValue?: string;
+    hiddenFields?: Record<string, string>;
+  };
+  primaryAction?: { label: string; href: string };
   secondaryAction?: ReactNode;
   children?: ReactNode;
 }) {
@@ -35,29 +64,73 @@ export function AdminPageHeader({
           ) : null}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {searchPlaceholder ? (
-            <input
-              type="search"
-              placeholder={searchPlaceholder}
-              className="admin-input max-w-xs"
-              aria-label={searchPlaceholder}
-            />
+          {search ? (
+            <form
+              method="get"
+              action={search.action}
+              className="flex flex-wrap items-center gap-2"
+            >
+              {search.hiddenFields
+                ? Object.entries(search.hiddenFields).map(([name, value]) => (
+                    <input key={name} type="hidden" name={name} value={value} />
+                  ))
+                : null}
+              <input
+                type="search"
+                name="q"
+                defaultValue={search.defaultValue ?? ""}
+                placeholder={search.placeholder}
+                className="admin-input max-w-xs"
+                aria-label={search.placeholder}
+              />
+              <button type="submit" className="admin-btn-secondary">
+                Search
+              </button>
+            </form>
           ) : null}
           {secondaryAction}
           {primaryAction ? (
-            primaryAction.href ? (
-              <Link href={primaryAction.href} className="admin-btn-primary">
-                {primaryAction.label}
-              </Link>
-            ) : (
-              <button type="button" className="admin-btn-primary">
-                {primaryAction.label}
-              </button>
-            )
+            <Link href={primaryAction.href} className="admin-btn-primary">
+              {primaryAction.label}
+            </Link>
           ) : null}
         </div>
       </div>
       {children}
+    </div>
+  );
+}
+
+export function AdminEmptyState({
+  title,
+  hint,
+  action,
+  icon,
+}: {
+  title: string;
+  hint?: string;
+  action?: ReactNode;
+  icon?: ReactNode;
+}) {
+  return (
+    <div className="admin-empty">
+      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-surface-3 text-muted">
+        {icon ?? (
+          <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden>
+            <path
+              d="M4 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Z"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </div>
+      <p className="mt-3 font-display text-sm font-semibold text-foreground">
+        {title}
+      </p>
+      {hint ? <p className="mt-1 text-sm text-muted">{hint}</p> : null}
+      {action ? <div className="mt-4">{action}</div> : null}
     </div>
   );
 }
@@ -69,32 +142,43 @@ export function AdminKpiGrid({
     label: string;
     value: string;
     hint?: string;
-    tone?: "default" | "danger" | "success";
+    tone?: "default" | "danger" | "success" | "info" | "warning";
+    icon?: ReactNode;
   }[];
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {items.map((item) => (
-        <div key={item.label} className="admin-kpi">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-            {item.label}
-          </p>
-          <p
-            className={`mt-2 font-display text-2xl font-bold ${
-              item.tone === "danger"
-                ? "text-accent-danger"
-                : item.tone === "success"
-                  ? "text-accent-green"
-                  : "text-foreground"
-            }`}
-          >
-            {item.value}
-          </p>
-          {item.hint ? (
-            <p className="mt-1 text-xs text-subtle">{item.hint}</p>
-          ) : null}
-        </div>
-      ))}
+      {items.map((item) => {
+        const tone = item.tone ?? "default";
+        return (
+          <div key={item.label} className="admin-kpi">
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+                {item.label}
+              </p>
+              <span
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${KPI_CHIP[tone]}`}
+              >
+                {item.icon ?? <DefaultKpiGlyph />}
+              </span>
+            </div>
+            <p
+              className={`mt-2 font-display text-2xl font-bold ${
+                tone === "danger"
+                  ? "text-accent-danger"
+                  : tone === "success"
+                    ? "text-accent-green"
+                    : "text-foreground"
+              }`}
+            >
+              {item.value}
+            </p>
+            {item.hint ? (
+              <p className="mt-1 text-xs text-subtle">{item.hint}</p>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -163,11 +247,13 @@ export function AdminPanel({
   action,
   children,
   className = "",
+  padded = true,
 }: {
   title?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
+  padded?: boolean;
 }) {
   return (
     <section className={`admin-card ${className}`}>
@@ -181,7 +267,7 @@ export function AdminPanel({
           {action}
         </div>
       )}
-      <div className="p-4">{children}</div>
+      <div className={padded ? "p-4" : ""}>{children}</div>
     </section>
   );
 }

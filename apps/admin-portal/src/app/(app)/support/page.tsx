@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TextArea } from "@/components/field";
 import {
   AdminDetailRail,
+  AdminEmptyState,
   AdminFilterTabs,
   AdminKpiGrid,
   AdminPageHeader,
@@ -20,7 +21,7 @@ type TicketTab = "all" | "open" | "progress" | "resolved";
 export default async function AdminSupportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; id?: string }>;
+  searchParams: Promise<{ tab?: string; id?: string; q?: string }>;
 }) {
   const { profile, userId } = await requireAdminProfile();
   requireFeaturePage(profile.role, "student_management");
@@ -48,9 +49,20 @@ export default async function AdminSupportPage({
         : tab === "resolved"
           ? resolved
           : tickets;
+  const q = (params.q ?? "").trim().toLowerCase();
+  const searched = q
+    ? visible.filter((ticket) => {
+        const student = ticket.student as { name?: string; email?: string } | null;
+        return (
+          ticket.subject.toLowerCase().includes(q) ||
+          (student?.name ?? "").toLowerCase().includes(q) ||
+          (student?.email ?? "").toLowerCase().includes(q)
+        );
+      })
+    : visible;
 
   const selected =
-    visible.find((t) => t.id === params.id) ?? visible[0] ?? null;
+    searched.find((t) => t.id === params.id) ?? searched[0] ?? null;
 
   const highPriority = tickets.filter((t) => t.priority === "high").length;
 
@@ -60,8 +72,12 @@ export default async function AdminSupportPage({
         eyebrow="Engagement"
         title="Support Tickets"
         description="Premium tickets are high priority. Reply so students see your response."
-        searchPlaceholder="Search tickets..."
-        primaryAction={{ label: "+ New Ticket" }}
+        search={{
+          action: "/support",
+          placeholder: "Search tickets...",
+          defaultValue: params.q ?? "",
+          hiddenFields: tab !== "all" ? { tab } : undefined,
+        }}
       />
 
       <AdminKpiGrid
@@ -116,15 +132,18 @@ export default async function AdminSupportPage({
         ]}
       />
 
-      {visible.length === 0 ? (
+      {searched.length === 0 ? (
         <AdminPanel>
-          <p className="text-sm text-muted">No support tickets in this view.</p>
+          <AdminEmptyState
+            title={q ? "No matching tickets" : "No support tickets in this view"}
+            hint="Premium student tickets appear here for staff reply."
+          />
         </AdminPanel>
       ) : (
         <AdminSplit
           main={
             <div className="space-y-3">
-              {visible.map((ticket) => {
+              {searched.map((ticket) => {
                 const student = ticket.student as {
                   name: string;
                   email: string;

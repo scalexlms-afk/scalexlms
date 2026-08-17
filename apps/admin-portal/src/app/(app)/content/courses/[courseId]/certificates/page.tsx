@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { CERTIFICATES_BUCKET, MEDIA_SIGNED_URL_TTL } from "@scalex/db";
-import { AdminPanel } from "@/components/admin-ui";
+import { AdminEmptyState, AdminPanel } from "@/components/admin-ui";
 import { requireAdminProfile } from "@/lib/auth";
 import { getServiceDb } from "@/lib/admin-db";
 import {
@@ -85,9 +85,10 @@ export default async function CourseCertificatesPage({
         ) : null}
 
         {certificates.length === 0 ? (
-          <p className="text-sm text-muted">
-            No certificates issued for this course yet.
-          </p>
+          <AdminEmptyState
+            title="No certificates yet"
+            hint="Issue a certificate when a student reaches 100% completion."
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[480px] text-left text-sm">

@@ -33,7 +33,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 export default async function AiKnowledgePage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; q?: string }>;
 }) {
   const { profile } = await requireAdminProfile();
   requireFeaturePage(profile.role, "ai_mentor");
@@ -53,6 +53,14 @@ export default async function AiKnowledgePage({
     categoryFilter === "all"
       ? rows
       : rows.filter((r) => r.category === categoryFilter);
+  const q = (params.q ?? "").trim().toLowerCase();
+  const searched = q
+    ? filtered.filter(
+        (r) =>
+          r.title.toLowerCase().includes(q) ||
+          r.body.toLowerCase().includes(q)
+      )
+    : filtered;
 
   const countBy = (cat: string) =>
     rows.filter((r) => r.category === cat).length;
@@ -63,7 +71,13 @@ export default async function AiKnowledgePage({
         eyebrow="Academy"
         title="AI Knowledge Base"
         description="Manage the content and sources used by the AI Mentor."
-        searchPlaceholder="Search knowledge..."
+        search={{
+          action: "/ai-knowledge",
+          placeholder: "Search knowledge...",
+          defaultValue: params.q ?? "",
+          hiddenFields:
+            categoryFilter !== "all" ? { category: categoryFilter } : undefined,
+        }}
       />
 
       <AdminKpiGrid
@@ -195,9 +209,13 @@ export default async function AiKnowledgePage({
 
       <AdminPanel>
         <DataTable
-          rows={filtered}
+          rows={searched}
           getRowKey={(r) => r.id}
-          emptyMessage="No knowledge articles yet. Add guides and FAQs to ground the AI Mentor."
+          emptyMessage={
+            q
+              ? "No articles match your search."
+              : "No knowledge articles yet. Add guides and FAQs to ground the AI Mentor."
+          }
           columns={[
             {
               key: "title",

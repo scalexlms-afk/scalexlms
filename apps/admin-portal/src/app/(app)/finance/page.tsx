@@ -30,7 +30,7 @@ type FinanceTab = "payments" | "expenses" | "plans";
 export default async function FinancePage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; q?: string }>;
 }) {
   const { profile, userId } = await requireAdminProfile();
   requireFeaturePage(profile.role, "finance");
@@ -60,6 +60,24 @@ export default async function FinancePage({
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
   const paidCount = payments.filter((p) => p.status === "paid").length;
   const net = totalRevenue - totalExpenses;
+  const q = (params.q ?? "").trim().toLowerCase();
+  const searchedPayments = q
+    ? payments.filter(
+        (row) =>
+          (row.student?.name ?? "").toLowerCase().includes(q) ||
+          formatStatus(row.status).toLowerCase().includes(q) ||
+          formatStatus(row.type).toLowerCase().includes(q)
+      )
+    : payments;
+  const searchedExpenses = q
+    ? expenses.filter((row) => {
+        const item = row as { category?: string; note?: string | null };
+        return (
+          (item.category ?? "").toLowerCase().includes(q) ||
+          (item.note ?? "").toLowerCase().includes(q)
+        );
+      })
+    : expenses;
 
   const kpiItems: {
     label: string;
@@ -108,7 +126,12 @@ export default async function FinancePage({
         eyebrow="Business"
         title="Payments & Expenses"
         description="Revenue tracking, installments, and academy expenses."
-        searchPlaceholder="Search payments..."
+        search={{
+          action: "/finance",
+          placeholder: "Search payments...",
+          defaultValue: params.q ?? "",
+          hiddenFields: tab !== "payments" ? { tab } : undefined,
+        }}
         primaryAction={
           manage ? { label: "+ Add Expense", href: "/finance?tab=expenses" } : undefined
         }
@@ -154,9 +177,11 @@ export default async function FinancePage({
             {tab === "payments" ? (
               <AdminPanel title="Payments">
                 <DataTable
-                  rows={payments}
+                  rows={searchedPayments}
                   getRowKey={(row) => row.id}
-                  emptyMessage="No payments found."
+                  emptyMessage={
+                    q ? "No payments match your search." : "No payments found."
+                  }
                   columns={[
                     {
                       key: "student",
@@ -242,9 +267,13 @@ export default async function FinancePage({
 
                 <AdminPanel title="Expenses">
                   <DataTable
-                    rows={expenses}
+                    rows={searchedExpenses}
                     getRowKey={(row) => row.id}
-                    emptyMessage="No expenses recorded."
+                    emptyMessage={
+                      q
+                        ? "No expenses match your search."
+                        : "No expenses recorded."
+                    }
                     columns={[
                       {
                         key: "category",
