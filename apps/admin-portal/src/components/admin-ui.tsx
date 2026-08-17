@@ -244,30 +244,41 @@ export function AdminDetailRail({
 
 export function AdminPanel({
   title,
+  description,
   action,
   children,
   className = "",
+  bodyClassName = "",
   padded = true,
 }: {
   title?: string;
+  description?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
+  bodyClassName?: string;
   padded?: boolean;
 }) {
   return (
     <section className={`admin-card ${className}`}>
-      {(title || action) && (
-        <div className="flex items-center justify-between gap-3 border-b border-line px-4 py-3">
-          {title ? (
-            <h2 className="font-display text-sm font-semibold">{title}</h2>
-          ) : (
-            <span />
-          )}
-          {action}
+      {(title || action || description) && (
+        <div className="border-b border-line px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            {title ? (
+              <h2 className="font-display text-sm font-semibold">{title}</h2>
+            ) : (
+              <span />
+            )}
+            {action}
+          </div>
+          {description ? (
+            <p className="mt-1 text-xs text-muted">{description}</p>
+          ) : null}
         </div>
       )}
-      <div className={padded ? "p-4" : ""}>{children}</div>
+      <div className={`${padded ? "p-4" : ""} ${bodyClassName}`.trim()}>
+        {children}
+      </div>
     </section>
   );
 }

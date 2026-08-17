@@ -17,7 +17,7 @@ export function AddMilestoneForm({
       className={
         prominent
           ? "space-y-3 rounded-2xl border border-dashed border-line p-6"
-          : "space-y-2"
+          : "flex items-end gap-2"
       }
     >
       <input type="hidden" name="courseId" value={courseId} />
@@ -33,13 +33,18 @@ export function AddMilestoneForm({
           </p>
         </div>
       ) : null}
-      <Field
-        label={prominent ? "Name" : "New milestone"}
-        name="title"
-        required
-        placeholder="Foundation"
-      />
-      <Button type="submit" className={prominent ? "w-full" : undefined}>
+      <div className={prominent ? undefined : "min-w-0 flex-1"}>
+        <Field
+          label={prominent ? "Name" : "New milestone"}
+          name="title"
+          required
+          placeholder="Foundation"
+        />
+      </div>
+      <Button
+        type="submit"
+        className={prominent ? "w-full" : "shrink-0"}
+      >
         {prominent ? "Add first milestone" : "+ Milestone"}
       </Button>
     </form>

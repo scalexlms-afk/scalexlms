@@ -94,15 +94,20 @@ export default async function CourseStructurePage({
 
   const treePanel = (
     <AdminPanel
-      title="Milestones"
-      className="h-fit max-h-[min(80vh,900px)] overflow-y-auto lg:sticky lg:top-6"
+      title="Course outline"
+      description="Click a step to edit it on the right."
+      padded={false}
+      className="flex h-fit max-h-[min(80vh,900px)] flex-col overflow-hidden lg:sticky lg:top-6"
+      bodyClassName="flex min-h-0 flex-1 flex-col"
     >
-      <ContentTree
-        course={course}
-        selected={{ entity: selectedEntity, id: selectedId }}
-      />
+      <div className="min-h-0 flex-1 overflow-y-auto p-3">
+        <ContentTree
+          course={course}
+          selected={{ entity: selectedEntity, id: selectedId }}
+        />
+      </div>
       {canEdit && milestoneCount > 0 ? (
-        <div className="mt-4 border-t border-line pt-3">
+        <div className="shrink-0 border-t border-line bg-surface-2 p-3">
           <AddMilestoneForm
             courseId={course.id}
             orderIndex={milestoneCount + 1}
@@ -177,19 +182,19 @@ export default async function CourseStructurePage({
   }
 
   return layout(
-    <>
-      {selectedEntity === "course" ? (
-        <div className="mb-4 rounded-lg border border-line bg-surface-3/40 px-3 py-2 text-sm text-muted">
-          Course name and publish live in{" "}
-          <Link
-            href={`/content/courses/${course.id}/settings`}
-            className="font-medium text-scalex-red hover:underline"
-          >
-            Settings
-          </Link>
-          . Pick a milestone on the left, or add another below.
-        </div>
-      ) : null}
+    selectedEntity === "course" ? (
+      <p className="text-sm text-muted">
+        Select a milestone in the outline to edit it. Course name and publish
+        live in{" "}
+        <Link
+          href={`/content/courses/${course.id}/settings`}
+          className="font-medium text-scalex-red hover:underline"
+        >
+          Settings
+        </Link>
+        .
+      </p>
+    ) : (
       <ContentEntityEditor
         course={course}
         entity={selectedEntity}
@@ -198,6 +203,6 @@ export default async function CourseStructurePage({
         mediaPreviews={mediaPreviews}
         hideCourseSettings
       />
-    </>
+    )
   );
 }

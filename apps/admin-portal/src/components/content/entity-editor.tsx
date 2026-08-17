@@ -112,8 +112,7 @@ export function ContentEntityEditor({
               </form>
             ) : (
               <p className="text-sm text-muted">
-                Pick a milestone on the left to edit it, or add one from the
-                outline.
+                Select a milestone in the outline to edit it.
               </p>
             )}
             {!hideCourseSettings ? (
