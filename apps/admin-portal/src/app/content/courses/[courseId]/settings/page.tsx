@@ -23,7 +23,7 @@ export default async function CourseSettingsPage({
   if (!course) notFound();
 
   return (
-    <AdminPanel title="Course settings">
+    <AdminPanel title="This course · settings">
       {canEdit ? (
         <div className="space-y-6">
           <form action={updateCourseAction} className="grid gap-4 sm:grid-cols-2">

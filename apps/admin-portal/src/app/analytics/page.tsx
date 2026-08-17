@@ -40,8 +40,8 @@ export default async function AnalyticsPage({
   return (
     <AdminShell activePath="/analytics">
       <AdminPageHeader
-        eyebrow="Overview"
-        title="Analytics"
+        eyebrow="All academy"
+        title="Academy analytics"
         description="Track academy performance and student success with data-driven insights."
         secondaryAction={
           <span className="admin-btn-secondary text-xs">All Courses</span>

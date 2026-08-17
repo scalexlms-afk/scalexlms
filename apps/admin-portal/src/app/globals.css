@@ -88,6 +88,10 @@ body {
   background: #f3f4f6;
 }
 
+.admin-course-rail {
+  background: #ffffff;
+}
+
 .admin-card {
   @apply rounded-2xl border border-line bg-surface-2 shadow-sm;
 }

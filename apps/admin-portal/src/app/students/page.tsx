@@ -100,8 +100,8 @@ export default async function StudentsPage({
   return (
     <AdminShell activePath="/students">
       <AdminPageHeader
-        eyebrow="Students"
-        title="Students"
+        eyebrow="All students"
+        title="All students"
         description="Manage all students, track their progress and activity."
         primaryAction={{ label: "+ Add Student" }}
         secondaryAction={

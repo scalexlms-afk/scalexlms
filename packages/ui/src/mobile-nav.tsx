@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { List, X } from "@phosphor-icons/react";
 import {
   NavItemRow,
+  type NavDensity,
   type NavGroup,
   type NavLinkComponent,
 } from "./nav-sidebar";
@@ -13,6 +14,8 @@ interface MobileNavProps {
   brand?: ReactNode;
   footer?: ReactNode;
   linkComponent?: NavLinkComponent;
+  density?: NavDensity;
+  collapsibleGroups?: boolean;
 }
 
 export function MobileNav({
@@ -20,8 +23,17 @@ export function MobileNav({
   brand,
   footer,
   linkComponent,
+  density = "comfortable",
+  collapsibleGroups = false,
 }: MobileNavProps) {
   const [open, setOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    for (const group of groups) {
+      initial[group.title] = group.items.some((item) => item.active);
+    }
+    return initial;
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -71,25 +83,49 @@ export function MobileNav({
                 <X weight="bold" className="h-4 w-4" aria-hidden />
               </button>
             </div>
-            <nav className="relative flex-1 space-y-6 overflow-y-auto px-3 py-5">
-              {groups.map((group) => (
-                <div key={group.title}>
-                  <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">
-                    {group.title}
-                  </p>
-                  <ul className="space-y-1">
-                    {group.items.map((item) => (
-                      <li key={`${group.title}-${item.label}-${item.href}`}>
-                        <NavItemRow
-                          item={item}
-                          linkComponent={linkComponent}
-                          onNavigate={() => setOpen(false)}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+            <nav className="relative flex-1 space-y-2 overflow-y-auto px-3 py-5">
+              {groups.map((group) => {
+                const isOpen =
+                  !collapsibleGroups || openGroups[group.title] === true;
+                return (
+                  <div key={group.title}>
+                    {collapsibleGroups ? (
+                      <button
+                        type="button"
+                        aria-expanded={isOpen}
+                        onClick={() =>
+                          setOpenGroups((prev) => ({
+                            ...prev,
+                            [group.title]: !prev[group.title],
+                          }))
+                        }
+                        className="mb-1 flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle"
+                      >
+                        {group.title}
+                        <span className="text-subtle">{isOpen ? "−" : "+"}</span>
+                      </button>
+                    ) : (
+                      <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-subtle">
+                        {group.title}
+                      </p>
+                    )}
+                    {isOpen ? (
+                      <ul className="space-y-1">
+                        {group.items.map((item) => (
+                          <li key={`${group.title}-${item.label}-${item.href}`}>
+                            <NavItemRow
+                              item={item}
+                              linkComponent={linkComponent}
+                              density={density}
+                              onNavigate={() => setOpen(false)}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
+                );
+              })}
             </nav>
             {footer && (
               <div className="relative border-t border-line bg-surface/35 px-5 py-4">

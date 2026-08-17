@@ -73,7 +73,7 @@ export function AdminKpiGrid({
   }[];
 }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
         <div key={item.label} className="admin-kpi">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">

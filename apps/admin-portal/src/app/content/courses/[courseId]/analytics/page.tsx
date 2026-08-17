@@ -34,7 +34,7 @@ export default async function CourseAnalyticsPage({
         ]}
       />
 
-      <AdminPanel title="About these metrics">
+      <AdminPanel title="This course · analytics">
         <p className="text-sm text-muted">
           Enrollment and completion come from course enrollments. Submission
           counts include all task submissions for milestones in this course.

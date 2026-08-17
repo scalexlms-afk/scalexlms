@@ -144,7 +144,7 @@ export default async function SettingsPage({
     <AdminShell activePath="/settings">
       <AdminPageHeader
         eyebrow="System"
-        title="Settings"
+        title="Platform settings"
         description="Academy configuration across general, security, integrations, and maintenance."
         secondaryAction={
           <>

@@ -68,7 +68,7 @@ export default async function CourseCertificatesPage({
 
   return (
     <div className="space-y-4">
-      <AdminPanel title="Certificates">
+      <AdminPanel title="This course · certificates">
         {canIssue && eligible.length > 0 ? (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface-3/40 px-3 py-2">
             <p className="text-sm text-muted">

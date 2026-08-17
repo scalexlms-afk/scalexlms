@@ -3,7 +3,7 @@ import type { NavGroup } from "@scalex/ui";
 import { getPermission, type Feature } from "@scalex/db/rbac";
 import type { UserRole } from "@scalex/db/types";
 import { requireAdminProfile } from "@/lib/auth";
-import { getAdminNotifications, getDashboardStats, getOpenSupportTicketCount } from "@/lib/data";
+import { getAdminNotifications, getCoursesSummary, getDashboardStats, getOpenSupportTicketCount } from "@/lib/data";
 import { markNotificationRead } from "@/app/notifications/actions";
 import { AdminChrome } from "@/components/admin-chrome";
 
@@ -222,10 +222,11 @@ export async function AdminShell({
   activePath: string;
 }) {
   const { profile, userId } = await requireAdminProfile();
-  const notifications = await getAdminNotifications(userId);
-  const [stats, openTickets] = await Promise.all([
+  const [notifications, stats, openTickets, courses] = await Promise.all([
+    getAdminNotifications(userId),
     getDashboardStats({ userId, role: profile.role }).catch(() => null),
     getOpenSupportTicketCount({ userId, role: profile.role }).catch(() => 0),
+    getCoursesSummary().catch(() => []),
   ]);
 
   const badges = {
@@ -266,12 +267,40 @@ export async function AdminShell({
     </div>
   );
 
+  const collapsedFooter = (
+    <div className="flex flex-col items-center gap-2">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-scalex-red/20 text-[10px] font-bold text-scalex-red">
+        {profile.name
+          .split(" ")
+          .map((p) => p[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase()}
+      </div>
+      <form action="/auth/signout" method="post">
+        <button
+          type="submit"
+          className="text-[10px] font-medium text-accent-danger hover:underline"
+          title="Sign out"
+        >
+          Out
+        </button>
+      </form>
+    </div>
+  );
+
   return (
     <AdminChrome
       groups={groups}
       footer={footer}
+      collapsedFooter={collapsedFooter}
       notifications={notifications}
       markReadAction={markNotificationRead}
+      courses={courses.map((course) => ({
+        id: course.id,
+        title: course.title,
+        status: course.status,
+      }))}
     >
       {children}
     </AdminChrome>

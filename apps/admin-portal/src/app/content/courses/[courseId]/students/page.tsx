@@ -18,7 +18,7 @@ export default async function CourseStudentsPage({
   const students = await getCourseStudents(courseId);
 
   return (
-    <AdminPanel title="Enrolled students">
+    <AdminPanel title="This course · enrolled students">
       <DataTable
         emptyMessage="No students enrolled in this course yet."
         getRowKey={(row) => row.id}
