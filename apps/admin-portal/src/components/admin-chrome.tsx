@@ -2,12 +2,13 @@
 
 import {
   useEffect,
+  useMemo,
   useState,
-  type MouseEventHandler,
   type ReactNode,
 } from "react";
+import type { NavLinkComponent } from "@scalex/ui";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Logo,
   MobileNav,
@@ -18,10 +19,20 @@ import {
 } from "@scalex/ui";
 import { AdminCourseBar } from "@/components/admin-course-rail";
 import {
+  loadAdminChromeExtras,
+  type AdminChromeExtras,
+} from "@/components/admin-chrome-data";
+import { markNotificationRead } from "@/app/(app)/notifications/actions";
+import {
   buildAdminBreadcrumbs,
   parseCourseContext,
-  type AdminCourseOption,
 } from "@/lib/admin-nav";
+import {
+  adminRoleLabel,
+  buildAdminNavGroups,
+  parseAdminNavRole,
+} from "@/lib/admin-nav-catalog";
+import type { UserRole } from "@scalex/db/types";
 
 const SIDEBAR_COLLAPSE_KEY = "scalex-admin-sidebar-collapsed";
 
@@ -52,71 +63,125 @@ function pathActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function withActiveGroups(groups: NavGroup[], pathname: string): NavGroup[] {
+function withActiveGroups(
+  groups: NavGroup[],
+  pathname: string,
+  pendingHref: string | null
+): NavGroup[] {
+  const activePath = pendingHref ?? pathname;
   return groups.map((group) => ({
     ...group,
     items: group.items.map((item) => ({
       ...item,
-      active: item.href ? pathActive(pathname, item.href) : Boolean(item.active),
+      active: item.href ? pathActive(activePath, item.href) : Boolean(item.active),
     })),
   }));
 }
 
-function AdminNavLink({
-  href,
-  className,
-  onClick,
-  title,
-  children,
-}: {
-  href: string;
-  className?: string;
-  onClick?: MouseEventHandler<HTMLAnchorElement>;
-  title?: string;
-  children: ReactNode;
-}) {
-  return (
-    <Link href={href} className={className} onClick={onClick} title={title}>
-      {children}
-    </Link>
-  );
+function isModifiedClick(event: { metaKey: boolean; ctrlKey: boolean; shiftKey: boolean; altKey: boolean; button: number }) {
+  return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
 }
 
-type Notification = {
-  id: string;
-  title: string;
-  body: string | null;
-  read_at: string | null;
-  created_at: string;
-};
+function createPrefetchNavLink(
+  setPendingHref: (href: string) => void
+): NavLinkComponent {
+  return function PrefetchNavLink({
+    href,
+    className,
+    onClick,
+    title,
+    children,
+  }) {
+    return (
+      <Link
+        href={href}
+        className={className}
+        title={title}
+        prefetch
+        onClick={(event) => {
+          if (!isModifiedClick(event)) setPendingHref(href);
+          onClick?.(event);
+        }}
+      >
+        {children}
+      </Link>
+    );
+  };
+}
+
+function initialsFromName(name: string) {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 export function AdminChrome({
-  groups,
-  footer,
-  notifications,
-  markReadAction,
-  courses,
+  initialRole,
   children,
 }: {
-  groups: NavGroup[];
-  footer: ReactNode;
-  notifications: Notification[];
-  markReadAction?: (formData: FormData) => Promise<void>;
-  courses: AdminCourseOption[];
+  initialRole?: string | null;
   children: ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [collapsed, setCollapsed] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [extras, setExtras] = useState<AdminChromeExtras | null>(null);
+  const AdminNavLink = useMemo(
+    () => createPrefetchNavLink(setPendingHref),
+    []
+  );
+
+  const role: UserRole =
+    extras?.role ?? parseAdminNavRole(initialRole) ?? "super_admin";
 
   useEffect(() => {
     const stored = window.localStorage.getItem(SIDEBAR_COLLAPSE_KEY);
     if (stored === "1") setCollapsed(true);
   }, []);
 
+  useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadAdminChromeExtras()
+      .then((data) => {
+        if (!cancelled) setExtras(data);
+      })
+      .catch(() => {
+        /* keep chrome without extras */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const badges = extras?.badges;
+  const groups = useMemo(
+    () => buildAdminNavGroups(role, badges ?? {}),
+    [role, badges]
+  );
+
+  useEffect(() => {
+    for (const href of groups.flatMap((group) =>
+      group.items.map((item) => item.href).filter(Boolean)
+    )) {
+      router.prefetch(href);
+    }
+  }, [groups, router]);
+
   const courseCtx = parseCourseContext(pathname);
-  const crumbs = buildAdminBreadcrumbs({ pathname, courses });
-  const activeGroups = withActiveGroups(groups, pathname);
+  const crumbs = buildAdminBreadcrumbs({
+    pathname,
+    courses: extras?.courses ?? [],
+  });
+  const activeGroups = withActiveGroups(groups, pathname, pendingHref);
   const sidebarOpen = !collapsed;
 
   function toggleCollapsed() {
@@ -124,6 +189,49 @@ export function AdminChrome({
     setCollapsed(next);
     window.localStorage.setItem(SIDEBAR_COLLAPSE_KEY, next ? "1" : "0");
   }
+
+  async function onMarkRead(formData: FormData) {
+    const id = String(formData.get("id") ?? "");
+    setExtras((current) => {
+      if (!current) return current;
+      const notifications = current.notifications.map((item) =>
+        item.id === id ? { ...item, read_at: new Date().toISOString() } : item
+      );
+      return {
+        ...current,
+        notifications,
+        badges: {
+          ...current.badges,
+          messages: notifications.filter((item) => !item.read_at).length,
+        },
+      };
+    });
+    await markNotificationRead(formData);
+  }
+
+  const footer = (
+    <div className="text-sm">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-scalex-red/20 text-xs font-bold text-scalex-red">
+          {initialsFromName(extras?.name ?? "A")}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate font-medium text-foreground">
+            {adminRoleLabel(role)}
+          </p>
+          <p className="truncate text-xs text-muted">{extras?.email ?? ""}</p>
+        </div>
+      </div>
+      <form action="/auth/signout" method="post" className="mt-3">
+        <button
+          type="submit"
+          className="text-xs font-medium text-accent-danger hover:underline"
+        >
+          Sign out
+        </button>
+      </form>
+    </div>
+  );
 
   const menuButton = (
     <button
@@ -193,7 +301,7 @@ export function AdminChrome({
                   <span key={`${crumb.label}-${index}`} className="flex items-center gap-1">
                     {index > 0 ? <span className="text-subtle">/</span> : null}
                     {crumb.href && index < crumbs.crumbs.length - 1 ? (
-                      <Link href={crumb.href} className="hover:text-scalex-red">
+                      <Link href={crumb.href} className="hover:text-scalex-red" prefetch>
                         {crumb.label}
                       </Link>
                     ) : (
@@ -210,15 +318,15 @@ export function AdminChrome({
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <NotificationBell
-              notifications={notifications}
-              markReadAction={markReadAction}
+              notifications={extras?.notifications ?? []}
+              markReadAction={onMarkRead}
             />
           </div>
         </header>
 
         {courseCtx ? (
           <AdminCourseBar
-            courses={courses}
+            courses={extras?.courses ?? []}
             currentCourseId={courseCtx.courseId}
           />
         ) : null}

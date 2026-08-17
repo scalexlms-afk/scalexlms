@@ -2,10 +2,11 @@
 
 import {
   useEffect,
+  useMemo,
   useState,
-  type MouseEventHandler,
   type ReactNode,
 } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { SidebarSimple } from "@phosphor-icons/react";
@@ -13,42 +14,72 @@ import {
   Logo,
   MobileNav,
   NavSidebar,
+  StatusPill,
   ThemeToggle,
   type NavGroup,
   type NavItem,
+  type NavLinkComponent,
 } from "@scalex/ui";
+import { planLabel, planPillVariant } from "@scalex/db/plans";
+import {
+  loadPortalChromeExtras,
+  type PortalChromeExtras,
+} from "@/components/portal-chrome-data";
+import {
+  buildPortalNavGroups,
+  portalNavHrefs,
+} from "@/lib/portal-nav-catalog";
 
 const SIDEBAR_STORAGE_KEY = "scalex-sidebar-open";
 
-const ACADEMY_ROUTES = [
-  "/dashboard",
-  "/continue-learning",
-  "/roadmap",
-  "/tasks",
-  "/achievements",
-  "/community",
-  "/sessions",
-  "/messages",
-  "/support",
-  "/ai-mentor",
-] as const;
-
-function PortalNavLink({
-  href,
-  className,
-  onClick,
-  children,
-}: {
-  href: string;
-  className?: string;
-  onClick?: MouseEventHandler<HTMLAnchorElement>;
-  children: ReactNode;
+function isModifiedClick(event: {
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+  button: number;
 }) {
   return (
-    <Link href={href} className={className} onClick={onClick} prefetch>
-      {children}
-    </Link>
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey ||
+    event.button !== 0
   );
+}
+
+function createPrefetchNavLink(
+  setPendingHref: (href: string) => void
+): NavLinkComponent {
+  return function PrefetchNavLink({
+    href,
+    className,
+    onClick,
+    title,
+    children,
+  }) {
+    return (
+      <Link
+        href={href}
+        className={className}
+        title={title}
+        prefetch
+        onClick={(event) => {
+          if (!isModifiedClick(event)) setPendingHref(href);
+          onClick?.(event);
+        }}
+      >
+        {children}
+      </Link>
+    );
+  };
+}
+
+function initialsFromName(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "S";
+  if (parts.length === 1) return parts[0]!.slice(0, 2).toUpperCase();
+  return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
 }
 
 function isItemActive(activePath: string, item: NavItem) {
@@ -74,35 +105,126 @@ function isItemActive(activePath: string, item: NavItem) {
   return activePath === item.href || activePath.startsWith(`${item.href}/`);
 }
 
-function withActiveGroups(groups: NavGroup[], pathname: string): NavGroup[] {
+function withActiveGroups(
+  groups: NavGroup[],
+  pathname: string,
+  pendingHref: string | null
+): NavGroup[] {
+  const activePath = pendingHref ?? pathname;
   return groups.map((group) => ({
     ...group,
     items: group.items.map((item) => ({
       ...item,
-      active: isItemActive(pathname, item),
+      active: isItemActive(activePath, item),
     })),
   }));
 }
 
-export function PortalChrome({
-  groups,
-  footer,
-  children,
+function SidebarFooter({
+  extras,
 }: {
-  groups: NavGroup[];
-  footer: ReactNode;
-  children: ReactNode;
+  extras: PortalChromeExtras | null;
 }) {
+  const name = extras?.name ?? "Student";
+  const email = extras?.email ?? "";
+  const avatarUrl = extras?.avatarUrl ?? null;
+  const plan = extras?.plan ?? null;
+  const pct = Math.min(
+    100,
+    Math.max(0, Math.round(extras?.completionPercent ?? 0))
+  );
+  const milestoneTotal = extras?.milestoneTotal ?? 8;
+  const step = Math.min(
+    milestoneTotal,
+    Math.max(1, Math.round(extras?.milestoneIndex ?? 1))
+  );
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        {avatarUrl ? (
+          <Image
+            src={avatarUrl}
+            alt=""
+            width={40}
+            height={40}
+            unoptimized
+            className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-line"
+          />
+        ) : (
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-3 text-xs font-bold text-foreground ring-1 ring-line metallic-edge">
+            {initialsFromName(name)}
+          </div>
+        )}
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-foreground">{name}</p>
+          <p className="truncate text-xs text-muted">{email}</p>
+        </div>
+      </div>
+
+      <StatusPill
+        label={`${planLabel(plan, true)} Plan`}
+        variant={planPillVariant(plan)}
+      />
+
+      <div className="rounded-[var(--radius-card)] border border-line px-3 py-3 metallic-graphite metallic-edge">
+        <p className="text-sm font-semibold text-foreground">
+          Program Progress: {pct}% Complete
+        </p>
+        <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-line">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-scalex-red-dark to-scalex-red shadow-[0_0_12px_-2px_rgba(227,30,36,0.6)] transition-[width] duration-500"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <p className="mt-2 text-xs text-muted">
+          Step {step} of {milestoneTotal}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function PortalChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(true);
   const [hydrated, setHydrated] = useState(false);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [extras, setExtras] = useState<PortalChromeExtras | null>(null);
+  const PortalNavLink = useMemo(
+    () => createPrefetchNavLink(setPendingHref),
+    []
+  );
+
+  const groups = useMemo(
+    () => buildPortalNavGroups(extras?.unreadCount ?? 0),
+    [extras?.unreadCount]
+  );
 
   useEffect(() => {
-    for (const route of ACADEMY_ROUTES) {
-      router.prefetch(route);
+    for (const href of portalNavHrefs(groups)) {
+      router.prefetch(href);
     }
-  }, [router]);
+  }, [groups, router]);
+
+  useEffect(() => {
+    setPendingHref(null);
+  }, [pathname]);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadPortalChromeExtras()
+      .then((data) => {
+        if (!cancelled) setExtras(data);
+      })
+      .catch(() => {
+        /* keep chrome without extras */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const stored = window.localStorage.getItem(SIDEBAR_STORAGE_KEY);
@@ -116,7 +238,9 @@ export function PortalChrome({
     window.localStorage.setItem(SIDEBAR_STORAGE_KEY, open ? "1" : "0");
   }, [open, hydrated]);
 
-  const activeGroups = withActiveGroups(groups, pathname);
+  const activeGroups = withActiveGroups(groups, pathname, pendingHref);
+
+  const footer = <SidebarFooter extras={extras} />;
 
   const sidebarToggle = (
     <button
@@ -146,7 +270,6 @@ export function PortalChrome({
       >
         {open ? (
           <>
-            {/* Overlay — does not reserve layout height or push the sidebar down */}
             <div className="pointer-events-none absolute right-3 top-3 z-30">
               <div className="pointer-events-auto">{sidebarToggle}</div>
             </div>

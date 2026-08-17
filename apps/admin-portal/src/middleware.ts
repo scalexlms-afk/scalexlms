@@ -1,15 +1,14 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@scalex/db/types";
+import {
+  SCALEX_ROLE_COOKIE,
+  hasSupabaseAuthCookie,
+  isScalexAdminRole,
+  scalexNavCookieOptions,
+} from "@scalex/db/nav-cookies";
 
 const PUBLIC_ROUTES = ["/login", "/auth/callback", "/reset-password"];
-const ADMIN_ROLES = ["super_admin", "instructor", "mentor", "sales"] as const;
-
-function isAdminRole(
-  role: string | undefined
-): role is (typeof ADMIN_ROLES)[number] {
-  return !!role && ADMIN_ROLES.includes(role as (typeof ADMIN_ROLES)[number]);
-}
 
 function copyCookies(from: NextResponse, to: NextResponse) {
   from.cookies.getAll().forEach((cookie) => {
@@ -17,8 +16,78 @@ function copyCookies(from: NextResponse, to: NextResponse) {
   });
 }
 
+function attachRoleCookie(response: NextResponse, role: string) {
+  response.cookies.set(SCALEX_ROLE_COOKIE, role, scalexNavCookieOptions());
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isPublic = PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+  const isLogin = pathname === "/login";
+  const hasAuth = hasSupabaseAuthCookie(request.cookies.getAll());
+  const roleCookie = request.cookies.get(SCALEX_ROLE_COOKIE)?.value;
+
+  const redirectTo = (path: string, from: NextResponse) => {
+    const url = request.nextUrl.clone();
+    url.pathname = path;
+    const redirectResponse = NextResponse.redirect(url);
+    copyCookies(from, redirectResponse);
+    return redirectResponse;
+  };
+
+  const gateRole = (role: string | undefined, response: NextResponse) => {
+    if (role === "student") {
+      const studentPortalUrl =
+        process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL ?? "http://localhost:3000";
+      const redirectResponse = NextResponse.redirect(studentPortalUrl);
+      copyCookies(response, redirectResponse);
+      return redirectResponse;
+    }
+
+    if (!isScalexAdminRole(role)) {
+      if (isLogin) {
+        return response;
+      }
+
+      if (!isPublic) {
+        if (role) {
+          return redirectTo("/forbidden", response);
+        }
+
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        url.searchParams.set(
+          "error",
+          "Account profile not found. Sign in with an admin staff account."
+        );
+        const redirectResponse = NextResponse.redirect(url);
+        copyCookies(response, redirectResponse);
+        return redirectResponse;
+      }
+    }
+
+    if (isLogin && isScalexAdminRole(role)) {
+      return redirectTo("/", response);
+    }
+
+    return response;
+  };
+
+  if (hasAuth && roleCookie) {
+    return gateRole(roleCookie, NextResponse.next({ request }));
+  }
+
+  if (!hasAuth) {
+    if (!isPublic) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next({ request });
+  }
 
   let supabaseResponse = NextResponse.next({ request });
 
@@ -53,19 +122,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isPublic = PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
-  const isLogin = pathname === "/login";
-
-  const redirectTo = (path: string) => {
-    const url = request.nextUrl.clone();
-    url.pathname = path;
-    const redirectResponse = NextResponse.redirect(url);
-    copyCookies(supabaseResponse, redirectResponse);
-    return redirectResponse;
-  };
-
   if (!user) {
     if (!isPublic) {
       const url = request.nextUrl.clone();
@@ -85,42 +141,11 @@ export async function middleware(request: NextRequest) {
     .single();
 
   const role = (profile as { role: string } | null)?.role;
-
-  if (role === "student") {
-    const studentPortalUrl =
-      process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL ?? "http://localhost:3000";
-    const redirectResponse = NextResponse.redirect(studentPortalUrl);
-    copyCookies(supabaseResponse, redirectResponse);
-    return redirectResponse;
+  if (role) {
+    attachRoleCookie(supabaseResponse, role);
   }
 
-  if (!isAdminRole(role)) {
-    if (isLogin) {
-      return supabaseResponse;
-    }
-
-    if (!isPublic) {
-      if (role) {
-        return redirectTo("/forbidden");
-      }
-
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.searchParams.set(
-        "error",
-        "Account profile not found. Sign in with an admin staff account."
-      );
-      const redirectResponse = NextResponse.redirect(url);
-      copyCookies(supabaseResponse, redirectResponse);
-      return redirectResponse;
-    }
-  }
-
-  if (isLogin && isAdminRole(role)) {
-    return redirectTo("/");
-  }
-
-  return supabaseResponse;
+  return gateRole(role, supabaseResponse);
 }
 
 export const config = {

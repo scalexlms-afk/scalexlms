@@ -6,6 +6,7 @@ import { createClient, createServiceClient } from "@scalex/db/server";
 import { requireStudentProfile } from "@/lib/auth";
 import { collectAccountExport } from "@/lib/account-export";
 import { SETTINGS_COUNTRIES, SETTINGS_LANGUAGES } from "@/lib/settings-shared";
+import { clearScalexNavCookies } from "@/lib/nav-cookies";
 
 function settingsRedirect(opts: {
   error?: string;
@@ -320,5 +321,6 @@ export async function deactivateAccountAction(formData: FormData) {
 
   const supabase = await createClient();
   await supabase.auth.signOut();
+  await clearScalexNavCookies();
   redirect("/login?deactivated=1");
 }

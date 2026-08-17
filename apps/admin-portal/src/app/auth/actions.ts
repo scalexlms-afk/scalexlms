@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@scalex/db/server";
 import { isAdminRole } from "@scalex/db/rbac";
 import type { UserRole } from "@scalex/db/types";
+import { clearScalexNavCookies, setScalexRoleCookie } from "@/lib/nav-cookies";
 
 export async function loginAction(formData: FormData) {
   const email = formData.get("email") as string;
@@ -30,11 +31,13 @@ export async function loginAction(formData: FormData) {
 
   if (!role || !isAdminRole(role)) {
     await supabase.auth.signOut();
+    await clearScalexNavCookies();
     redirect(
       `/login?error=${encodeURIComponent("This portal is for admin staff only. Students should use the Student Portal.")}`
     );
   }
 
+  await setScalexRoleCookie(role);
   redirect(redirectTo);
 }
 
@@ -91,5 +94,6 @@ export async function verifyPasswordOtpAction(formData: FormData) {
 export async function signOutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  await clearScalexNavCookies();
   redirect("/login");
 }

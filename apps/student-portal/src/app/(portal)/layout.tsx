@@ -1,9 +1,9 @@
-import { PortalShell } from "@/components/portal-shell";
+import { PortalChrome } from "@/components/portal-chrome";
 
 export default function PortalLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <PortalShell>{children}</PortalShell>;
+  return <PortalChrome>{children}</PortalChrome>;
 }

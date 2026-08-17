@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createClient } from "@scalex/db/server";
 import { requireAdminProfile } from "@/lib/auth";
 
@@ -15,6 +14,4 @@ export async function markNotificationRead(formData: FormData) {
     .update({ read_at: new Date().toISOString() })
     .eq("id", id)
     .eq("user_id", userId);
-
-  revalidatePath("/", "layout");
 }

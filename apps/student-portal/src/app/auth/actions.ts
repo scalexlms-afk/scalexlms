@@ -3,15 +3,18 @@
 import { redirect } from "next/navigation";
 import { createClient, createServiceClient } from "@scalex/db/server";
 import { safeRelativePath } from "@/lib/site";
+import { clearScalexNavCookies, setScalexNavCookies } from "@/lib/nav-cookies";
 
 async function redirectAfterAuth(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, fallback = "/dashboard") {
   const { data: profile } = await supabase
     .from("profiles")
-    .select("status")
+    .select("status, role")
     .eq("id", userId)
     .single();
 
-  const status = (profile as { status: string } | null)?.status;
+  const row = profile as { status: string; role?: string } | null;
+  const status = row?.status;
+  await setScalexNavCookies(row?.role ?? "student", status ?? "pending");
 
   if (status === "active") {
     redirect(fallback === "/payment" ? "/dashboard" : fallback);
@@ -160,5 +163,6 @@ export async function updatePasswordAction(formData: FormData) {
 export async function signOutAction() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  await clearScalexNavCookies();
   redirect("/");
 }

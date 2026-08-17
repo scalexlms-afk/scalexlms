@@ -11,6 +11,7 @@
     "./password-otp": "./src/password-otp.ts",
     "./middleware": "./src/middleware.ts",
     "./rbac": "./src/rbac.ts",
+    "./nav-cookies": "./src/nav-cookies.ts",
     "./media": "./src/media.ts",
     "./types": "./src/database.types.ts",
     "./plans": "./src/plans.ts"

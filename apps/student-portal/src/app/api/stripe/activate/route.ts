@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { createClient } from "@scalex/db/server";
 import { fulfillCheckoutPayment } from "@/lib/stripe-fulfillment";
+import { setScalexNavCookies } from "@/lib/nav-cookies";
 
 function getStripe() {
   if (!process.env.STRIPE_SECRET_KEY) {
@@ -68,6 +69,10 @@ export async function GET(request: Request) {
       planType,
       checkoutMode,
     });
+
+    if (user) {
+      await setScalexNavCookies("student", "active");
+    }
 
     return NextResponse.json({
       activated: true,

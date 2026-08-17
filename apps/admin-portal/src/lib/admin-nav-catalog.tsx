@@ -1,11 +1,9 @@
+"use client";
+
 import type { ReactNode } from "react";
 import type { NavGroup } from "@scalex/ui";
 import { getPermission, type Feature } from "@scalex/db/rbac";
 import type { UserRole } from "@scalex/db/types";
-import { requireAdminProfile } from "@/lib/auth";
-import { getAdminNotifications, getCoursesList, getNavBadgeCounts } from "@/lib/data";
-import { markNotificationRead } from "@/app/(app)/notifications/actions";
-import { AdminChrome } from "@/components/admin-chrome";
 
 const iconClass = "h-4 w-4";
 
@@ -29,9 +27,7 @@ const icons = {
       <path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6v-9h-6v9Zm0-16v5h6V4h-6Z" fill="currentColor" />
     </svg>
   ),
-  analytics: (
-    <Ico d="M4 20V10M10 20V4M16 20v-8M22 20H2" />
-  ),
+  analytics: <Ico d="M4 20V10M10 20V4M16 20v-8M22 20H2" />,
   courses: (
     <Ico d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
   ),
@@ -44,12 +40,8 @@ const icons = {
   students: (
     <Ico d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
   ),
-  reviews: (
-    <Ico d="m9 12 2 2 4-4M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
-  ),
-  community: (
-    <Ico d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" />
-  ),
+  reviews: <Ico d="m9 12 2 2 4-4M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />,
+  community: <Ico d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" />,
   sessions: (
     <Ico d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M5 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z" />
   ),
@@ -62,29 +54,25 @@ const icons = {
   crm: (
     <Ico d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
   ),
-  finance: (
-    <Ico d="M12 3v18M8 7h5a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6" />
-  ),
+  finance: <Ico d="M12 3v18M8 7h5a3 3 0 0 1 0 6H9a3 3 0 0 0 0 6h6" />,
   team: (
     <Ico d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
   ),
-  roles: (
-    <Ico d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
-  ),
-  settings: (
-    <Ico d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-  ),
+  roles: <Ico d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />,
+  settings: <Ico d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />,
 };
+
+export type AdminNavBadgeKey = "reviews" | "sessions" | "messages" | "support";
 
 type NavDef = {
   label: string;
   href: string;
   feature: Feature;
   icon: ReactNode;
-  badgeKey?: "reviews" | "sessions" | "messages" | "support";
+  badgeKey?: AdminNavBadgeKey;
 };
 
-const NAV_CATALOG: { title: string; items: NavDef[] }[] = [
+export const ADMIN_NAV_CATALOG: { title: string; items: NavDef[] }[] = [
   {
     title: "Overview",
     items: [
@@ -182,11 +170,11 @@ const NAV_CATALOG: { title: string; items: NavDef[] }[] = [
   },
 ];
 
-function buildNavGroups(
+export function buildAdminNavGroups(
   role: UserRole,
-  badges: Partial<Record<NonNullable<NavDef["badgeKey"]>, number>>
+  badges: Partial<Record<AdminNavBadgeKey, number>> = {}
 ): NavGroup[] {
-  return NAV_CATALOG.map((group) => ({
+  return ADMIN_NAV_CATALOG.map((group) => ({
     title: group.title,
     items: group.items
       .filter((item) => getPermission(role, item.feature) !== "none")
@@ -202,78 +190,19 @@ function buildNavGroups(
   })).filter((group) => group.items.length > 0);
 }
 
-function roleLabel(role: UserRole): string {
+export function adminRoleLabel(role: UserRole): string {
   if (role === "super_admin") return "Super Admin";
   return role.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-export async function AdminShell({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { profile, userId } = await requireAdminProfile();
-  const [notifications, badgeCounts, courses] = await Promise.all([
-    getAdminNotifications(userId),
-    getNavBadgeCounts({ userId, role: profile.role }).catch(() => ({
-      pendingReviews: 0,
-      upcomingSessions: 0,
-      openTickets: 0,
-    })),
-    getCoursesList().catch(() => []),
-  ]);
-
-  const badges = {
-    reviews: badgeCounts.pendingReviews,
-    sessions: badgeCounts.upcomingSessions,
-    messages: notifications.filter((n) => !n.read_at).length,
-    support: badgeCounts.openTickets,
-  };
-
-  const groups = buildNavGroups(profile.role, badges);
-
-  const footer = (
-    <div className="text-sm">
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-scalex-red/20 text-xs font-bold text-scalex-red">
-          {profile.name
-            .split(" ")
-            .map((p) => p[0])
-            .join("")
-            .slice(0, 2)
-            .toUpperCase()}
-        </div>
-        <div className="min-w-0">
-          <p className="truncate font-medium text-foreground">
-            {roleLabel(profile.role)}
-          </p>
-          <p className="truncate text-xs text-muted">{profile.email}</p>
-        </div>
-      </div>
-      <form action="/auth/signout" method="post" className="mt-3">
-        <button
-          type="submit"
-          className="text-xs font-medium text-accent-danger hover:underline"
-        >
-          Sign out
-        </button>
-      </form>
-    </div>
-  );
-
-  return (
-    <AdminChrome
-      groups={groups}
-      footer={footer}
-      notifications={notifications}
-      markReadAction={markNotificationRead}
-      courses={courses.map((course) => ({
-        id: course.id,
-        title: course.title,
-        status: course.status,
-      }))}
-    >
-      {children}
-    </AdminChrome>
-  );
+export function parseAdminNavRole(value: string | null | undefined): UserRole | null {
+  if (
+    value === "super_admin" ||
+    value === "instructor" ||
+    value === "mentor" ||
+    value === "sales"
+  ) {
+    return value;
+  }
+  return null;
 }
