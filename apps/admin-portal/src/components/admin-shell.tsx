@@ -267,33 +267,10 @@ export async function AdminShell({
     </div>
   );
 
-  const collapsedFooter = (
-    <div className="flex flex-col items-center gap-2">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-scalex-red/20 text-[10px] font-bold text-scalex-red">
-        {profile.name
-          .split(" ")
-          .map((p) => p[0])
-          .join("")
-          .slice(0, 2)
-          .toUpperCase()}
-      </div>
-      <form action="/auth/signout" method="post">
-        <button
-          type="submit"
-          className="text-[10px] font-medium text-accent-danger hover:underline"
-          title="Sign out"
-        >
-          Out
-        </button>
-      </form>
-    </div>
-  );
-
   return (
     <AdminChrome
       groups={groups}
       footer={footer}
-      collapsedFooter={collapsedFooter}
       notifications={notifications}
       markReadAction={markNotificationRead}
       courses={courses.map((course) => ({

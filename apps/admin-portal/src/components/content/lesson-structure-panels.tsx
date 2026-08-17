@@ -609,8 +609,8 @@ export function UnlockRulesPanel({
       <div>
         <h3 className="font-medium">{milestoneTitle}</h3>
         <p className="mt-1 text-sm text-muted">
-          Milestone unlock: previous milestone&apos;s required tasks must be
-          approved before this milestone opens.
+          Students unlock this after the previous milestone&apos;s required task
+          is approved.
         </p>
       </div>
       {canEdit ? (
@@ -664,10 +664,12 @@ export function LessonRightRailForm({
   lesson,
   courseId,
   canEdit,
+  simple = false,
 }: {
   lesson: ContentLesson;
   courseId: string;
   canEdit: boolean;
+  simple?: boolean;
 }) {
   const primaryTask = lesson.tasks?.[0];
   const hasQuiz = (lesson.quizzes?.length ?? 0) > 0;
@@ -710,99 +712,152 @@ export function LessonRightRailForm({
       <input type="hidden" name="lessonId" value={lesson.id} />
       <input type="hidden" name="courseId" value={courseId} />
 
-      <section className="space-y-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Completion requirement
-        </h3>
-        <label className="block space-y-1">
-          <span className="text-xs text-subtle">Requirement type</span>
-          <select
-            name="completionType"
-            className={inputClasses}
-            defaultValue={lesson.completion_type || "view_only"}
-          >
-            {COMPLETION_TYPES.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        {quizPassMissingQuiz ? (
-          <p className="text-xs text-amber-200">
-            Soft check: Pass quiz is selected but no quiz exists. Add one in the
-            Quiz tab.
-          </p>
-        ) : null}
-      </section>
-
-      <section className="space-y-2 border-t border-line pt-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Progress metadata
-        </h3>
-        <Field
-          label="XP points"
-          name="xpPoints"
-          type="number"
-          defaultValue={String(lesson.xp_points ?? 0)}
-        />
-        <Field
-          label="Estimated minutes"
-          name="estimatedMinutes"
-          type="number"
-          defaultValue={
-            lesson.estimated_minutes != null
-              ? String(lesson.estimated_minutes)
-              : ""
-          }
-        />
-        <Field
-          label="Level"
-          name="level"
-          defaultValue={lesson.level ?? ""}
-        />
-        <TextArea
-          label="Learning objectives (one per line)"
-          name="learningObjectives"
-          rows={3}
-          defaultValue={(lesson.learning_objectives ?? []).join("\n")}
-        />
-      </section>
-
-      <section className="space-y-2 border-t border-line pt-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Review hints
-        </h3>
-        {primaryTask ? (
-          <p className="text-xs text-subtle">
-            From task &ldquo;{primaryTask.title}&rdquo;:{" "}
-            {primaryTask.review_method}
-            {primaryTask.is_required ? " · required for unlock" : " · optional"}
-          </p>
-        ) : (
-          <p className="text-xs text-subtle">
-            Add a lesson task to configure mentor review gates.
-          </p>
-        )}
-      </section>
-
-      <section className="space-y-2 border-t border-line pt-4">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Published
-        </h3>
+      <label className="flex items-center justify-between gap-4 rounded-xl border border-line px-4 py-3">
+        <span>
+          <span className="block font-medium">Published</span>
+          <span className="text-xs text-muted">
+            Students can see this lesson when it is on.
+          </span>
+        </span>
         <select
           name="status"
-          className={inputClasses}
+          className={inputClasses + " max-w-[10rem]"}
           defaultValue={lesson.status || "draft"}
         >
           <option value="draft">Draft</option>
           <option value="published">Published</option>
         </select>
-      </section>
+      </label>
 
-      <Button type="submit" size="sm" className="w-full">
-        Save lesson controls
-      </Button>
+      <Field
+        label="Estimated minutes"
+        name="estimatedMinutes"
+        type="number"
+        defaultValue={
+          lesson.estimated_minutes != null
+            ? String(lesson.estimated_minutes)
+            : ""
+        }
+      />
+
+      {simple ? (
+        <details className="rounded-xl border border-line p-4">
+          <summary className="cursor-pointer text-sm font-medium text-muted">
+            Advanced · completion and XP
+          </summary>
+          <div className="mt-3 space-y-4">
+            <label className="block space-y-1">
+              <span className="text-xs text-subtle">Requirement type</span>
+              <select
+                name="completionType"
+                className={inputClasses}
+                defaultValue={lesson.completion_type || "view_only"}
+              >
+                {COMPLETION_TYPES.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {quizPassMissingQuiz ? (
+              <p className="text-xs text-amber-200">
+                Pass quiz is selected but this lesson has no quiz yet. Add one
+                above.
+              </p>
+            ) : null}
+            <Field
+              label="XP points"
+              name="xpPoints"
+              type="number"
+              defaultValue={String(lesson.xp_points ?? 0)}
+            />
+            <Field
+              label="Level"
+              name="level"
+              defaultValue={lesson.level ?? ""}
+            />
+            <TextArea
+              label="Learning objectives (one per line)"
+              name="learningObjectives"
+              rows={3}
+              defaultValue={(lesson.learning_objectives ?? []).join("\n")}
+            />
+          </div>
+        </details>
+      ) : (
+        <>
+          <section className="space-y-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
+              Completion requirement
+            </h3>
+            <label className="block space-y-1">
+              <span className="text-xs text-subtle">Requirement type</span>
+              <select
+                name="completionType"
+                className={inputClasses}
+                defaultValue={lesson.completion_type || "view_only"}
+              >
+                {COMPLETION_TYPES.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {quizPassMissingQuiz ? (
+              <p className="text-xs text-amber-200">
+                Soft check: Pass quiz is selected but no quiz exists. Add one
+                below.
+              </p>
+            ) : null}
+          </section>
+
+          <section className="space-y-2 border-t border-line pt-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
+              Progress metadata
+            </h3>
+            <Field
+              label="XP points"
+              name="xpPoints"
+              type="number"
+              defaultValue={String(lesson.xp_points ?? 0)}
+            />
+            <Field
+              label="Level"
+              name="level"
+              defaultValue={lesson.level ?? ""}
+            />
+            <TextArea
+              label="Learning objectives (one per line)"
+              name="learningObjectives"
+              rows={3}
+              defaultValue={(lesson.learning_objectives ?? []).join("\n")}
+            />
+          </section>
+        </>
+      )}
+
+      {!simple ? (
+        <section className="space-y-2 border-t border-line pt-4">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted">
+            Review hints
+          </h3>
+          {primaryTask ? (
+            <p className="text-xs text-subtle">
+              From task &ldquo;{primaryTask.title}&rdquo;:{" "}
+              {primaryTask.review_method}
+              {primaryTask.is_required ? " · required for unlock" : " · optional"}
+            </p>
+          ) : (
+            <p className="text-xs text-subtle">
+              Add a lesson task to configure mentor review gates.
+            </p>
+          )}
+        </section>
+      ) : null}
+
+      <Button type="submit">Save</Button>
     </form>
   );
 }

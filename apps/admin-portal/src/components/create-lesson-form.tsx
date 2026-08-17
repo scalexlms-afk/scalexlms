@@ -20,9 +20,7 @@ export function CreateLessonForm({
       action={createLessonAction}
       className="mt-3 grid gap-3 rounded-lg border border-line bg-surface/40 p-3"
     >
-      <p className="text-xs font-semibold uppercase tracking-wider text-muted">
-        Add lesson
-      </p>
+      <p className="text-sm font-semibold">Add lesson</p>
       <input type="hidden" name="moduleId" value={moduleId} />
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Title" name="title" required placeholder="Lesson title" />
@@ -77,9 +75,7 @@ export function CreateLessonForm({
         rows={3}
         placeholder="Optional. PDF text is extracted automatically for the AI Mentor when you save."
       />
-      <Button type="submit" className="!px-3 !py-2 text-xs">
-        Save lesson
-      </Button>
+      <Button type="submit">+ Add lesson</Button>
     </form>
   );
 }

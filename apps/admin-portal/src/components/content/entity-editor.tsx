@@ -76,7 +76,7 @@ export function ContentEntityEditor({
         <div>
           <h2 className="font-display text-xl font-semibold">{course.title}</h2>
           <p className="mt-1 text-sm text-muted">
-            {hideCourseSettings ? "Course root" : "Course settings"}
+            {hideCourseSettings ? "Content" : "Course settings"}
           </p>
         </div>
         {canEdit ? (
@@ -110,24 +110,31 @@ export function ContentEntityEditor({
                 </div>
                 <Button type="submit">Save course</Button>
               </form>
+            ) : (
+              <p className="text-sm text-muted">
+                Pick a milestone on the left to edit it, or add one from the
+                outline.
+              </p>
+            )}
+            {!hideCourseSettings ? (
+              <form action={createMilestoneAction} className="grid gap-3 rounded-lg border border-line p-4 sm:grid-cols-2">
+                <input type="hidden" name="courseId" value={course.id} />
+                <input
+                  type="hidden"
+                  name="orderIndex"
+                  value={String((course.milestones?.length ?? 0) + 1)}
+                />
+                <div className="sm:col-span-2">
+                  <p className="text-sm font-medium">Add milestone</p>
+                </div>
+                <Field label="Title" name="title" required />
+                <div className="flex items-end">
+                  <Button type="submit" size="sm">
+                    Add milestone
+                  </Button>
+                </div>
+              </form>
             ) : null}
-            <form action={createMilestoneAction} className="grid gap-3 rounded-lg border border-line p-4 sm:grid-cols-2">
-              <input type="hidden" name="courseId" value={course.id} />
-              <input
-                type="hidden"
-                name="orderIndex"
-                value={String((course.milestones?.length ?? 0) + 1)}
-              />
-              <div className="sm:col-span-2">
-                <p className="text-sm font-medium">Add milestone</p>
-              </div>
-              <Field label="Title" name="title" required />
-              <div className="flex items-end">
-                <Button type="submit" size="sm">
-                  Add milestone
-                </Button>
-              </div>
-            </form>
             {!hideCourseSettings ? (
               <form action={deleteCourseAction}>
                 <input type="hidden" name="courseId" value={course.id} />
@@ -177,7 +184,7 @@ export function ContentEntityEditor({
             />
             <form
               action={createModuleAction}
-              className="grid gap-3 rounded-lg border border-line p-4 sm:grid-cols-2"
+              className="grid gap-3 rounded-xl border border-dashed border-line p-4"
             >
               <input type="hidden" name="milestoneId" value={ms.id} />
               <input
@@ -185,19 +192,19 @@ export function ContentEntityEditor({
                 name="orderIndex"
                 value={String((ms.modules?.length ?? 0) + 1)}
               />
-              <div className="sm:col-span-2 text-sm font-medium">Add module</div>
-              <Field label="Title" name="title" required />
-              <div className="flex items-end">
-                <Button type="submit" size="sm">
-                  Add module
-                </Button>
-              </div>
+              <p className="text-sm font-medium">
+                {(ms.modules?.length ?? 0) === 0
+                  ? "Add a module, then add lessons inside it."
+                  : "Add module"}
+              </p>
+              <Field label="Name" name="title" required placeholder="Legal" />
+              <Button type="submit">+ Add module</Button>
             </form>
             <p className="text-sm text-muted">
-              Tasks attach to lessons (use a lesson&apos;s Tasks tab).{" "}
+              Tasks attach to lessons.{" "}
               {(ms.tasks?.length ?? 0) > 0
-                ? `${ms.tasks.length} task(s) still linked via milestone_id for unlock gating.`
-                : "No milestone-linked tasks yet."}
+                ? `${ms.tasks.length} task(s) still linked for unlock gating.`
+                : "Add a task on a lesson when students need to submit work."}
             </p>
             <form action={deleteMilestoneAction}>
               <input type="hidden" name="milestoneId" value={ms.id} />
@@ -261,7 +268,11 @@ export function ContentEntityEditor({
               }}
             />
             <div className="space-y-3">
-              <p className="text-sm font-medium">Lessons</p>
+              <p className="text-sm font-medium">
+                {lessons.length === 0
+                  ? "Add lessons inside this module."
+                  : "Lessons"}
+              </p>
               {lessons.map((lesson) => (
                 <div key={lesson.id} className="flex flex-wrap items-center gap-2">
                   <span className="text-sm">{lesson.title}</span>

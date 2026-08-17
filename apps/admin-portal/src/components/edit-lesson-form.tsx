@@ -24,15 +24,21 @@ export function EditLessonForm({
   lesson,
   moduleId,
   previewUrl,
+  bare = false,
 }: {
   lesson: Lesson;
   moduleId: string;
   previewUrl?: string | null;
+  bare?: boolean;
 }) {
   const [contentType, setContentType] = useState(lesson.content_type);
 
   return (
-    <div className="mt-2 rounded-lg border border-line bg-surface/30 p-3">
+    <div
+      className={
+        bare ? "" : "mt-2 rounded-lg border border-line bg-surface/30 p-3"
+      }
+    >
       <form action={updateLessonAction} className="grid gap-3">
         <input type="hidden" name="lessonId" value={lesson.id} />
         <div className="grid gap-3 sm:grid-cols-2">
@@ -53,13 +59,21 @@ export function EditLessonForm({
               <option value="link">External link</option>
             </select>
           </div>
-          <Field
-            label="Order"
-            name="orderIndex"
-            type="number"
-            min="1"
-            defaultValue={String(lesson.order_index)}
-          />
+          {bare ? (
+            <input
+              type="hidden"
+              name="orderIndex"
+              value={String(lesson.order_index)}
+            />
+          ) : (
+            <Field
+              label="Order"
+              name="orderIndex"
+              type="number"
+              min="1"
+              defaultValue={String(lesson.order_index)}
+            />
+          )}
         </div>
         {(contentType === "video" || contentType === "pdf") && (
           <MediaUploadField

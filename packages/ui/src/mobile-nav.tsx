@@ -30,7 +30,7 @@ export function MobileNav({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     for (const group of groups) {
-      initial[group.title] = group.items.some((item) => item.active);
+      initial[group.title] = true;
     }
     return initial;
   });

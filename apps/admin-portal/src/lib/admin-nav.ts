@@ -1,6 +1,6 @@
 export const COURSE_HUB_TABS = [
   { id: "overview", label: "Overview", suffix: "" },
-  { id: "structure", label: "Structure", suffix: "/structure" },
+  { id: "structure", label: "Content", suffix: "/structure" },
   { id: "students", label: "Students", suffix: "/students" },
   { id: "certificates", label: "Certificates", suffix: "/certificates" },
   { id: "analytics", label: "Analytics", suffix: "/analytics" },

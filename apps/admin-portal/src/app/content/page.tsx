@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin-shell";
-import { Field, TextArea, inputClasses } from "@/components/field";
+import { NewCourseDialog } from "@/components/content/new-course-dialog";
 import {
   AdminFilterTabs,
   AdminKpiGrid,
@@ -11,8 +11,7 @@ import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { canAccess } from "@scalex/db/rbac";
 import { getCoursesSummary } from "@/lib/data";
 import { formatStatus } from "@/lib/format";
-import { createCourseAction } from "./actions";
-import { Button, DataTable, StatusPill } from "@scalex/ui";
+import { DataTable, StatusPill } from "@scalex/ui";
 
 export default async function ContentPage({
   searchParams,
@@ -51,12 +50,7 @@ export default async function ContentPage({
       <AdminPageHeader
         eyebrow="Academy"
         title="Courses"
-        description="Manage all courses and their content, settings, and performance."
-        primaryAction={
-          canEdit
-            ? { label: "+ Create Course", href: "#new-course" }
-            : undefined
-        }
+        description="Create a course, then add milestones and lessons."
         secondaryAction={
           <form method="get" className="flex flex-wrap items-center gap-2">
             {statusFilter !== "all" ? (
@@ -73,6 +67,7 @@ export default async function ContentPage({
             <button type="submit" className="admin-btn-secondary">
               Search
             </button>
+            {canEdit ? <NewCourseDialog /> : null}
           </form>
         }
       />
@@ -115,36 +110,6 @@ export default async function ContentPage({
         ]}
       />
 
-      {canEdit ? (
-        <div id="new-course">
-          <AdminPanel title="New course">
-            <form
-              action={createCourseAction}
-              className="grid gap-4 sm:grid-cols-2"
-            >
-              <Field label="Title" name="title" required />
-              <div>
-                <label
-                  htmlFor="status"
-                  className="mb-1.5 block text-sm font-medium text-muted"
-                >
-                  Status
-                </label>
-                <select id="status" name="status" className={inputClasses}>
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                  <option value="archived">Archived</option>
-                </select>
-              </div>
-              <div className="sm:col-span-2">
-                <TextArea label="Description" name="description" rows={2} />
-              </div>
-              <Button type="submit">Create course</Button>
-            </form>
-          </AdminPanel>
-        </div>
-      ) : null}
-
       <AdminPanel
         title={
           statusQuery || q
@@ -156,7 +121,7 @@ export default async function ContentPage({
           emptyMessage={
             q || statusFilter !== "all"
               ? "No courses match your filters."
-              : "No courses yet."
+              : "No courses yet. Use New course to start."
           }
           getRowKey={(row) => row.id}
           rows={filtered}
@@ -193,16 +158,6 @@ export default async function ContentPage({
               ),
             },
             {
-              key: "milestones",
-              header: "Milestones",
-              render: (row) => String(row.milestoneCount),
-            },
-            {
-              key: "modules",
-              header: "Modules",
-              render: (row) => String(row.moduleCount),
-            },
-            {
               key: "lessons",
               header: "Lessons",
               render: (row) => String(row.lessonCount),
@@ -212,7 +167,7 @@ export default async function ContentPage({
               header: "",
               render: (row) => (
                 <Link
-                  href={`/content/courses/${row.id}`}
+                  href={`/content/courses/${row.id}/structure`}
                   className="text-sm font-medium text-scalex-red hover:underline"
                 >
                   Open

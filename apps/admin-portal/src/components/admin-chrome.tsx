@@ -16,10 +16,7 @@ import {
   ThemeToggle,
   type NavGroup,
 } from "@scalex/ui";
-import {
-  AdminCourseMobileTabs,
-  AdminCourseRail,
-} from "@/components/admin-course-rail";
+import { AdminCourseBar } from "@/components/admin-course-rail";
 import {
   buildAdminBreadcrumbs,
   parseCourseContext,
@@ -27,6 +24,28 @@ import {
 } from "@/lib/admin-nav";
 
 const SIDEBAR_COLLAPSE_KEY = "scalex-admin-sidebar-collapsed";
+
+function MenuIcon({ open }: { open: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden>
+      {open ? (
+        <path
+          d="M4 7h16M4 12h10M4 17h16"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      ) : (
+        <path
+          d="M4 7h16M4 12h16M4 17h16"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      )}
+    </svg>
+  );
+}
 
 function AdminNavLink({
   href,
@@ -59,7 +78,6 @@ type Notification = {
 export function AdminChrome({
   groups,
   footer,
-  collapsedFooter,
   notifications,
   markReadAction,
   courses,
@@ -67,7 +85,6 @@ export function AdminChrome({
 }: {
   groups: NavGroup[];
   footer: ReactNode;
-  collapsedFooter?: ReactNode;
   notifications: Notification[];
   markReadAction?: (formData: FormData) => Promise<void>;
   courses: AdminCourseOption[];
@@ -84,6 +101,7 @@ export function AdminChrome({
 
   const courseCtx = parseCourseContext(pathname);
   const crumbs = buildAdminBreadcrumbs({ pathname, courses });
+  const sidebarOpen = !collapsed;
 
   function toggleCollapsed() {
     const next = !collapsed;
@@ -91,70 +109,58 @@ export function AdminChrome({
     window.localStorage.setItem(SIDEBAR_COLLAPSE_KEY, next ? "1" : "0");
   }
 
+  const menuButton = (
+    <button
+      type="button"
+      aria-label={sidebarOpen ? "Hide menu" : "Show menu"}
+      aria-expanded={sidebarOpen}
+      onClick={toggleCollapsed}
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line bg-surface-2 text-foreground transition hover:bg-surface-3"
+    >
+      <MenuIcon open={sidebarOpen} />
+    </button>
+  );
+
   return (
     <div className="flex h-dvh min-h-0 overflow-hidden bg-surface">
       <div
-        className={`relative z-20 hidden h-full min-h-0 shrink-0 overflow-hidden md:block ${
-          collapsed ? "w-16" : "w-64"
+        className={`relative z-20 hidden h-full min-h-0 shrink-0 overflow-hidden transition-[width] duration-200 md:block ${
+          collapsed ? "w-0 border-r-0" : "w-64"
         }`}
       >
-        <NavSidebar
-          groups={groups}
-          brand={
-            collapsed ? (
-              <button
-                type="button"
-                aria-label="Expand sidebar"
-                onClick={toggleCollapsed}
-                className="mx-auto block"
-              >
-                <Logo size="sm" />
-              </button>
-            ) : (
+        {!collapsed ? (
+          <NavSidebar
+            groups={groups}
+            brand={
               <div className="flex items-start justify-between gap-2">
                 <Logo size="md" showTagline />
-                <button
-                  type="button"
-                  aria-label="Collapse sidebar"
-                  onClick={toggleCollapsed}
-                  className="mt-1 flex h-7 w-7 items-center justify-center rounded-lg border border-line text-muted hover:text-foreground"
-                >
-                  «
-                </button>
               </div>
-            )
-          }
-          headerSlot={
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Jump to…"
-              className="admin-input py-2"
-              aria-label="Jump to page"
-            />
-          }
-          footer={collapsed ? collapsedFooter ?? footer : footer}
-          linkComponent={AdminNavLink}
-          className="admin-sidebar-dark h-full min-h-0 w-full"
-          density="compact"
-          collapsibleGroups
-          collapsed={collapsed}
-          persistKey="scalex-admin-nav"
-          filterQuery={query}
-        />
+            }
+            headerSlot={
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Jump to…"
+                className="admin-input py-2"
+                aria-label="Jump to page"
+              />
+            }
+            footer={footer}
+            linkComponent={AdminNavLink}
+            className="admin-sidebar-dark h-full min-h-0 w-full"
+            density="compact"
+            collapsibleGroups
+            collapsed={false}
+            filterQuery={query}
+          />
+        ) : null}
       </div>
-
-      {courseCtx ? (
-        <AdminCourseRail
-          courses={courses}
-          currentCourseId={courseCtx.courseId}
-        />
-      ) : null}
 
       <div className="admin-main-canvas flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="z-10 flex shrink-0 items-center justify-between gap-3 border-b border-line bg-surface-2/90 px-4 py-3 backdrop-blur">
           <div className="flex min-w-0 items-center gap-3">
+            <div className="hidden md:block">{menuButton}</div>
             <div className="md:hidden">
               <MobileNav
                 groups={groups}
@@ -195,7 +201,10 @@ export function AdminChrome({
         </header>
 
         {courseCtx ? (
-          <AdminCourseMobileTabs currentCourseId={courseCtx.courseId} />
+          <AdminCourseBar
+            courses={courses}
+            currentCourseId={courseCtx.courseId}
+          />
         ) : null}
 
         <main className="admin-main-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 md:p-7 lg:p-8">

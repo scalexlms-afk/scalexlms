@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 import { createClient } from "@scalex/db/client";
 import { LESSON_MEDIA_BUCKET } from "@scalex/db/media";
-import { Button } from "@scalex/ui";
 
 type MediaUploadFieldProps = {
   folder: string;
@@ -27,6 +26,7 @@ export function MediaUploadField({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
 
   async function handleFileChange(file: File | null) {
     if (!file) return;
@@ -57,39 +57,52 @@ export function MediaUploadField({
 
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-muted">
-        {label}
-      </label>
+      <p className="mb-1.5 text-sm font-medium text-muted">{label}</p>
       <input type="hidden" name={name} value={url} />
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          ref={inputRef}
-          type="file"
-          accept={accept}
-          className="hidden"
-          onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
-        />
-        <Button
-          type="button"
-          className="!px-3 !py-2 text-xs"
-          disabled={uploading}
-          onClick={() => inputRef.current?.click()}
-        >
-          {uploading ? "Uploading…" : url ? "Replace file" : "Upload file"}
-        </Button>
-        {fileName && (
-          <span className="text-xs text-subtle">{fileName}</span>
-        )}
-        {url && !fileName && (
-          <span className="max-w-[200px] truncate text-xs text-accent-green">
-            File attached
-          </span>
-        )}
-      </div>
-      {helperText && (
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
+      />
+      <button
+        type="button"
+        disabled={uploading}
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragOver(false);
+          handleFileChange(event.dataTransfer.files?.[0] ?? null);
+        }}
+        className={`flex min-h-[160px] w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-8 text-center transition ${
+          dragOver
+            ? "border-scalex-red bg-scalex-red/10"
+            : "border-line bg-surface-3/40 hover:border-scalex-red/60 hover:bg-surface-3"
+        }`}
+      >
+        <span className="text-sm font-medium text-foreground">
+          {uploading
+            ? "Uploading…"
+            : fileName
+              ? fileName
+              : url
+                ? "File attached — drop a new file to replace"
+                : "Drop a video or PDF, or click to browse"}
+        </span>
+        <span className="mt-1 text-xs text-subtle">
+          MP4, WebM, or PDF
+        </span>
+      </button>
+      {helperText ? (
         <p className="mt-1 text-xs text-subtle">{helperText}</p>
-      )}
-      {error && <p className="mt-1 text-xs text-accent-danger">{error}</p>}
+      ) : null}
+      {error ? <p className="mt-1 text-xs text-accent-danger">{error}</p> : null}
     </div>
   );
 }

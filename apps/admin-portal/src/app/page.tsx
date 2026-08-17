@@ -45,7 +45,7 @@ function relativeTime(iso: string) {
 }
 
 const QUICK_ACTIONS = [
-  { href: "/content", label: "Create Course" },
+  { href: "/content", label: "New course" },
   { href: "/content", label: "Add Lesson" },
   { href: "/sessions", label: "Schedule Live Class" },
   { href: "/reviews", label: "Review Tasks", badgeKey: "reviews" as const },

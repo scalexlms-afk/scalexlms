@@ -61,7 +61,7 @@ export async function createCourseAction(formData: FormData) {
   });
 
   revalidateContent(data.id);
-  redirect(`/content/courses/${data.id}`);
+  redirect(`/content/courses/${data.id}/structure`);
 }
 
 export async function updateCourseAction(formData: FormData) {

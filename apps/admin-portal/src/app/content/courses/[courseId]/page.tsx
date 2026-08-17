@@ -3,6 +3,7 @@ import {
   AdminKpiGrid,
   AdminPanel,
 } from "@/components/admin-ui";
+import { updateCourseAction } from "@/app/content/actions";
 import { canAccess } from "@scalex/db/rbac";
 import { requireAdminProfile } from "@/lib/auth";
 import { getCourseAnalytics, getCourseById } from "@/lib/data";
@@ -75,14 +76,28 @@ export default async function CourseOverviewPage({
               href={`/content/courses/${course.id}/structure`}
               className="admin-btn-primary"
             >
-              Open structure
+              Edit content
             </Link>
-            {canEdit ? (
+            {canEdit && course.status !== "published" ? (
+              <form action={updateCourseAction}>
+                <input type="hidden" name="courseId" value={course.id} />
+                <input type="hidden" name="title" value={course.title} />
+                <input
+                  type="hidden"
+                  name="description"
+                  value={course.description ?? ""}
+                />
+                <input type="hidden" name="status" value="published" />
+                <button type="submit" className="admin-btn-secondary">
+                  Publish
+                </button>
+              </form>
+            ) : canEdit ? (
               <Link
                 href={`/content/courses/${course.id}/settings`}
                 className="admin-btn-secondary"
               >
-                Course settings
+                Settings
               </Link>
             ) : null}
           </div>

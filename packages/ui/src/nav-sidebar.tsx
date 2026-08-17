@@ -263,7 +263,6 @@ export function NavSidebar({
   density = "comfortable",
   collapsibleGroups = false,
   collapsed = false,
-  persistKey,
   filterQuery = "",
   headerSlot,
 }: NavSidebarProps) {
@@ -275,29 +274,17 @@ export function NavSidebar({
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     for (const group of groups) {
-      initial[group.title] = groupHasActive(group);
+      initial[group.title] = true;
     }
     return initial;
   });
-
-  useEffect(() => {
-    if (!persistKey || typeof window === "undefined") return;
-    try {
-      const raw = window.localStorage.getItem(persistKey);
-      if (!raw) return;
-      const stored = JSON.parse(raw) as Record<string, boolean>;
-      setOpenGroups((prev) => ({ ...prev, ...stored }));
-    } catch {
-      /* ignore */
-    }
-  }, [persistKey]);
 
   useEffect(() => {
     setOpenGroups((prev) => {
       const next = { ...prev };
       let changed = false;
       for (const group of groups) {
-        if (groupHasActive(group) && next[group.title] !== true) {
+        if (next[group.title] === undefined) {
           next[group.title] = true;
           changed = true;
         }
@@ -305,11 +292,6 @@ export function NavSidebar({
       return changed ? next : prev;
     });
   }, [groups]);
-
-  useEffect(() => {
-    if (!persistKey || typeof window === "undefined") return;
-    window.localStorage.setItem(persistKey, JSON.stringify(openGroups));
-  }, [openGroups, persistKey]);
 
   const searching = filterQuery.trim().length > 0;
 
