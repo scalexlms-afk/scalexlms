@@ -2,6 +2,7 @@ import { RoadmapAccordion } from "@/components/roadmap/roadmap-accordion";
 import { RoadmapFooter } from "@/components/roadmap/roadmap-footer";
 import { RoadmapHero } from "@/components/roadmap/roadmap-hero";
 import { RoadmapRail } from "@/components/roadmap/roadmap-rail";
+import { CourseCover } from "@scalex/ui";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { requireStudentProfile } from "@/lib/auth";
 import { getRoadmapPageData } from "@/lib/roadmap";
@@ -23,23 +24,30 @@ export default async function RoadmapPage() {
   return (
     <>
       <div className="academy-page space-y-8">
-        <div>
-          <Breadcrumbs
-            items={[
-              { label: "Dashboard", href: "/dashboard" },
-              { label: "Launch Roadmap" },
-            ]}
-          />
-          <h1 className="academy-page-heading font-display text-2xl font-bold md:text-3xl">
-            Launch Roadmap
-          </h1>
-          <p className="mt-1 max-w-2xl text-muted">
-            {data.courseDescription?.trim() ||
-              "Follow the proven path from beginner to successful Amazon seller."}
-          </p>
+        <div className="flex flex-wrap items-start gap-4">
+          <div className="relative h-20 w-32 shrink-0 overflow-hidden rounded-xl border border-line sm:h-24 sm:w-40">
+            <CourseCover src={data.coverSrc} title={data.courseTitle} />
+          </div>
+          <div>
+            <Breadcrumbs
+              items={[
+                { label: "Dashboard", href: "/dashboard" },
+                { label: "Launch Roadmap" },
+              ]}
+            />
+            <h1 className="academy-page-heading font-display text-2xl font-bold md:text-3xl">
+              {data.courseTitle}
+            </h1>
+            <p className="mt-1 max-w-2xl text-muted">
+              {data.courseDescription?.trim() ||
+                "Follow the proven path from beginner to successful Amazon seller."}
+            </p>
+          </div>
         </div>
 
         <RoadmapHero
+          courseTitle={data.courseTitle}
+          coverSrc={data.coverSrc}
           currentStage={data.currentStage}
           stepIndex={data.stepIndex}
           totalSteps={data.totalSteps}

@@ -5,9 +5,11 @@ import {
 } from "@/components/admin-ui";
 import { updateCourseAction } from "@/app/(app)/content/actions";
 import { canAccess } from "@scalex/db/rbac";
+import { courseCoverSrc } from "@scalex/db";
 import { requireAdminProfile } from "@/lib/auth";
 import { getCourseAnalytics, getCourseById } from "@/lib/data";
 import { formatPercent } from "@/lib/format";
+import { CourseCover } from "@scalex/ui";
 import { notFound } from "next/navigation";
 
 function countTree(course: NonNullable<Awaited<ReturnType<typeof getCourseById>>>) {
@@ -68,6 +70,14 @@ export default async function CourseOverviewPage({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <AdminPanel title="Curriculum">
+          <div className="mb-4 overflow-hidden rounded-xl border border-line">
+            <div className="relative aspect-video bg-surface-3">
+              <CourseCover
+                src={courseCoverSrc(course)}
+                title={course.title}
+              />
+            </div>
+          </div>
           <p className="text-sm text-muted">
             {course.description || "No description yet."}
           </p>

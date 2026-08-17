@@ -1,12 +1,13 @@
-import { Card, ProgressBar } from "@scalex/ui";
+import { Card, CourseCover, ProgressBar } from "@scalex/ui";
 import {
   AcademyCtaLink,
   academyEyebrowMutedClass,
 } from "@/components/academy-cta";
 import { AcademyHeroBackdrop } from "@/components/academy-hero-backdrop";
-import { AcademyIllustration } from "@/components/academy-illustration";
 
 export function RoadmapHero({
+  courseTitle,
+  coverSrc,
   currentStage,
   stepIndex,
   totalSteps,
@@ -15,6 +16,8 @@ export function RoadmapHero({
   estimatedTimeLabel,
   continueHref,
 }: {
+  courseTitle: string;
+  coverSrc: string;
   currentStage: string;
   stepIndex: number;
   totalSteps: number;
@@ -25,7 +28,7 @@ export function RoadmapHero({
 }) {
   return (
     <Card className="relative overflow-hidden border-scalex-red/25">
-      <AcademyHeroBackdrop src="/landing/pillar-ai.png" />
+      <AcademyHeroBackdrop src={coverSrc} />
       <div className="relative z-10 grid gap-6 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
         <div className="min-w-0">
           <p className={academyEyebrowMutedClass}>Your Business Journey</p>
@@ -44,8 +47,10 @@ export function RoadmapHero({
           </div>
         </div>
 
-        <div className="hidden justify-center lg:flex" aria-hidden="true">
-          <AcademyIllustration src="/illustrations/rocket-red.png" size={128} />
+        <div className="hidden justify-center lg:flex">
+          <div className="relative h-28 w-44 overflow-hidden rounded-xl border border-line shadow-sm">
+            <CourseCover src={coverSrc} title={courseTitle} />
+          </div>
         </div>
 
         <div className="min-w-0 lg:text-right">

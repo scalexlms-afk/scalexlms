@@ -1,3 +1,4 @@
+import { courseCoverSrc } from "@scalex/db";
 import type { Announcement } from "@scalex/db/types";
 import {
   ensureEnrollment,
@@ -46,6 +47,7 @@ export type DashboardData = {
   upcomingSessions: (LiveSession & { registered: boolean })[];
   badges: Badge[];
   remainingPayment: { id: string; amount: number; status: string } | null;
+  coverSrc: string | null;
 };
 
 function firstNameFrom(name: string) {
@@ -79,6 +81,7 @@ export async function getDashboardData(
     upcomingSessions: [],
     badges: [],
     remainingPayment: null,
+    coverSrc: null,
   };
 
   const [announcements, upcomingSessions, badges, remainingPayment] =
@@ -199,5 +202,6 @@ export async function getDashboardData(
     upcomingSessions,
     badges,
     remainingPayment,
+    coverSrc: courseCoverSrc(course),
   };
 }

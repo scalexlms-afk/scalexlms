@@ -54,6 +54,7 @@ export default async function DashboardPage() {
           stepIndex={data.stepIndex}
           totalSteps={data.totalSteps}
           completionPercent={data.completionPercent}
+          coverSrc={data.coverSrc}
         />
 
         <TodaysMission

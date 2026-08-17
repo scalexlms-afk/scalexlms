@@ -8,9 +8,10 @@ import {
 } from "@/components/admin-ui";
 import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { canAccess } from "@scalex/db/rbac";
+import { courseCoverSrc } from "@scalex/db";
 import { getCoursesSummary } from "@/lib/data";
 import { formatStatus } from "@/lib/format";
-import { DataTable, StatusPill } from "@scalex/ui";
+import { CourseCover, StatusPill } from "@scalex/ui";
 
 export default async function ContentPage({
   searchParams,
@@ -105,65 +106,51 @@ export default async function ContentPage({
             : undefined
         }
       >
-        <DataTable
-          emptyMessage={
-            q || statusFilter !== "all"
+        {filtered.length === 0 ? (
+          <p className="px-1 py-8 text-center text-sm text-muted">
+            {q || statusFilter !== "all"
               ? "No courses match your filters."
-              : "No courses yet. Use New course to start."
-          }
-          getRowKey={(row) => row.id}
-          rows={filtered}
-          columns={[
-            {
-              key: "title",
-              header: "Course",
-              render: (row) => (
-                <div>
-                  <Link
-                    href={`/content/courses/${row.id}`}
-                    className="font-medium text-foreground hover:text-scalex-red"
-                  >
-                    {row.title}
-                  </Link>
+              : "No courses yet. Use New course to start."}
+          </p>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((row) => (
+              <Link
+                key={row.id}
+                href={`/content/courses/${row.id}`}
+                className="group overflow-hidden rounded-2xl border border-line bg-surface-2 shadow-sm transition hover:border-scalex-red/40"
+              >
+                <div className="relative aspect-video overflow-hidden bg-surface-3">
+                  <CourseCover
+                    src={courseCoverSrc(row)}
+                    title={row.title}
+                  />
+                </div>
+                <div className="space-y-2 p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="font-display text-sm font-semibold text-foreground group-hover:text-scalex-red">
+                      {row.title}
+                    </h3>
+                    <StatusPill
+                      label={formatStatus(row.status)}
+                      variant={
+                        row.status === "published" ? "approved" : "pending"
+                      }
+                    />
+                  </div>
                   {row.description ? (
-                    <p className="mt-0.5 line-clamp-1 text-xs text-subtle">
+                    <p className="line-clamp-2 text-xs text-subtle">
                       {row.description}
                     </p>
                   ) : null}
+                  <p className="text-xs text-muted">
+                    {row.lessonCount} lesson{row.lessonCount === 1 ? "" : "s"}
+                  </p>
                 </div>
-              ),
-            },
-            {
-              key: "status",
-              header: "Status",
-              render: (row) => (
-                <StatusPill
-                  label={formatStatus(row.status)}
-                  variant={
-                    row.status === "published" ? "approved" : "pending"
-                  }
-                />
-              ),
-            },
-            {
-              key: "lessons",
-              header: "Lessons",
-              render: (row) => String(row.lessonCount),
-            },
-            {
-              key: "open",
-              header: "",
-              render: (row) => (
-                <Link
-                  href={`/content/courses/${row.id}/structure`}
-                  className="text-sm font-medium text-scalex-red hover:underline"
-                >
-                  Open
-                </Link>
-              ),
-            },
-          ]}
-        />
+              </Link>
+            ))}
+          </div>
+        )}
       </AdminPanel>
     </>
   );

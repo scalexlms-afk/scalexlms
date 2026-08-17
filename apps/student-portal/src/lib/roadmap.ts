@@ -1,4 +1,5 @@
 import type { Lesson } from "@scalex/db/types";
+import { courseCoverSrc } from "@scalex/db";
 import { promptsForStage } from "@/lib/continue-learning";
 import { getDashboardData, type DashboardMilestone } from "@/lib/dashboard";
 import {
@@ -34,6 +35,7 @@ export type RoadmapMilestoneItem = {
 export type RoadmapPageData = {
   courseTitle: string;
   courseDescription: string | null;
+  coverSrc: string;
   currentStage: string;
   stepIndex: number;
   totalSteps: number;
@@ -217,6 +219,7 @@ export async function getRoadmapPageData(
   return {
     courseTitle: course.title,
     courseDescription: course.description,
+    coverSrc: courseCoverSrc(course),
     currentStage: dashboard.currentStage,
     stepIndex: dashboard.stepIndex,
     totalSteps: dashboard.totalSteps,

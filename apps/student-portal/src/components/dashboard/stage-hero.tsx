@@ -8,15 +8,17 @@ export function StageHero({
   stepIndex,
   totalSteps,
   completionPercent,
+  coverSrc,
 }: {
   stageTitle: string;
   stepIndex: number;
   totalSteps: number;
   completionPercent: number;
+  coverSrc?: string | null;
 }) {
   return (
     <Card className="relative overflow-hidden border-scalex-red/20">
-      <AcademyHeroBackdrop />
+      <AcademyHeroBackdrop src={coverSrc || undefined} />
       <div className="relative z-10 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0 flex-1">
           <p className={academyEyebrowMutedClass}>Business Stage</p>

@@ -50,6 +50,8 @@ User ──┬── Enrollment ── Course ── Milestone ── Module ─
 | status | enum | `draft \| published \| archived` |
 | created_by | uuid FK → User | instructor/admin |
 
+Course cards use a cover image from `/courses/{slug}.png` in each portal (`amazon-fba-private-label-mastery.png`, `abcd-test.png`).
+
 ### `Milestone`
 | Field | Type | Notes |
 |---|---|---|

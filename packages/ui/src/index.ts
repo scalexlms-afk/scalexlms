@@ -1,4 +1,5 @@
 export { Button } from "./button";
+export { CourseCover } from "./course-cover";
 export { Card } from "./card";
 export { Logo } from "./logo";
 export { NotificationBell, BadgeMedallion } from "./notification-bell";
