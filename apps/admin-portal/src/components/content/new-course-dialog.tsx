@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Field, TextArea } from "@/components/field";
-import { createCourseAction } from "@/app/content/actions";
+import { createCourseAction } from "@/app/(app)/content/actions";
 import { Button } from "@scalex/ui";
 
 export function NewCourseDialog() {

@@ -1,4 +1,4 @@
-import { createMilestoneAction } from "@/app/content/actions";
+import { createMilestoneAction } from "@/app/(app)/content/actions";
 import { Field } from "@/components/field";
 import { Button } from "@scalex/ui";
 

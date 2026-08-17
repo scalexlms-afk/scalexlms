@@ -5,7 +5,7 @@ import {
   getCompletedLessonIds,
   getCourseWithRoadmap,
   getPublishedCourse,
-  getTasksByMilestoneId,
+  getTasksByMilestoneIds,
   isMilestoneUnlocked,
 } from "@/lib/data";
 
@@ -88,16 +88,23 @@ export async function getRoadmapPageData(
     (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
   );
 
-  const unlockStates = await Promise.all(
-    ordered.map(async (ms) => {
-      const tasks = await getTasksByMilestoneId(ms.id);
-      return {
-        id: ms.id,
-        unlocked: await isMilestoneUnlocked(userId, ms.id),
-        task: tasks[0] ?? null,
-      };
-    })
-  );
+  const milestoneIds = ordered.map((ms) => ms.id);
+  const [milestoneTasks, unlockFlags] = await Promise.all([
+    getTasksByMilestoneIds(milestoneIds),
+    Promise.all(ordered.map((ms) => isMilestoneUnlocked(userId, ms.id))),
+  ]);
+  const firstTaskByMilestone = new Map<string, (typeof milestoneTasks)[number]>();
+  for (const task of milestoneTasks) {
+    const key = task.milestone_id ?? "";
+    if (key && !firstTaskByMilestone.has(key)) {
+      firstTaskByMilestone.set(key, task);
+    }
+  }
+  const unlockStates = ordered.map((ms, index) => ({
+    id: ms.id,
+    unlocked: unlockFlags[index] ?? false,
+    task: firstTaskByMilestone.get(ms.id) ?? null,
+  }));
   const unlockById = new Map(unlockStates.map((s) => [s.id, s]));
 
   const milestones: RoadmapMilestoneItem[] = ordered.map((ms) => {

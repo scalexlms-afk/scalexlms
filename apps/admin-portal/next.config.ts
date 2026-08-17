@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
     // Monorepo root — avoids picking up stray lockfiles outside the repo.
     root: path.join(__dirname, "../.."),
   },
+  experimental: {
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
+  },
 };
 
 export default nextConfig;

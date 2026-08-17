@@ -19,7 +19,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { planLabel, planPillVariant } from "@scalex/db";
 import { getSessionProfile } from "@/lib/auth";
-import { getNotifications, getStudentJourneySummary } from "@/lib/data";
+import { getNotifications, getSidebarProgress } from "@/lib/data";
 import { PortalChrome } from "@/components/portal-chrome";
 import { redirect } from "next/navigation";
 
@@ -115,9 +115,9 @@ export async function PortalShell({
 
   const { userId, profile } = session;
 
-  const [notifications, journey] = await Promise.all([
+  const [notifications, progress] = await Promise.all([
     getNotifications(userId),
-    getStudentJourneySummary(userId),
+    getSidebarProgress(userId),
   ]);
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
@@ -223,9 +223,9 @@ export async function PortalShell({
       email={email}
       avatarUrl={profile.avatar_url ?? null}
       plan={profile.plan ?? null}
-      completionPercent={journey.completionPercent}
-      milestoneIndex={journey.milestoneIndex}
-      milestoneTotal={journey.milestoneTotal}
+      completionPercent={progress.completionPercent}
+      milestoneIndex={progress.milestoneIndex}
+      milestoneTotal={progress.milestoneTotal}
     />
   );
 

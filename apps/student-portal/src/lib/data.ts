@@ -224,6 +224,42 @@ function computeProgramAccess(enrolledAt: string | null): {
   };
 }
 
+export const getSidebarProgress = cache(
+  async (
+    studentId: string
+  ): Promise<{
+    completionPercent: number;
+    milestoneIndex: number;
+    milestoneTotal: number;
+  }> => {
+    const empty = {
+      completionPercent: 0,
+      milestoneIndex: 1,
+      milestoneTotal: 8,
+    };
+    const course = await getPublishedCourse();
+    if (!course) return empty;
+
+    const supabase = await createClient();
+    const [enrollment, milestoneCount] = await Promise.all([
+      getEnrollment(studentId, course.id),
+      supabase
+        .from("milestones")
+        .select("id", { count: "exact", head: true })
+        .eq("course_id", course.id),
+    ]);
+
+    const milestoneTotal = Math.max(1, milestoneCount.count ?? 8);
+    const completionPercent = enrollment?.completion_percent ?? 0;
+    const milestoneIndex = Math.min(
+      milestoneTotal,
+      Math.max(1, Math.ceil((completionPercent / 100) * milestoneTotal) || 1)
+    );
+
+    return { completionPercent, milestoneIndex, milestoneTotal };
+  }
+);
+
 /** Sidebar / continue-learning journey rollup for the student portal. */
 export const getStudentJourneySummary = cache(
   async (studentId: string): Promise<StudentJourneySummary> => {
@@ -455,6 +491,19 @@ export async function getTasksByMilestoneId(
   return (data ?? []) as Task[];
 }
 
+export async function getTasksByMilestoneIds(
+  milestoneIds: string[]
+): Promise<Task[]> {
+  if (milestoneIds.length === 0) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("tasks")
+    .select("*")
+    .in("milestone_id", milestoneIds)
+    .order("created_at", { ascending: true });
+  return (data ?? []) as Task[];
+}
+
 export async function getTaskById(taskId: string): Promise<Task | null> {
   const supabase = await createClient();
   const { data } = await supabase
@@ -463,6 +512,28 @@ export async function getTaskById(taskId: string): Promise<Task | null> {
     .eq("id", taskId)
     .maybeSingle();
   return data as Task | null;
+}
+
+export async function getSubmissionsForTasks(
+  taskIds: string[],
+  studentId: string
+): Promise<(Submission & { reviews: Review[] })[]> {
+  if (taskIds.length === 0) return [];
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("submissions")
+    .select("*, reviews(*)")
+    .eq("student_id", studentId)
+    .in("task_id", taskIds);
+
+  return ((data ?? []) as (Submission & { reviews: Review[] })[]).map(
+    (row) => ({
+      ...row,
+      reviews: [...(row.reviews ?? [])].sort((a, b) =>
+        a.reviewed_at < b.reviewed_at ? 1 : -1
+      ),
+    })
+  );
 }
 
 export async function getSubmissionForTask(

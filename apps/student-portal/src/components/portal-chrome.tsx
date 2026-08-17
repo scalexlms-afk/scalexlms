@@ -26,6 +26,11 @@ const ACADEMY_ROUTES = [
   "/roadmap",
   "/tasks",
   "/achievements",
+  "/community",
+  "/sessions",
+  "/messages",
+  "/support",
+  "/ai-mentor",
 ] as const;
 
 function PortalNavLink({

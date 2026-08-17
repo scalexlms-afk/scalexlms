@@ -16,7 +16,7 @@ import {
   updateMilestoneAction,
   updateModuleAction,
   updateTaskAction,
-} from "@/app/content/actions";
+} from "@/app/(app)/content/actions";
 import { Button, StatusPill } from "@scalex/ui";
 import type { ContentEntityType } from "./content-tree";
 import type { ContentTask } from "@/lib/data";

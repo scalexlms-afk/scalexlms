@@ -3,8 +3,8 @@ import type { NavGroup } from "@scalex/ui";
 import { getPermission, type Feature } from "@scalex/db/rbac";
 import type { UserRole } from "@scalex/db/types";
 import { requireAdminProfile } from "@/lib/auth";
-import { getAdminNotifications, getCoursesSummary, getDashboardStats, getOpenSupportTicketCount } from "@/lib/data";
-import { markNotificationRead } from "@/app/notifications/actions";
+import { getAdminNotifications, getCoursesList, getNavBadgeCounts } from "@/lib/data";
+import { markNotificationRead } from "@/app/(app)/notifications/actions";
 import { AdminChrome } from "@/components/admin-chrome";
 
 const iconClass = "h-4 w-4";
@@ -182,14 +182,8 @@ const NAV_CATALOG: { title: string; items: NavDef[] }[] = [
   },
 ];
 
-function pathActive(activePath: string, href: string) {
-  if (href === "/") return activePath === "/";
-  return activePath === href || activePath.startsWith(`${href}/`);
-}
-
 function buildNavGroups(
   role: UserRole,
-  activePath: string,
   badges: Partial<Record<NonNullable<NavDef["badgeKey"]>, number>>
 ): NavGroup[] {
   return NAV_CATALOG.map((group) => ({
@@ -200,7 +194,6 @@ function buildNavGroups(
         label: item.label,
         href: item.href,
         icon: item.icon,
-        active: pathActive(activePath, item.href),
         badge:
           item.badgeKey && badges[item.badgeKey]
             ? badges[item.badgeKey]
@@ -216,27 +209,28 @@ function roleLabel(role: UserRole): string {
 
 export async function AdminShell({
   children,
-  activePath,
 }: {
   children: React.ReactNode;
-  activePath: string;
 }) {
   const { profile, userId } = await requireAdminProfile();
-  const [notifications, stats, openTickets, courses] = await Promise.all([
+  const [notifications, badgeCounts, courses] = await Promise.all([
     getAdminNotifications(userId),
-    getDashboardStats({ userId, role: profile.role }).catch(() => null),
-    getOpenSupportTicketCount({ userId, role: profile.role }).catch(() => 0),
-    getCoursesSummary().catch(() => []),
+    getNavBadgeCounts({ userId, role: profile.role }).catch(() => ({
+      pendingReviews: 0,
+      upcomingSessions: 0,
+      openTickets: 0,
+    })),
+    getCoursesList().catch(() => []),
   ]);
 
   const badges = {
-    reviews: stats?.pendingReviews ?? 0,
-    sessions: stats?.upcomingSessions ?? 0,
+    reviews: badgeCounts.pendingReviews,
+    sessions: badgeCounts.upcomingSessions,
     messages: notifications.filter((n) => !n.read_at).length,
-    support: openTickets,
+    support: badgeCounts.openTickets,
   };
 
-  const groups = buildNavGroups(profile.role, activePath, badges);
+  const groups = buildNavGroups(profile.role, badges);
 
   const footer = (
     <div className="text-sm">

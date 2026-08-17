@@ -5,7 +5,7 @@ import { Field, TextArea } from "@/components/field";
 import {
   deleteCourseAction,
   updateCourseAction,
-} from "@/app/content/actions";
+} from "@/app/(app)/content/actions";
 import { Button } from "@scalex/ui";
 
 type CourseStatus = "draft" | "published" | "archived";

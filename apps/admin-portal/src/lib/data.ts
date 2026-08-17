@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@scalex/db/server";
 import type {
   LeadStage,
@@ -1137,7 +1138,7 @@ function mapContentTask(t: Record<string, unknown>): ContentTask {
   };
 }
 
-export async function getContentTree(courseId?: string): Promise<ContentCourse[]> {
+export const getContentTree = cache(async (courseId?: string): Promise<ContentCourse[]> => {
   const db = getServiceDb();
   let query = db
     .from("courses")
@@ -1283,11 +1284,68 @@ export async function getContentTree(courseId?: string): Promise<ContentCourse[]
       } satisfies ContentCourse;
     }
   );
+});
+
+export const getCourseById = cache(
+  async (courseId: string): Promise<ContentCourse | null> => {
+    const courses = await getContentTree(courseId);
+    return courses[0] ?? null;
+  }
+);
+
+export async function getCourseExists(courseId: string): Promise<boolean> {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("courses")
+    .select("id")
+    .eq("id", courseId)
+    .maybeSingle();
+  if (error) return false;
+  return Boolean(data);
 }
 
-export async function getCourseById(courseId: string): Promise<ContentCourse | null> {
-  const courses = await getContentTree(courseId);
-  return courses[0] ?? null;
+export async function getCoursesList(): Promise<
+  { id: string; title: string; status: string }[]
+> {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("courses")
+    .select("id, title, status")
+    .order("created_at", { ascending: true });
+  if (error) return [];
+  return data ?? [];
+}
+
+export async function getNavBadgeCounts(scope: AdminScope): Promise<{
+  pendingReviews: number;
+  upcomingSessions: number;
+  openTickets: number;
+}> {
+  const db = getServiceDb();
+  const scopedStudentIds = await getScopedStudentIds(scope);
+
+  const [pendingReviews, upcomingSessions, openTickets] = await Promise.all([
+    (async () => {
+      let query = db
+        .from("submissions")
+        .select("*", { count: "exact", head: true })
+        .in("status", ["submitted", "under_review"]);
+      if (scopedStudentIds) {
+        if (scopedStudentIds.length === 0) return 0;
+        query = query.in("student_id", scopedStudentIds);
+      }
+      const { count } = await query;
+      return count ?? 0;
+    })(),
+    countTable("live_sessions", {
+      column: "scheduled_at",
+      op: "gt",
+      value: new Date().toISOString(),
+    }),
+    getOpenSupportTicketCount(scope),
+  ]);
+
+  return { pendingReviews, upcomingSessions, openTickets };
 }
 
 export type CourseStudentRow = {

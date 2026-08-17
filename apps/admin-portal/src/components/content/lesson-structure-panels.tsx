@@ -23,7 +23,7 @@ import {
   updateQuizQuestionAction,
   updateTaskAction,
   updateUnlockRuleAction,
-} from "@/app/content/actions";
+} from "@/app/(app)/content/actions";
 import { Button, StatusPill } from "@scalex/ui";
 
 const FORMAT_OPTIONS = ["image", "excel", "pdf", "link", "text"] as const;

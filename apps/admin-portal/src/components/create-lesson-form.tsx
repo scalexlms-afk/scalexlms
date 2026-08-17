@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Field, TextArea, inputClasses } from "@/components/field";
 import { MediaUploadField } from "@/components/media-upload-field";
-import { createLessonAction } from "@/app/content/actions";
+import { createLessonAction } from "@/app/(app)/content/actions";
 import { Button } from "@scalex/ui";
 
 export function CreateLessonForm({

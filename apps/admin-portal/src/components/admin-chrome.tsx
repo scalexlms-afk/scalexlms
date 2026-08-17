@@ -47,6 +47,21 @@ function MenuIcon({ open }: { open: boolean }) {
   );
 }
 
+function pathActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function withActiveGroups(groups: NavGroup[], pathname: string): NavGroup[] {
+  return groups.map((group) => ({
+    ...group,
+    items: group.items.map((item) => ({
+      ...item,
+      active: item.href ? pathActive(pathname, item.href) : Boolean(item.active),
+    })),
+  }));
+}
+
 function AdminNavLink({
   href,
   className,
@@ -101,6 +116,7 @@ export function AdminChrome({
 
   const courseCtx = parseCourseContext(pathname);
   const crumbs = buildAdminBreadcrumbs({ pathname, courses });
+  const activeGroups = withActiveGroups(groups, pathname);
   const sidebarOpen = !collapsed;
 
   function toggleCollapsed() {
@@ -130,7 +146,7 @@ export function AdminChrome({
       >
         {!collapsed ? (
           <NavSidebar
-            groups={groups}
+            groups={activeGroups}
             brand={
               <div className="flex items-start justify-between gap-2">
                 <Logo size="md" showTagline />
@@ -163,7 +179,7 @@ export function AdminChrome({
             <div className="hidden md:block">{menuButton}</div>
             <div className="md:hidden">
               <MobileNav
-                groups={groups}
+                groups={activeGroups}
                 brand={<Logo size="sm" />}
                 linkComponent={AdminNavLink}
                 footer={footer}
@@ -208,7 +224,7 @@ export function AdminChrome({
         ) : null}
 
         <main className="admin-main-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain p-5 md:p-7 lg:p-8">
-          <div className="mx-auto max-w-[1600px] animate-fade-in space-y-5">
+          <div className="mx-auto max-w-[1600px] space-y-5">
             {children}
           </div>
         </main>

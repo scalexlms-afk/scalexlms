@@ -8,7 +8,7 @@ import {
   deleteLessonAction,
   reextractLessonPdfAction,
   updateLessonAction,
-} from "@/app/content/actions";
+} from "@/app/(app)/content/actions";
 import { Button } from "@scalex/ui";
 
 type Lesson = {

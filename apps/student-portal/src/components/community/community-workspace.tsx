@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { CommunityHero } from "@/components/community/community-hero";
 import { ChannelChips } from "@/components/community/channel-chips";
 import { CreatePostCard } from "@/components/community/create-post-card";
@@ -25,7 +25,6 @@ export function CommunityWorkspace({
   activeChannel: CommunityChannel | "latest";
   loadMoreHref: string | null;
 }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const initialQ = searchParams.get("q")?.trim() ?? "";
   const [searchQuery, setSearchQuery] = useState(initialQ);
@@ -50,12 +49,6 @@ export function CommunityWorkspace({
 
   function handleSearchChange(value: string) {
     setSearchQuery(value);
-    const params = new URLSearchParams(searchParams.toString());
-    const trimmed = value.trim();
-    if (trimmed) params.set("q", trimmed);
-    else params.delete("q");
-    const qs = params.toString();
-    router.replace(qs ? `/community?${qs}` : "/community", { scroll: false });
   }
 
   function focusComposer() {

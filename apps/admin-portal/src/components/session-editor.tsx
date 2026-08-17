@@ -6,7 +6,7 @@ import { MediaPreview } from "@/components/media-preview";
 import {
   deleteSessionAction,
   updateSessionAction,
-} from "@/app/sessions/actions";
+} from "@/app/(app)/sessions/actions";
 import { Button } from "@scalex/ui";
 
 type SessionEditorProps = {

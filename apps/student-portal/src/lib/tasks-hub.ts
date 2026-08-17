@@ -5,8 +5,8 @@ import {
   getCompletedLessonIds,
   getCourseWithRoadmap,
   getPublishedCourse,
-  getSubmissionForTask,
-  getTasksByMilestoneId,
+  getSubmissionsForTasks,
+  getTasksByMilestoneIds,
   isMilestoneUnlocked,
   type SubmissionStatus,
   type Task,
@@ -302,16 +302,34 @@ export async function getTasksHubData(
     (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
   );
 
+  const milestoneIds = ordered.map((ms) => ms.id);
+  const milestoneTasks = await getTasksByMilestoneIds(milestoneIds);
+  const [unlockFlags, submissions] = await Promise.all([
+    Promise.all(ordered.map((ms) => isMilestoneUnlocked(userId, ms.id))),
+    getSubmissionsForTasks(
+      milestoneTasks.map((task) => task.id),
+      userId
+    ),
+  ]);
+  const submissionByTaskId = new Map(
+    submissions.map((submission) => [submission.task_id, submission])
+  );
+  const tasksByMilestoneId = new Map<string, Task[]>();
+  for (const task of milestoneTasks) {
+    const key = task.milestone_id ?? "";
+    const list = tasksByMilestoneId.get(key) ?? [];
+    list.push(task);
+    tasksByMilestoneId.set(key, list);
+  }
+
   const allTasks: HubTaskItem[] = [];
 
-  for (const ms of ordered) {
-    const [tasks, unlocked] = await Promise.all([
-      getTasksByMilestoneId(ms.id),
-      isMilestoneUnlocked(userId, ms.id),
-    ]);
+  ordered.forEach((ms, index) => {
+    const tasks = tasksByMilestoneId.get(ms.id) ?? [];
+    const unlocked = unlockFlags[index] ?? false;
 
     for (const task of tasks) {
-      const submission = await getSubmissionForTask(task.id, userId);
+      const submission = submissionByTaskId.get(task.id);
       const status = (submission?.status ?? "not_started") as SubmissionStatus;
       const latestReview = submission?.reviews?.[0] ?? null;
 
@@ -325,7 +343,7 @@ export async function getTasksHubData(
         reviewedAt: latestReview?.reviewed_at ?? null,
       });
     }
-  }
+  });
 
   let pending = 0;
   let underReview = 0;
@@ -386,10 +404,7 @@ export async function getTasksHubData(
         ? "1 lesson left"
         : `${remaining.length} lessons left`);
 
-  const submission = await getSubmissionForTask(
-    currentItem.task.id,
-    userId
-  );
+  const submission = submissionByTaskId.get(currentItem.task.id);
   const hasAiNotes = Boolean(submission?.ai_notes || submission?.ai_score != null);
   const hasMentorReview = Boolean(submission?.reviews?.[0]);
   const canSubmit =
