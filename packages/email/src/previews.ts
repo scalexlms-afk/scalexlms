@@ -1,6 +1,7 @@
 import {
   passwordOtpEmailHtml,
   remainingPaymentEmailHtml,
+  staffInviteEmailHtml,
   taskReviewedEmailHtml,
   welcomeEmailHtml,
 } from "./templates";
@@ -75,6 +76,15 @@ export function getEmailPreviews(): EmailPreview[] {
         code: "482913",
         portalLabel: "LaunchPad",
         expiresMinutes: 10,
+      }),
+    },
+    {
+      name: "Staff invite",
+      subject: "You're invited to ScaleX as Mentor",
+      html: staffInviteEmailHtml({
+        roleLabel: "Mentor",
+        inviteUrl: "https://admin.scalexlms.com/invite/preview",
+        inviterName: "Jordan Lee",
       }),
     },
   ];

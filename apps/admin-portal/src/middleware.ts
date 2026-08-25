@@ -8,7 +8,7 @@ import {
   scalexNavCookieOptions,
 } from "@scalex/db/nav-cookies";
 
-const PUBLIC_ROUTES = ["/login", "/auth/callback", "/reset-password"];
+const PUBLIC_ROUTES = ["/login", "/auth/callback", "/reset-password", "/invite"];
 
 function copyCookies(from: NextResponse, to: NextResponse) {
   from.cookies.getAll().forEach((cookie) => {

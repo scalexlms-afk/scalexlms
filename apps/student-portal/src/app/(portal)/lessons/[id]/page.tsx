@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ProtectedMediaPlayer } from "@/components/protected-media-player";
+import { ScreenRecordingNotice } from "@/components/screen-recording-notice";
 import { QuizPlayer } from "@/components/lessons/quiz-player";
 import { requireStudentProfile } from "@/lib/auth";
 import {
@@ -14,6 +15,7 @@ import { getSecureMediaUrl } from "@/lib/secure-media";
 import { createClient } from "@scalex/db/server";
 import { isLessonStorageMedia } from "@scalex/db/media";
 import { Card, Button, StatusPill } from "@scalex/ui";
+import { getStudentPlatformPrefs } from "@/lib/platform-prefs";
 import { markLessonComplete } from "../actions";
 
 export default async function LessonPage({
@@ -23,7 +25,10 @@ export default async function LessonPage({
 }) {
   const { id } = await params;
   const { userId, profile } = await requireStudentProfile();
-  const lesson = await getLessonById(id);
+  const [lesson, platformPrefs] = await Promise.all([
+    getLessonById(id),
+    getStudentPlatformPrefs(),
+  ]);
 
   if (!lesson) notFound();
 
@@ -122,6 +127,10 @@ export default async function LessonPage({
             {isComplete && <StatusPill label="Completed" variant="approved" />}
           </div>
         </div>
+
+        {platformPrefs.detectScreenRecording ? (
+          <ScreenRecordingNotice />
+        ) : null}
 
         <Card>
           {lesson.content_type === "video" || lesson.content_type === "pdf" ? (

@@ -208,6 +208,7 @@ export async function updateStaffNotificationPrefsAction(formData: FormData) {
 const PLATFORM_SETTING_KEYS = [
   "branding",
   "auth",
+  "security",
   "email",
   "ai",
   "storage",
@@ -237,6 +238,7 @@ function formValueToJson(
         accent: String(formData.get("accent") ?? "").trim(),
         supportEmail: String(formData.get("supportEmail") ?? "").trim(),
         logoUrl: String(formData.get("logoUrl") ?? "").trim(),
+        introVideoUrl: String(formData.get("introVideoUrl") ?? "").trim(),
       };
     case "auth":
       return {
@@ -247,6 +249,12 @@ function formValueToJson(
         allowPasswordReset:
           formData.get("allowPasswordReset") === "on" ||
           formData.get("allowPasswordReset") === "true",
+      };
+    case "security":
+      return {
+        detectScreenRecording:
+          formData.get("detectScreenRecording") === "on" ||
+          formData.get("detectScreenRecording") === "true",
       };
     case "email":
       return {

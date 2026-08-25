@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { PLATFORM_STORAGE_BUCKETS } from "@scalex/db";
 import { createClient } from "@scalex/db/server";
 import type {
   LeadStage,
@@ -2242,3 +2243,40 @@ export async function getPendingStaffInvites(): Promise<StaffInviteRow[]> {
   return (data ?? []) as StaffInviteRow[];
 }
 
+export type StorageBucketStatus = {
+  id: string;
+  label: string;
+  purpose: string;
+  configured: boolean;
+  listed: boolean;
+};
+
+export async function getStorageBucketStatus(): Promise<StorageBucketStatus[]> {
+  const db = getServiceDb();
+  let existing = new Set<string>();
+  let listed = false;
+  try {
+    const { data, error } = await db.storage.listBuckets();
+    if (!error) {
+      listed = true;
+      existing = new Set(
+        (data ?? []).map((bucket) => bucket.id || bucket.name).filter(Boolean)
+      );
+    } else {
+      console.error("getStorageBucketStatus:", error.message);
+    }
+  } catch (err) {
+    console.error(
+      "getStorageBucketStatus:",
+      err instanceof Error ? err.message : err
+    );
+  }
+
+  return PLATFORM_STORAGE_BUCKETS.map((bucket) => ({
+    id: bucket.id,
+    label: bucket.label,
+    purpose: bucket.purpose,
+    configured: listed && existing.has(bucket.id),
+    listed,
+  }));
+}

@@ -14,6 +14,7 @@ import {
   getPlatformSettings,
   getRecentAuditLogs,
   getStaffNotificationPrefs,
+  getStorageBucketStatus,
 } from "@/lib/data";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { canAccess } from "@scalex/db/rbac";
@@ -96,13 +97,14 @@ export default async function SettingsPage({
   const platformKeys = [
     "branding",
     "auth",
+    "security",
     "email",
     "ai",
     "storage",
     "backup",
   ] as const;
 
-  const [planSettings, auditLogs, notifPrefs, platformSettings] =
+  const [planSettings, auditLogs, notifPrefs, platformSettings, storageBuckets] =
     await Promise.all([
       getPaymentPlanSettings(),
       activeSection === "audit" ? getRecentAuditLogs(50) : Promise.resolve([]),
@@ -110,6 +112,9 @@ export default async function SettingsPage({
         ? getStaffNotificationPrefs(userId)
         : Promise.resolve(null),
       getPlatformSettings([...platformKeys]),
+      activeSection === "storage"
+        ? getStorageBucketStatus()
+        : Promise.resolve([]),
     ]);
 
   const branding = platformSettings.branding ?? {};
@@ -118,6 +123,7 @@ export default async function SettingsPage({
   const aiPrefs = platformSettings.ai ?? {};
   const storagePrefs = platformSettings.storage ?? {};
   const backupPrefs = platformSettings.backup ?? {};
+  const securityPrefs = platformSettings.security ?? {};
 
   const stripeConfigured = Boolean(process.env.STRIPE_SECRET_KEY);
   const resendConfigured = Boolean(process.env.RESEND_API_KEY);
@@ -125,6 +131,17 @@ export default async function SettingsPage({
     process.env.LONGCAT_API_KEY || process.env.OPENAI_API_KEY
   );
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  let supabaseProjectRef = "";
+  try {
+    if (supabaseUrl) {
+      supabaseProjectRef = new URL(supabaseUrl).hostname.split(".")[0] ?? "";
+    }
+  } catch {
+    supabaseProjectRef = "";
+  }
+  const supabaseBackupsUrl = supabaseProjectRef
+    ? `https://supabase.com/dashboard/project/${supabaseProjectRef}/database/backups`
+    : null;
 
   const sectionTabs = SETTINGS_SECTIONS.map((s) => ({
     id: s.id,
@@ -209,7 +226,14 @@ export default async function SettingsPage({
                       />
                     </div>
                     <p className="text-xs text-subtle">
-                      Email is managed via Auth. Role changes live on{" "}
+                      Beginner intro video lives under{" "}
+                      <Link
+                        href="/settings?section=branding"
+                        className="font-semibold text-scalex-red hover:underline"
+                      >
+                        Branding
+                      </Link>
+                      . Email is managed via Auth. Role changes live on{" "}
                       <Link
                         href="/team"
                         className="font-semibold text-scalex-red hover:underline"
@@ -353,6 +377,18 @@ export default async function SettingsPage({
                     defaultUrl={str(branding.logoUrl)}
                     helperText="PNG, JPG, SVG, or WebP"
                   />
+                  <Field
+                    label="Beginner intro video URL"
+                    name="introVideoUrl"
+                    type="url"
+                    placeholder="https://www.youtube.com/watch?v=…"
+                    defaultValue={str(branding.introVideoUrl)}
+                  />
+                  <p className="text-xs text-subtle">
+                    Optional YouTube, Vimeo, or MP4 URL shown on the student
+                    dashboard “How this works” card. Leave empty to keep the
+                    text steps.
+                  </p>
                   <SaveBar />
                 </form>
               </AdminPanel>
@@ -406,6 +442,29 @@ export default async function SettingsPage({
                       type="checkbox"
                       name="allowPasswordReset"
                       defaultChecked={bool(authPrefs.allowPasswordReset, true)}
+                      className="h-4 w-4 accent-[var(--color-scalex-red)]"
+                    />
+                  </label>
+                  <SaveBar />
+                </form>
+                <form action={updatePlatformSettingAction} className="mt-6 space-y-4 border-t border-line pt-6">
+                  <input type="hidden" name="key" value="security" />
+                  <input type="hidden" name="section" value="auth" />
+                  <p className="text-sm font-medium">Lesson recording notice</p>
+                  <p className="text-xs text-subtle">
+                    Best-effort UI only. Students see a notice on lesson and
+                    video pages. Nothing is uploaded, and screens are not
+                    captured.
+                  </p>
+                  <label className="flex items-center justify-between rounded-xl border border-line bg-surface-3 px-4 py-3 text-sm">
+                    <span>Detect screen recording (best-effort)</span>
+                    <input
+                      type="checkbox"
+                      name="detectScreenRecording"
+                      defaultChecked={bool(
+                        securityPrefs.detectScreenRecording,
+                        false
+                      )}
                       className="h-4 w-4 accent-[var(--color-scalex-red)]"
                     />
                   </label>
@@ -569,8 +628,19 @@ export default async function SettingsPage({
                       value: maskConfiguredSecret(stripeConfigured, "sk_"),
                     },
                     {
+                      name: "Stripe webhook",
+                      value: maskConfiguredSecret(
+                        Boolean(process.env.STRIPE_WEBHOOK_SECRET),
+                        "whsec_"
+                      ),
+                    },
+                    {
                       name: "Resend / Email",
                       value: maskConfiguredSecret(resendConfigured, "re_"),
+                    },
+                    {
+                      name: "LongCat / OpenAI",
+                      value: maskConfiguredSecret(longcatConfigured, "lc_"),
                     },
                     {
                       name: "Supabase URL",
@@ -652,12 +722,29 @@ export default async function SettingsPage({
                     <span>Provider</span>
                     <span>Supabase Storage</span>
                   </div>
-                  <div className="flex items-center justify-between rounded-xl border border-line bg-surface-3 px-4 py-3">
-                    <span>Buckets</span>
-                    <span className="text-muted">
-                      submissions · community · resources · avatars
-                    </span>
-                  </div>
+                  {storageBuckets.map((bucket) => (
+                    <div
+                      key={bucket.id}
+                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line bg-surface-3 px-4 py-3"
+                    >
+                      <div>
+                        <p className="font-medium">{bucket.label}</p>
+                        <p className="text-xs text-subtle">
+                          {bucket.id} · {bucket.purpose}
+                        </p>
+                      </div>
+                      <StatusPill
+                        label={
+                          !bucket.listed
+                            ? "Not verified"
+                            : bucket.configured
+                              ? "Configured"
+                              : "Not configured"
+                        }
+                        variant={bucket.configured ? "approved" : "not_started"}
+                      />
+                    </div>
+                  ))}
                 </div>
                 <form action={updatePlatformSettingAction} className="space-y-4">
                   <input type="hidden" name="key" value="storage" />
@@ -687,8 +774,34 @@ export default async function SettingsPage({
               <AdminPanel>
                 <SectionIntro
                   title="Backup & Maintenance"
-                  description="Preferences and on-demand JSON snapshots to the platform-backups bucket."
+                  description="Database backups are managed by Supabase. App snapshots are optional extras."
                 />
+                <div className="mb-6 space-y-3 rounded-xl border border-line bg-surface-3 px-4 py-4 text-sm">
+                  <p className="font-medium">How backups work</p>
+                  <p className="text-muted">
+                    Supabase runs automatic backups for this project. Point-in-time
+                    recovery and backup retention are configured in the Supabase
+                    dashboard — ScaleX does not invent a last-backup timestamp here.
+                  </p>
+                  <p className="text-xs text-subtle">
+                    Restore, schedule, and retention stay in Supabase. This page
+                    does not store or display secret credentials.
+                  </p>
+                  {supabaseBackupsUrl ? (
+                    <a
+                      href={supabaseBackupsUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex text-sm font-semibold text-scalex-red hover:underline"
+                    >
+                      Open Supabase backups →
+                    </a>
+                  ) : (
+                    <p className="text-xs text-subtle">
+                      Set NEXT_PUBLIC_SUPABASE_URL to link the project backups page.
+                    </p>
+                  )}
+                </div>
                 <form action={updatePlatformSettingAction} className="space-y-4">
                   <input type="hidden" name="key" value="backup" />
                   <input type="hidden" name="section" value="backup" />
@@ -719,10 +832,10 @@ export default async function SettingsPage({
                   </label>
                   {backupPrefs.lastRunAt || backupPrefs.lastStatus ? (
                     <p className="text-xs text-muted">
-                      Last run:{" "}
+                      Last app JSON snapshot:{" "}
                       {backupPrefs.lastRunAt
                         ? formatDateTime(String(backupPrefs.lastRunAt))
-                        : "—"}
+                        : "not recorded"}
                       {backupPrefs.lastStatus
                         ? ` · status ${String(backupPrefs.lastStatus)}`
                         : ""}
@@ -730,7 +843,12 @@ export default async function SettingsPage({
                         ? ` · ${String(backupPrefs.lastPath)}`
                         : ""}
                     </p>
-                  ) : null}
+                  ) : (
+                    <p className="text-xs text-subtle">
+                      No app JSON snapshot has been run from this UI. Database
+                      backups remain in Supabase and are not timestamped here.
+                    </p>
+                  )}
                   <SaveBar label="Save preferences" />
                 </form>
                 <form action={runPlatformBackupAction} className="mt-4">

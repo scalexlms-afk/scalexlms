@@ -9,13 +9,17 @@ import { StageHero } from "@/components/dashboard/stage-hero";
 import { TodaysMission } from "@/components/dashboard/todays-mission";
 import { requireStudentProfile } from "@/lib/auth";
 import { getDashboardData } from "@/lib/dashboard";
+import { getStudentPlatformPrefs } from "@/lib/platform-prefs";
 import { isPremiumPlan, planLabel } from "@scalex/db";
 import { Card } from "@scalex/ui";
 
 export default async function DashboardPage() {
   const { userId, profile } = await requireStudentProfile();
   const premium = isPremiumPlan(profile.plan);
-  const data = await getDashboardData(userId, profile.name, premium);
+  const [data, platformPrefs] = await Promise.all([
+    getDashboardData(userId, profile.name, premium),
+    getStudentPlatformPrefs(),
+  ]);
 
   return (
     <>
@@ -75,7 +79,7 @@ export default async function DashboardPage() {
           kind={data.nextAction.kind}
         />
 
-        <HowThisWorks />
+        <HowThisWorks introVideoUrl={platformPrefs.introVideoUrl} />
 
         <JourneyProgress
           milestones={data.milestones}

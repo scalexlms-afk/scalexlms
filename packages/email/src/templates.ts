@@ -441,3 +441,47 @@ export function passwordOtpEmailText(params: {
 }) {
   return `SCALEX PASSWORD RESET\n\nA password reset was requested for your ${params.portalLabel} account.\n\nYOUR ONE-TIME CODE: ${params.code}\n\nThis code expires in ${params.expiresMinutes} minutes and can only be used once.\n\nIf you did not request this, ignore this email. Never share this code with anyone.\n\nScaleX LaunchPad`;
 }
+
+
+export function staffInviteEmailHtml(params: {
+  roleLabel: string;
+  inviteUrl: string;
+  inviterName?: string;
+}) {
+  const who = params.inviterName?.trim();
+  const intro = who
+    ? `${who} invited you to join the ScaleX staff team`
+    : "You have been invited to join the ScaleX staff team";
+
+  return emailLayout({
+    title: "You are invited to ScaleX",
+    eyebrow: "Staff invitation",
+    preheader: `${intro} as ${params.roleLabel}.`,
+    bodyHtml: `
+      ${statusPill(params.roleLabel, "brand")}
+      ${gmailSafeText(`
+        <p style="margin:0;color:${BRAND.body};font-size:15px;line-height:24px;">${escapeHtml(intro)} as <strong style="color:${BRAND.white};">${escapeHtml(params.roleLabel)}</strong>.</p>
+        <p style="margin:12px 0 0;color:${BRAND.body};font-size:15px;line-height:24px;">Accept this invite to create your Management OS account. The link expires in 7 days and can only be used once.</p>
+      `)}
+      ${featureRows([
+        { number: "01", title: "Open the invite", description: "Use the button below — it is unique to your email." },
+        { number: "02", title: "Set your name and password", description: "You will create your own sign-in on the accept page." },
+        { number: "03", title: "Sign in to Management OS", description: "After accepting, use the admin portal with your new password." },
+      ])}
+      ${ctaButton("Accept staff invite", params.inviteUrl)}
+      ${closingBanner("This invite is personal.", "If you were not expecting this email, you can ignore it. Do not forward the link.")}
+    `,
+  });
+}
+
+export function staffInviteEmailText(params: {
+  roleLabel: string;
+  inviteUrl: string;
+  inviterName?: string;
+}) {
+  const who = params.inviterName?.trim();
+  const intro = who
+    ? `${who} invited you to join the ScaleX staff team`
+    : "You have been invited to join the ScaleX staff team";
+  return `SCALEX STAFF INVITE\n\n${intro} as ${params.roleLabel}.\n\nAccept your invite (expires in 7 days):\n${params.inviteUrl}\n\nIf you were not expecting this, ignore this email.\n\nLearn. Build. Launch. Grow.\nScaleX LaunchPad`;
+}

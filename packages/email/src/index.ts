@@ -6,6 +6,8 @@ import {
   remainingPaymentEmailText,
   taskReviewedEmailHtml,
   taskReviewedEmailText,
+  staffInviteEmailHtml,
+  staffInviteEmailText,
   welcomeEmailHtml,
   welcomeEmailText,
 } from "./templates";
@@ -115,6 +117,21 @@ export async function sendPasswordOtpEmail(input: {
     subject: `${input.code} is your ScaleX password reset code`,
     html: passwordOtpEmailHtml(input),
     text: passwordOtpEmailText(input),
+  });
+}
+
+
+export async function sendStaffInviteEmail(input: {
+  to: string;
+  roleLabel: string;
+  inviteUrl: string;
+  inviterName?: string;
+}) {
+  return sendEmail({
+    to: input.to,
+    subject: `You're invited to ScaleX as ${input.roleLabel}`,
+    html: staffInviteEmailHtml(input),
+    text: staffInviteEmailText(input),
   });
 }
 

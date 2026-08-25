@@ -109,7 +109,7 @@ export default async function TeamMembersPage({
           <div className="space-y-4">
             {params.invited === "1" ? (
               <p className="rounded-xl border border-accent-green/30 bg-accent-green/10 px-4 py-3 text-sm text-accent-green">
-                Invite stored. Share onboarding details with the new teammate.
+                Invite email sent. They can accept from the link in their inbox.
               </p>
             ) : null}
             <AdminPanel title="Invite staff">
@@ -310,8 +310,8 @@ export default async function TeamMembersPage({
                     {formatDate(selected.created_at)}
                   </p>
                   <p className="text-xs text-subtle">
-                    Use the invite form to store a pending staff invite, then
-                    assign roles here after they sign in.
+                    Use the invite form to email a staff invite. They set a password
+                    on the accept page, then sign in here.
                   </p>
                 </div>
               ) : (

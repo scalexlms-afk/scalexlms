@@ -4,8 +4,24 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { writeAuditLog } from "@scalex/db";
 import type { UserRole } from "@scalex/db/types";
+import { sendStaffInviteEmail } from "@scalex/email";
 import { requireAdminProfile, requireFeature } from "@/lib/auth";
 import { getServiceDb } from "@/lib/admin-db";
+import { formatRole } from "@/lib/format";
+
+
+function adminPortalBaseUrl() {
+  const explicit = process.env.NEXT_PUBLIC_ADMIN_PORTAL_URL?.trim().replace(
+    /\/$/,
+    ""
+  );
+  if (explicit) return explicit;
+
+  const site = process.env.EMAIL_SITE_URL?.trim().replace(/\/$/, "");
+  if (site && /admin/i.test(site)) return site;
+
+  return "https://admin.scalexlms.com";
+}
 
 const INVITE_ROLES: UserRole[] = [
   "instructor",
@@ -52,6 +68,21 @@ export async function inviteStaffAction(formData: FormData) {
       throw new Error("A pending invite already exists for this email");
     }
     throw new Error(error.message);
+  }
+
+  const inviteUrl = `${adminPortalBaseUrl()}/invite/${data.id}`;
+  const sent = await sendStaffInviteEmail({
+    to: email,
+    roleLabel: formatRole(role),
+    inviteUrl,
+    inviterName: profile.name ?? undefined,
+  });
+
+  if (!sent.ok) {
+    await db.from("staff_invites").delete().eq("id", data.id);
+    throw new Error(
+      `Invite email was not sent (${sent.error}). The invite was not saved. Check RESEND_API_KEY and EMAIL_FROM, then try again.`
+    );
   }
 
   await writeAuditLog({
