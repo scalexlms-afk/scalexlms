@@ -40,6 +40,9 @@ export function SidePanels({
               <li key={resource.id}>
                 <Link
                   href={resource.href}
+                  {...(resource.downloadable
+                    ? { download: true }
+                    : {})}
                   className="flex items-center gap-3 rounded-lg border border-transparent px-1 py-1 transition-colors hover:border-line hover:bg-surface-3/50"
                 >
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-3 text-[10px] font-bold uppercase text-muted">
@@ -49,7 +52,10 @@ export function SidePanels({
                     <span className="block truncate text-sm font-medium text-foreground">
                       {resource.title}
                     </span>
-                    <span className="text-xs text-subtle">{resource.typeLabel}</span>
+                    <span className="text-xs text-subtle">
+                      {resource.typeLabel}
+                      {resource.downloadable ? " · Download" : ""}
+                    </span>
                   </span>
                 </Link>
               </li>

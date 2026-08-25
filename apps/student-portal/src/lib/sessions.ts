@@ -29,12 +29,21 @@ type SessionRow = {
   scheduled_at: string;
   meeting_url: string | null;
   recording_url: string | null;
+  audience?: "all_premium" | "selected" | string | null;
   host: {
     name: string;
     avatar_url?: string | null;
   } | null;
   session_registrations?: { count: number }[];
 };
+
+function visibleToStudent(
+  audience: string | null | undefined,
+  registered: boolean
+) {
+  if (audience === "selected") return registered;
+  return true;
+}
 
 async function fetchUpcomingSessions(
   studentId: string,
@@ -55,6 +64,7 @@ async function fetchUpcomingSessions(
         scheduled_at,
         meeting_url,
         recording_url,
+        audience,
         host:profiles!host_id(name, avatar_url),
         session_registrations(count)
       `
@@ -72,18 +82,21 @@ async function fetchUpcomingSessions(
     (registrations ?? []).map((r) => (r as { session_id: string }).session_id)
   );
 
-  return ((sessions ?? []) as SessionRow[]).map((session) => ({
-    id: session.id,
-    type: session.type,
-    title: session.title,
-    description: session.description,
-    scheduled_at: session.scheduled_at,
-    meeting_url: session.meeting_url,
-    registered: registeredIds.has(session.id),
-    hostName: session.host?.name ?? null,
-    hostAvatarUrl: session.host?.avatar_url ?? null,
-    registrationCount: session.session_registrations?.[0]?.count ?? 0,
-  }));
+  return ((sessions ?? []) as SessionRow[])
+    .map((session) => ({
+      id: session.id,
+      type: session.type,
+      title: session.title,
+      description: session.description,
+      scheduled_at: session.scheduled_at,
+      meeting_url: session.meeting_url,
+      registered: registeredIds.has(session.id),
+      hostName: session.host?.name ?? null,
+      hostAvatarUrl: session.host?.avatar_url ?? null,
+      registrationCount: session.session_registrations?.[0]?.count ?? 0,
+      audience: session.audience ?? null,
+    }))
+    .filter((session) => visibleToStudent(session.audience, session.registered));
 }
 
 async function fetchRecordings(limit = 12): Promise<RecordingListItem[]> {

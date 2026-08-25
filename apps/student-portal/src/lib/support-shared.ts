@@ -34,6 +34,11 @@ export type SupportPageData = {
   mentor: SupportMentorSummary | null;
   tickets: SupportTicketItem[];
   conversation: ConversationPreviewData | null;
+  contact: {
+    email: string | null;
+    phone: string | null;
+    whatsapp: string | null;
+  };
 };
 
 export const TICKET_STATUS_LABELS: Record<TicketStatus, string> = {

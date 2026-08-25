@@ -13,8 +13,13 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
+    if (error.digest?.startsWith("NEXT_REDIRECT")) return;
     console.error(error);
   }, [error]);
+
+  if (error.digest?.startsWith("NEXT_REDIRECT")) {
+    throw error;
+  }
 
   return (
     <AuthShell>

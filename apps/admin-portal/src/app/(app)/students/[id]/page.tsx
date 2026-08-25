@@ -17,6 +17,7 @@ import {
   formatDateTime,
   formatPercent,
   formatStatus,
+  studentPublicCode,
 } from "@/lib/format";
 import { planLabel, planPillVariant } from "@scalex/db";
 import {
@@ -73,7 +74,7 @@ export default async function StudentDetailPage({
       <AdminPageHeader
         eyebrow="Students"
         title={detail.student.name}
-        description={detail.student.email}
+        description={`${detail.student.email} · ID ${studentPublicCode(detail.student.id)}`}
         secondaryAction={
           <div className="flex flex-wrap items-center gap-2">
             <Link href="/students" className="admin-btn-secondary">

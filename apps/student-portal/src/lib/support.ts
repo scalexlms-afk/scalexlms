@@ -10,6 +10,7 @@ import type {
   TicketStatus,
 } from "@/lib/support-shared";
 import { truncateSupportPreview } from "@/lib/support-shared";
+import { getPublicContactInfo } from "@/lib/contact-settings";
 
 export type {
   ConversationPreviewData,
@@ -53,6 +54,8 @@ export async function getSupportPageData(
   const premium = isPremiumPlan(profile.plan);
   const mentorId = profile.mentor_id;
   const supabase = await createClient();
+
+  const contact = await getPublicContactInfo();
 
   const { data: ticketRows } = await supabase
     .from("support_tickets")
@@ -136,5 +139,6 @@ export async function getSupportPageData(
     mentor,
     tickets,
     conversation,
+    contact,
   };
 }

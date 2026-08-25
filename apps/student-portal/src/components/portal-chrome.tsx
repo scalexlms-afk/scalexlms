@@ -259,14 +259,14 @@ export function PortalChrome({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="relative flex min-h-screen bg-surface">
+    <div className="relative flex h-dvh min-h-0 overflow-hidden bg-surface">
       <div
         className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_72%_-8%,rgba(227,30,36,0.12),transparent_32%),radial-gradient(circle_at_105%_72%,rgba(227,30,36,0.055),transparent_28%)]"
         aria-hidden
       />
 
       <div
-        className={`relative z-10 hidden shrink-0 md:block ${open ? "w-64" : "w-14"}`}
+        className={`relative z-10 hidden h-full shrink-0 overflow-y-auto md:block ${open ? "w-64" : "w-14"}`}
       >
         {open ? (
           <>
@@ -282,7 +282,7 @@ export function PortalChrome({ children }: { children: ReactNode }) {
               }
               footer={footer}
               linkComponent={PortalNavLink}
-              className="min-h-dvh"
+              className="h-full"
             />
           </>
         ) : (
@@ -292,7 +292,7 @@ export function PortalChrome({ children }: { children: ReactNode }) {
         )}
       </div>
 
-      <div className="relative flex min-w-0 flex-1 flex-col">
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <header className="pointer-events-none sticky top-0 z-20 flex h-14 items-center justify-end gap-2 px-4">
           <div className="pointer-events-auto mr-auto flex items-center gap-2 md:hidden">
             <MobileNav
@@ -307,7 +307,7 @@ export function PortalChrome({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="relative z-10 flex-1 p-4 pt-2 md:p-8 md:pt-2">
+        <main className="relative z-10 min-h-0 flex-1 overflow-y-auto p-4 pt-2 md:p-8 md:pt-2">
           {children}
         </main>
       </div>

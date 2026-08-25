@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@scalex/db/server";
 import { requireAdminProfile } from "@/lib/auth";
 
@@ -14,4 +15,19 @@ export async function markNotificationRead(formData: FormData) {
     .update({ read_at: new Date().toISOString() })
     .eq("id", id)
     .eq("user_id", userId);
+
+  revalidatePath("/notifications");
+}
+
+export async function markAllNotificationsRead() {
+  const { userId } = await requireAdminProfile();
+  const supabase = await createClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase as any)
+    .from("notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("user_id", userId)
+    .is("read_at", null);
+
+  revalidatePath("/notifications");
 }

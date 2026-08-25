@@ -27,24 +27,34 @@ export function MediaUploadField({
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   async function handleFileChange(file: File | null) {
     if (!file) return;
     setUploading(true);
     setError(null);
+    setProgress(8);
 
     try {
       const supabase = createClient();
       const path = `${folder}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-      const { error: uploadError } = await supabase.storage
-        .from(LESSON_MEDIA_BUCKET)
-        .upload(path, file, {
-          cacheControl: "3600",
-          upsert: false,
-          contentType: file.type || undefined,
-        });
-
-      if (uploadError) throw new Error(uploadError.message);
+      let tick = 0;
+      tick = window.setInterval(() => {
+        setProgress((current) => (current < 90 ? current + 8 : current));
+      }, 200);
+      try {
+        const { error: uploadError } = await supabase.storage
+          .from(LESSON_MEDIA_BUCKET)
+          .upload(path, file, {
+            cacheControl: "3600",
+            upsert: false,
+            contentType: file.type || undefined,
+          });
+        setProgress(100);
+        if (uploadError) throw new Error(uploadError.message);
+      } finally {
+        window.clearInterval(tick);
+      }
 
       setUrl(path);
       setFileName(file.name);
@@ -99,6 +109,20 @@ export function MediaUploadField({
           MP4, WebM, or PDF
         </span>
       </button>
+      {uploading || progress > 0 ? (
+        <div className="mt-3" aria-live="polite">
+          <div className="mb-1 flex items-center justify-between text-xs text-muted">
+            <span>{uploading ? "Uploading…" : progress >= 100 ? "Uploaded" : "Upload"}</span>
+            <span>{Math.min(100, Math.round(progress))}%</span>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-surface-3">
+            <div
+              className="h-full rounded-full bg-scalex-red transition-[width] duration-200"
+              style={{ width: `${Math.min(100, Math.max(uploading ? 8 : 0, progress))}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
       {helperText ? (
         <p className="mt-1 text-xs text-subtle">{helperText}</p>
       ) : null}

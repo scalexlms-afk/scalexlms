@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CompletedTasks } from "@/components/tasks/completed-tasks";
+import { TaskStageLists } from "@/components/tasks/task-stage-lists";
 import { CurrentTaskHero } from "@/components/tasks/current-task-hero";
 import { ImplementationChecklist } from "@/components/tasks/implementation-checklist";
 import { ReviewTimeline } from "@/components/tasks/review-timeline";
@@ -38,6 +39,8 @@ export default async function TasksHubPage() {
 
         <TasksStats stats={hub.stats} />
 
+        <TaskStageLists currentStage={hub.currentStage} upcoming={hub.upcoming} />
+
         {current ? (
           <>
             <CurrentTaskHero
@@ -50,6 +53,14 @@ export default async function TasksHubPage() {
               lessonHref={current.lessonHref}
               canSubmit={current.canSubmit}
             />
+            {current.task.lesson_id ? (
+              <p className="text-sm text-muted">
+                Watch the linked lesson to complete this task.{" "}
+                <Link href={current.lessonHref} className="font-semibold text-scalex-red hover:underline">
+                  Open lesson
+                </Link>
+              </p>
+            ) : null}
 
             <TaskOverview
               objective={current.objective}

@@ -1,6 +1,7 @@
 import { createClient } from "@scalex/db/server";
 import { PLAN_FEATURES, isPremiumPlan, planLabel } from "@scalex/db";
 import type { Profile } from "@scalex/db/types";
+import { getPublicContactInfo } from "@/lib/contact-settings";
 import {
   getPendingRemainingPayment,
   getStudentJourneySummary,
@@ -63,7 +64,7 @@ export async function getBillingPageData(
     stripe_customer_id?: string | null;
   };
 
-  const [journey, remainingRaw, { data: paymentRows }] = await Promise.all([
+  const [journey, remainingRaw, { data: paymentRows }, contact] = await Promise.all([
     getStudentJourneySummary(userId),
     getPendingRemainingPayment(userId),
     supabase
@@ -74,6 +75,7 @@ export async function getBillingPageData(
       .eq("student_id", userId)
       .order("created_at", { ascending: false })
       .limit(20),
+    getPublicContactInfo(),
   ]);
 
   const rows = (paymentRows ?? []) as PaymentHistoryRow[];
@@ -126,5 +128,6 @@ export async function getBillingPageData(
     history,
     paidViaStripe,
     stripeCustomerId: profileRow.stripe_customer_id ?? null,
+    contact,
   };
 }

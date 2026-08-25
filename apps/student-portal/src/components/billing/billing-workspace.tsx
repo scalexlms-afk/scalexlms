@@ -12,6 +12,7 @@ import {
 import { BillingHistory } from "@/components/billing/billing-history";
 import { BillingRail } from "@/components/billing/billing-rail";
 import { BillingTrustFooter } from "@/components/billing/billing-trust-footer";
+import { ContactInfoCard } from "@/components/contact-info-card";
 import {
   formatBillingDate,
   formatBillingMoney,
@@ -109,6 +110,7 @@ export function BillingWorkspace({ data }: { data: BillingPageData }) {
           </div>
 
           <BillingHistory items={data.history} />
+          <ContactInfoCard contact={data.contact} title="Billing contact" />
           <BillingTrustFooter />
         </div>
 

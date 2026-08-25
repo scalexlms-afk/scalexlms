@@ -69,6 +69,11 @@ export async function middleware(request: NextRequest) {
     }
 
     if (isLogin && isScalexAdminRole(role)) {
+      // A failed sign-in must be able to render the login alert; do not
+      // keep the previous staff session by bouncing back to the dashboard.
+      if (request.nextUrl.searchParams.has("error")) {
+        return response;
+      }
       return redirectTo("/", response);
     }
 

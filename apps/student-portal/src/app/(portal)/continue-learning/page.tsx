@@ -17,7 +17,7 @@ export default async function ContinueLearningPage() {
 
   return (
     <>
-      <div className="academy-page space-y-8">
+      <div className="academy-page space-y-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <Breadcrumbs
@@ -43,20 +43,20 @@ export default async function ContinueLearningPage() {
           </a>
         </div>
 
-        <MissionHero
-          title={data.missionTitle}
-          body={data.missionBody}
-          estimatedTimeLabel={data.estimatedTimeLabel}
-          difficultyLabel={data.difficultyLabel}
-          continueHref={data.continueHref}
-        />
-
         <ProgressStrip
           stageTitle={data.currentStage}
           stepIndex={data.stepIndex}
           totalSteps={data.totalSteps}
           completionPercent={data.completionPercent}
           unlocksLabel={data.unlocksLabel}
+        />
+
+        <MissionHero
+          title={data.missionTitle}
+          body={data.missionBody}
+          estimatedTimeLabel={data.estimatedTimeLabel}
+          difficultyLabel={data.difficultyLabel}
+          continueHref={data.continueHref}
         />
 
         <WhyAndLearn

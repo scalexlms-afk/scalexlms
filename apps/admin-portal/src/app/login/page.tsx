@@ -1,8 +1,6 @@
 import Link from "next/link";
-import { FormError, SubmitButton } from "@scalex/ui";
-import { loginAction } from "../auth/actions";
 import { AuthShell } from "@/components/auth-shell";
-import { Field } from "@/components/field";
+import { LoginForm } from "@/components/login-form";
 
 export default async function LoginPage({
   searchParams,
@@ -30,28 +28,10 @@ export default async function LoginPage({
         </>
       }
     >
-      {params.error && (
-        <div className="mt-4">
-          <FormError message={params.error} />
-        </div>
-      )}
-
-      <form action={loginAction} className="mt-6 space-y-4">
-        <input type="hidden" name="redirect" value={params.redirect ?? ""} />
-        <Field label="Email" name="email" type="email" required />
-        <Field label="Password" name="password" type="password" required />
-        <div className="flex justify-end">
-          <Link
-            href="/reset-password"
-            className="text-xs text-muted hover:text-scalex-red hover:underline"
-          >
-            Forgot password?
-          </Link>
-        </div>
-        <SubmitButton className="w-full" pendingLabel="Signing in...">
-          Sign In
-        </SubmitButton>
-      </form>
+      <LoginForm
+        redirectTo={params.redirect ?? ""}
+        initialError={params.error}
+      />
     </AuthShell>
   );
 }

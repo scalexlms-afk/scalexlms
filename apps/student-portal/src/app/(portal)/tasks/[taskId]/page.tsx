@@ -112,10 +112,11 @@ export default async function TaskDetailPage({
 
   if (!milestone) notFound();
 
-  const unlocked = await isMilestoneUnlocked(userId, milestoneId);
+  const rpcUnlocked = await isMilestoneUnlocked(userId, milestoneId);
   const submission = await getSubmissionForTask(task.id, userId);
   const status = submission?.status ?? "not_started";
   const latestReview = submission?.reviews?.[0];
+  const unlocked = rpcUnlocked || status === "revision_required";
   const canSubmit =
     unlocked && (status === "not_started" || status === "revision_required");
   const hasAiNotes = Boolean(
@@ -167,6 +168,17 @@ export default async function TaskDetailPage({
               previous milestone task to unlock it.
             </p>
           </Card>
+        ) : null}
+        {task.lesson_id ? (
+          <p className="text-sm text-muted">
+            Watch lesson to complete this task.{" "}
+            <Link
+              href={`/lessons/${task.lesson_id}`}
+              className="font-semibold text-scalex-red hover:underline"
+            >
+              Open linked lesson
+            </Link>
+          </p>
         ) : null}
 
         <ReviewTimeline

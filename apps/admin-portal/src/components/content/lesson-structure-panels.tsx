@@ -342,16 +342,31 @@ function QuizEditor({
           <input type="hidden" name="quizId" value={quiz.id} />
           <input type="hidden" name="courseId" value={courseId} />
           <p className="text-sm font-medium">Add question</p>
-          <TextArea label="Prompt" name="prompt" rows={2} required />
           <TextArea
-            label="Options (one per line)"
-            name="options"
-            rows={4}
+            label="Prompt"
+            name="prompt"
+            id={`${quiz.id}-new-prompt`}
+            rows={2}
             required
           />
           <Field
-            label="Correct option index (0-based)"
+            label="Option A"
+            name="option0"
+            id={`${quiz.id}-new-option0`}
+            required
+          />
+          <Field
+            label="Option B"
+            name="option1"
+            id={`${quiz.id}-new-option1`}
+            required
+          />
+          <Field label="Option C" name="option2" id={`${quiz.id}-new-option2`} />
+          <Field label="Option D" name="option3" id={`${quiz.id}-new-option3`} />
+          <Field
+            label="Correct option (0 = A, 1 = B, …)"
             name="correctIndex"
+            id={`${quiz.id}-new-correct`}
             type="number"
             min="0"
             defaultValue="0"
@@ -405,20 +420,41 @@ function QuizQuestionCard({
         <TextArea
           label="Prompt"
           name="prompt"
+          id={`${question.id}-prompt`}
           rows={2}
           required
           defaultValue={question.prompt}
         />
-        <TextArea
-          label="Options (one per line)"
-          name="options"
-          rows={4}
+        <Field
+          label="Option A"
+          name="option0"
+          id={`${question.id}-option0`}
           required
-          defaultValue={question.options.join("\n")}
+          defaultValue={question.options[0] ?? ""}
         />
         <Field
-          label="Correct option index (0-based)"
+          label="Option B"
+          name="option1"
+          id={`${question.id}-option1`}
+          required
+          defaultValue={question.options[1] ?? ""}
+        />
+        <Field
+          label="Option C"
+          name="option2"
+          id={`${question.id}-option2`}
+          defaultValue={question.options[2] ?? ""}
+        />
+        <Field
+          label="Option D"
+          name="option3"
+          id={`${question.id}-option3`}
+          defaultValue={question.options[3] ?? ""}
+        />
+        <Field
+          label="Correct option (0 = A, 1 = B, …)"
           name="correctIndex"
+          id={`${question.id}-correct`}
           type="number"
           min="0"
           required

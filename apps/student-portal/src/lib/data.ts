@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { clampStep, normalizeProgressPercent } from "@/lib/progress";
 import { createClient, createServiceClient } from "@scalex/db/server";
 import type {
   Course,
@@ -232,31 +233,12 @@ export const getSidebarProgress = cache(
     milestoneIndex: number;
     milestoneTotal: number;
   }> => {
-    const empty = {
-      completionPercent: 0,
-      milestoneIndex: 1,
-      milestoneTotal: 8,
+    const journey = await getStudentJourneySummary(studentId);
+    return {
+      completionPercent: journey.completionPercent,
+      milestoneIndex: journey.milestoneIndex,
+      milestoneTotal: journey.milestoneTotal,
     };
-    const course = await getPublishedCourse();
-    if (!course) return empty;
-
-    const supabase = await createClient();
-    const [enrollment, milestoneCount] = await Promise.all([
-      getEnrollment(studentId, course.id),
-      supabase
-        .from("milestones")
-        .select("id", { count: "exact", head: true })
-        .eq("course_id", course.id),
-    ]);
-
-    const milestoneTotal = Math.max(1, milestoneCount.count ?? 8);
-    const completionPercent = enrollment?.completion_percent ?? 0;
-    const milestoneIndex = Math.min(
-      milestoneTotal,
-      Math.max(1, Math.ceil((completionPercent / 100) * milestoneTotal) || 1)
-    );
-
-    return { completionPercent, milestoneIndex, milestoneTotal };
   }
 );
 
@@ -301,7 +283,7 @@ export const getStudentJourneySummary = cache(
     return {
       ...empty,
       milestoneTotal,
-      completionPercent: enrollment.completion_percent,
+      completionPercent: normalizeProgressPercent(enrollment.completion_percent),
       enrolledAt: enrollment.enrolled_at,
       ...access,
     };
@@ -309,7 +291,10 @@ export const getStudentJourneySummary = cache(
 
   const milestoneIndexRaw =
     roadmap.findIndex((ms) => ms.id === currentMilestone.id) + 1;
-  const milestoneIndex = milestoneIndexRaw > 0 ? milestoneIndexRaw : 1;
+  const milestoneIndex = clampStep(
+    milestoneIndexRaw > 0 ? milestoneIndexRaw : 1,
+    milestoneTotal
+  );
 
   let continueHref = "/roadmap";
   const orderedLessons = [...currentMilestone.modules]
@@ -333,7 +318,7 @@ export const getStudentJourneySummary = cache(
     currentMilestoneId: currentMilestone.id,
     milestoneIndex,
     milestoneTotal,
-    completionPercent: enrollment.completion_percent,
+    completionPercent: normalizeProgressPercent(enrollment.completion_percent),
     continueHref,
     enrolledAt: enrollment.enrolled_at,
     monthsRemaining: access.monthsRemaining,
@@ -611,7 +596,7 @@ export async function getUpcomingSessions(
       .select("*")
       .gte("scheduled_at", now)
       .order("scheduled_at", { ascending: true })
-      .limit(limit),
+      .limit(Math.max(limit * 3, 12)),
     supabase
       .from("session_registrations")
       .select("session_id")
@@ -624,10 +609,17 @@ export async function getUpcomingSessions(
     )
   );
 
-  return ((sessions ?? []) as LiveSession[]).map((session) => ({
-    ...session,
-    registered: registeredIds.has(session.id),
-  }));
+  return ((sessions ?? []) as LiveSession[])
+    .map((session) => ({
+      ...session,
+      registered: registeredIds.has(session.id),
+    }))
+    .filter((session) => {
+      const audience = (session as LiveSession & { audience?: string | null }).audience;
+      if (audience === "selected") return session.registered;
+      return true;
+    })
+    .slice(0, limit);
 }
 
 export async function getRecordedSessions(limit = 10): Promise<LiveSession[]> {

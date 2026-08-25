@@ -1,5 +1,8 @@
 import { courseCoverSrc } from "@scalex/db";
+import { clampStep, normalizeProgressPercent } from "@/lib/progress";
 import type { Announcement } from "@scalex/db/types";
+import { getNotificationsPageData } from "@/lib/notifications";
+import type { NotificationItem } from "@/lib/notifications-shared";
 import {
   ensureEnrollment,
   getAnnouncements,
@@ -48,6 +51,13 @@ export type DashboardData = {
   badges: Badge[];
   remainingPayment: { id: string; amount: number; status: string } | null;
   coverSrc: string | null;
+  nextAction: {
+    kind: "watch" | "submit" | "continue";
+    title: string;
+    description: string | null;
+    href: string;
+  };
+  recentNotifications: NotificationItem[];
 };
 
 function firstNameFrom(name: string) {
@@ -65,7 +75,7 @@ export async function getDashboardData(
 
   const empty: DashboardData = {
     firstName: firstNameFrom(profileName),
-    completionPercent: journey.completionPercent,
+    completionPercent: normalizeProgressPercent(journey.completionPercent),
     currentStage: journey.currentStage,
     currentMilestoneId: journey.currentMilestoneId,
     stepIndex: 1,
@@ -82,6 +92,13 @@ export async function getDashboardData(
     badges: [],
     remainingPayment: null,
     coverSrc: null,
+    nextAction: {
+      kind: "continue",
+      title: "Continue your roadmap",
+      description: null,
+      href: journey.continueHref,
+    },
+    recentNotifications: [],
   };
 
   const [announcements, upcomingSessions, badges, remainingPayment] =
@@ -93,12 +110,14 @@ export async function getDashboardData(
     ]);
 
   if (!course) {
+    const notificationData = await getNotificationsPageData(userId);
     return {
       ...empty,
       announcements,
       upcomingSessions,
       badges,
       remainingPayment,
+      recentNotifications: notificationData.notifications.slice(0, 5),
     };
   }
 
@@ -184,12 +203,60 @@ export async function getDashboardData(
   const stepIndex =
     currentIndex >= 0 ? currentIndex + 1 : Math.max(1, milestones.length);
 
+  const currentMs = journey.currentMilestoneId
+    ? ordered.find((m) => m.id === journey.currentMilestoneId)
+    : null;
+  const stageLessons = currentMs
+    ? currentMs.modules
+        .slice()
+        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0))
+        .flatMap((m) =>
+          [...m.lessons].sort(
+            (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+          )
+        )
+    : [];
+  const nextWatch = stageLessons.find((l) => !completedIds.has(l.id)) ?? null;
+  const submitOpen =
+    currentTask &&
+    (currentSubmission?.status === "not_started" ||
+      currentSubmission?.status === "revision_required" ||
+      !currentSubmission);
+
+  let nextAction: DashboardData["nextAction"];
+  if (nextWatch) {
+    nextAction = {
+      kind: "watch",
+      title: `Watch: ${nextWatch.title}`,
+      description: "Watch this lesson to keep your current stage moving.",
+      href: `/lessons/${nextWatch.id}`,
+    };
+  } else if (submitOpen && currentTask) {
+    nextAction = {
+      kind: "submit",
+      title: `Submit: ${currentTask.title}`,
+      description:
+        currentTask.description ??
+        "Submit this deliverable for mentor review.",
+      href: `/tasks/${currentTask.id}`,
+    };
+  } else {
+    nextAction = {
+      kind: "continue",
+      title: currentTask?.title ?? "Continue your roadmap",
+      description: currentTask?.description ?? null,
+      href: journey.continueHref,
+    };
+  }
+
+  const notificationData = await getNotificationsPageData(userId);
+
   return {
     firstName: firstNameFrom(profileName),
-    completionPercent: journey.completionPercent,
+    completionPercent: normalizeProgressPercent(journey.completionPercent),
     currentStage: journey.currentStage,
     currentMilestoneId: journey.currentMilestoneId,
-    stepIndex,
+    stepIndex: clampStep(stepIndex, Math.max(milestones.length, 1)),
     totalSteps: Math.max(milestones.length, 1),
     lessonsLeftInStage,
     continueHref: journey.continueHref,
@@ -203,5 +270,7 @@ export async function getDashboardData(
     badges,
     remainingPayment,
     coverSrc: courseCoverSrc(course),
+    nextAction,
+    recentNotifications: notificationData.notifications.slice(0, 5),
   };
 }

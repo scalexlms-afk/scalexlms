@@ -153,21 +153,21 @@ export async function getDashboardStats(scope: AdminScope) {
 
   const now = new Date();
   const thisMonth = monthKey(now);
-  const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const lastMonth = monthKey(lastMonthDate);
+  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const studentsThisMonth = students.filter(
     (s) => monthKey(new Date(s.created_at)) === thisMonth
   ).length;
-  const studentsLastMonth = students.filter(
-    (s) => monthKey(new Date(s.created_at)) === lastMonth
+  // Compare roster size now vs roster size at the start of this month.
+  // New-this-month vs new-last-month produced "↓ 100%" on a large non-zero total
+  // whenever nobody joined this month (or ±100% when last month was empty).
+  const totalAtStartOfMonth = students.filter(
+    (s) => new Date(s.created_at).getTime() < startOfThisMonth.getTime()
   ).length;
-  const momGrowth =
-    studentsLastMonth > 0
-      ? ((studentsThisMonth - studentsLastMonth) / studentsLastMonth) * 100
-      : studentsThisMonth > 0
-        ? 100
-        : 0;
+  const hasMomBaseline = totalAtStartOfMonth > 0;
+  const momGrowth = hasMomBaseline
+    ? ((totalStudents - totalAtStartOfMonth) / totalAtStartOfMonth) * 100
+    : 0;
 
   return {
     pendingReviews,
@@ -180,6 +180,7 @@ export async function getDashboardStats(scope: AdminScope) {
     totalRevenue,
     completionRate,
     momGrowth,
+    hasMomBaseline,
     studentsThisMonth,
   };
 }
@@ -259,15 +260,28 @@ export async function getMilestoneCompletionRates(scope: AdminScope) {
 
   const { data: milestones, error: milestoneError } = await db
     .from("milestones")
-    .select("id, title, order_index")
+    .select("id, title, order_index, course_id")
     .order("order_index", { ascending: true });
 
   if (milestoneError || !milestones?.length) return [];
 
   const colors = CHART_COLORS;
+  const usedNames = new Set<string>();
+
+  const uniqueLabel = (raw: string, id: string) => {
+    const name = raw.trim() || `Milestone ${id.slice(0, 6)}`;
+    if (!usedNames.has(name)) {
+      usedNames.add(name);
+      return name;
+    }
+    const withId = `${name} · ${id.slice(0, 4)}`;
+    usedNames.add(withId);
+    return withId;
+  };
 
   const results = [];
   for (const milestone of milestones) {
+    const label = uniqueLabel(milestone.title, milestone.id);
     const { data: tasks } = await db
       .from("tasks")
       .select("id")
@@ -276,7 +290,7 @@ export async function getMilestoneCompletionRates(scope: AdminScope) {
     const taskIds = (tasks ?? []).map((t) => t.id);
     if (taskIds.length === 0) {
       results.push({
-        name: milestone.title,
+        name: label,
         value: 0,
         color: colors[(milestone.order_index - 1) % colors.length],
       });
@@ -291,7 +305,7 @@ export async function getMilestoneCompletionRates(scope: AdminScope) {
     if (scopedStudentIds) {
       if (scopedStudentIds.length === 0) {
         results.push({
-          name: milestone.title,
+          name: label,
           value: 0,
           color: colors[(milestone.order_index - 1) % colors.length],
         });
@@ -307,7 +321,7 @@ export async function getMilestoneCompletionRates(scope: AdminScope) {
     const rate = total > 0 ? Math.round((approved / total) * 100) : 0;
 
     results.push({
-      name: `M${milestone.order_index}`,
+      name: label,
       value: rate,
       color: colors[(milestone.order_index - 1) % colors.length],
     });
@@ -1967,7 +1981,8 @@ export type AdminNotification = {
 };
 
 export async function getAdminNotifications(
-  userId: string
+  userId: string,
+  limit = 20
 ): Promise<AdminNotification[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -1975,7 +1990,7 @@ export async function getAdminNotifications(
     .select("id, title, body, read_at, created_at")
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
-    .limit(20);
+    .limit(limit);
 
   if (error) throw new Error(error.message);
   return (data ?? []) as AdminNotification[];

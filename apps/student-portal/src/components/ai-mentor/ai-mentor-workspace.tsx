@@ -101,6 +101,9 @@ export function AiMentorWorkspace({
   const [chatSearch, setChatSearch] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const lastPromptRef = useRef<string>("");
+  const [attaching, setAttaching] = useState(false);
 
   const suggested = useMemo(
     () => buildSuggestedPrompts(context.milestoneTitle),
@@ -156,9 +159,14 @@ export function AiMentorWorkspace({
     const trimmed = raw.trim();
     if (!trimmed || streaming) return;
 
+    lastPromptRef.current = trimmed;
     setError(null);
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: trimmed }]);
+    setMessages((prev) => {
+      const last = prev[prev.length - 1];
+      if (last?.role === "user" && last.content === trimmed) return prev;
+      return [...prev, { role: "user", content: trimmed }];
+    });
     setStreaming(true);
 
     try {
@@ -168,7 +176,17 @@ export function AiMentorWorkspace({
         body: JSON.stringify({ chatId, message: trimmed }),
       });
 
-      if (!response.ok) throw new Error("Failed to reach AI mentor");
+      if (!response.ok) {
+        const raw = await response.text();
+        let message = "Failed to reach AI mentor";
+        try {
+          const parsed = JSON.parse(raw) as { error?: string };
+          if (parsed.error) message = parsed.error;
+        } catch {
+          if (raw.trim()) message = raw.trim();
+        }
+        throw new Error(message);
+      }
 
       const headerChatId = response.headers.get("X-Chat-Id");
       if (headerChatId) {
@@ -244,6 +262,42 @@ export function AiMentorWorkspace({
       void sendText(
         `Generate a practical checklist for completing "${context.currentTaskTitle ?? context.milestoneTitle}" in ${context.milestoneTitle}.`
       );
+    }
+  }
+
+  async function attachFile(file: File) {
+    setAttaching(true);
+    setError(null);
+    try {
+      const { createClient } = await import("@scalex/db/client");
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setError("Sign in again to attach a document.");
+        return;
+      }
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const path = `${user.id}/${Date.now()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from("community-media")
+        .upload(path, file, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        });
+      if (uploadError) {
+        setError(uploadError.message || "Could not upload document.");
+        return;
+      }
+      const { data } = supabase.storage.from("community-media").getPublicUrl(path);
+      const url = data.publicUrl;
+      const note = `I uploaded a document: ${file.name}${url ? ` (${url})` : ""}. Please review it in the context of my current milestone.`;
+      setInput((prev) => (prev.trim() ? `${prev.trim()}\n\n${note}` : note));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not upload document.");
+    } finally {
+      setAttaching(false);
     }
   }
 
@@ -335,7 +389,17 @@ export function AiMentorWorkspace({
             </div>
 
             {error ? (
-              <p className="px-4 text-sm text-accent-danger md:px-5">{error}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2 px-4 md:px-5">
+                <p className="text-sm text-accent-danger">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => void sendText(lastPromptRef.current || input)}
+                  disabled={busy}
+                  className="rounded-lg border border-line px-2.5 py-1 text-xs font-semibold text-foreground hover:border-accent-purple/40"
+                >
+                  Retry
+                </button>
+              </div>
             ) : null}
 
             <form
@@ -360,14 +424,27 @@ export function AiMentorWorkspace({
                 />
                 <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-1">
                   <div className="flex items-center gap-1">
-                    <span
-                      title="Coming soon"
-                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-subtle/70"
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept=".pdf,.txt,.md,.doc,.docx,.png,.jpg,.jpeg,.webp"
+                      className="sr-only"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        if (file) void attachFile(file);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      title="Attach a document"
+                      disabled={busy || attaching}
+                      onClick={() => fileRef.current?.click()}
+                      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-accent-purple hover:bg-accent-purple/10 disabled:opacity-50"
                     >
                       <Paperclip className="h-3.5 w-3.5" aria-hidden />
-                      Attach
-                      <span className="text-[10px]">Soon</span>
-                    </span>
+                      {attaching ? "Uploading…" : "Attach"}
+                    </button>
                     <span
                       title="Coming soon"
                       className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs text-subtle/70"

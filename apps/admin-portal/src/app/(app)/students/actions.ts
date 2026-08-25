@@ -193,8 +193,9 @@ export async function replyToStudentAction(formData: FormData) {
 
   revalidatePath(`/students/${studentId}`);
   revalidatePath("/messages");
+  revalidatePath(`/messages/${studentId}`);
 
   if (redirectTo.startsWith("/messages")) {
-    redirect(`/messages?student=${studentId}&sent=1`);
+    redirect(`/messages/${studentId}?sent=1`);
   }
 }

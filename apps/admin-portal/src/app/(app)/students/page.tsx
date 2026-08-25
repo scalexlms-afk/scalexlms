@@ -7,7 +7,7 @@ import {
 } from "@/components/admin-ui";
 import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { getStudents } from "@/lib/data";
-import { formatDate, formatStatus } from "@/lib/format";
+import { formatDate, formatStatus, studentPublicCode } from "@/lib/format";
 import { planLabel, planPillVariant } from "@scalex/db";
 import { DataTable, ProgressBar, StatusPill } from "@scalex/ui";
 
@@ -84,7 +84,9 @@ export default async function StudentsPage({
       (s) =>
         s.name.toLowerCase().includes(q) ||
         s.email.toLowerCase().includes(q) ||
-        (s.current_stage ?? "").toLowerCase().includes(q)
+        (s.current_stage ?? "").toLowerCase().includes(q) ||
+        studentPublicCode(s.id).toLowerCase().includes(q) ||
+        s.id.toLowerCase().includes(q)
     );
   }
 
@@ -227,6 +229,13 @@ export default async function StudentsPage({
                     </span>
                   </span>
                 </Link>
+              ),
+            },
+            {
+              key: "studentId",
+              header: "Student ID",
+              render: (row) => (
+                <span className="font-mono text-xs">{studentPublicCode(row.id)}</span>
               ),
             },
             {

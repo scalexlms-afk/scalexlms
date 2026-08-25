@@ -26,6 +26,7 @@ export type ContinueResource = {
   title: string;
   typeLabel: string;
   href: string;
+  downloadable?: boolean;
 };
 
 export type ContinueLearningData = {
@@ -304,6 +305,7 @@ export async function getContinueLearningData(
       title: l.title,
       typeLabel: resourceTypeLabel(l.content_type),
       href: `/lessons/${l.id}`,
+      downloadable: l.content_type === "pdf",
     }));
 
   if (task) {

@@ -321,6 +321,13 @@ export function AdminChrome({
               notifications={extras?.notifications ?? []}
               markReadAction={onMarkRead}
             />
+            <Link
+              href="/notifications"
+              className="hidden text-xs font-semibold text-muted hover:text-scalex-red sm:inline"
+              prefetch
+            >
+              Inbox
+            </Link>
           </div>
         </header>
 

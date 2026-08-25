@@ -18,6 +18,7 @@ export async function markStudentThreadReadAction(studentId: string) {
     .is("read_at", null);
 
   revalidatePath("/messages");
+  revalidatePath(`/messages/${studentId}`);
 }
 
 export async function sendStudentChatAction(

@@ -8,8 +8,8 @@ import {
 } from "@/components/admin-ui";
 import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import { getAiInsights, getReportsSummary } from "@/lib/data";
-import { formatCurrency, formatPercent } from "@/lib/format";
-import { BarChartCard, DonutChart, LineChartCard } from "@scalex/ui";
+import { formatMomHint, formatPercent } from "@/lib/format";
+import { BarChartCard, DonutChart } from "@scalex/ui";
 
 export default async function AnalyticsPage({
   searchParams,
@@ -21,47 +21,30 @@ export default async function AnalyticsPage({
 
   const sp = await searchParams;
   const section =
-    sp.section === "revenue" ||
-    sp.section === "learning" ||
-    sp.section === "community"
+    sp.section === "learning" || sp.section === "community"
       ? sp.section
       : "overview";
 
   const scope = { userId, role: profile.role };
-  const [{ stats, revenueSeries, growthSeries, milestoneRates }, insights] =
-    await Promise.all([
-      getReportsSummary(scope),
-      getAiInsights(scope),
-    ]);
+  const [{ stats, growthSeries, milestoneRates }, insights] =
+    await Promise.all([getReportsSummary(scope), getAiInsights(scope)]);
 
-  const momHint = (value: number) =>
-    `${value >= 0 ? "↑" : "↓"} ${formatPercent(Math.abs(value))} vs last month`;
+  const academicInsights = insights.filter((item) => item.id !== "payment-risk");
 
   return (
     <>
       <AdminPageHeader
         eyebrow="All academy"
         title="Academy analytics"
-        description="Track academy performance and student success with data-driven insights."
+        description="Student performance and learning progress — finance lives on Finance."
       />
 
       <AdminKpiGrid
         items={[
           {
-            label: "Total Revenue",
-            value: formatCurrency(stats.totalRevenue),
-            hint: momHint(stats.momGrowth),
-            tone: "success",
-          },
-          {
             label: "Total Students",
             value: String(stats.totalStudents),
-            hint: "Enrolled roster",
-          },
-          {
-            label: "Completion Rate",
-            value: formatPercent(stats.completionRate),
-            hint: "Avg enrollment progress",
+            hint: formatMomHint(stats.momGrowth, stats.hasMomBaseline),
           },
           {
             label: "Active Students",
@@ -71,6 +54,16 @@ export default async function AnalyticsPage({
                 ? `${((stats.activeStudents / stats.totalStudents) * 100).toFixed(1)}% of total`
                 : "Status = active",
           },
+          {
+            label: "Completion Rate",
+            value: formatPercent(stats.completionRate),
+            hint: "Avg enrollment progress",
+          },
+          {
+            label: "Premium Students",
+            value: String(stats.premiumStudents),
+            hint: "Current premium roster",
+          },
         ]}
       />
 
@@ -78,11 +71,6 @@ export default async function AnalyticsPage({
         active={section}
         tabs={[
           { id: "overview", label: "Overview", href: "/analytics" },
-          {
-            id: "revenue",
-            label: "Revenue",
-            href: "/analytics?section=revenue",
-          },
           {
             id: "learning",
             label: "Learning",
@@ -96,58 +84,46 @@ export default async function AnalyticsPage({
         ]}
       />
 
-      {(section === "overview" || section === "revenue") && (
+      {(section === "overview" || section === "learning") && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <AdminPanel title="Revenue Trend">
-            <LineChartCard title="" data={revenueSeries} valuePrefix="$" />
+          <AdminPanel title="Student Growth">
+            <BarChartCard title="" data={growthSeries} />
           </AdminPanel>
-          {section === "overview" ? (
-            <AdminPanel title="Student Growth">
-              <BarChartCard title="" data={growthSeries} />
-            </AdminPanel>
-          ) : (
-            <AdminPanel title="Revenue pulse">
-              <dl className="space-y-3 text-sm">
-                <div className="flex justify-between gap-2">
-                  <dt className="text-muted">Paid volume</dt>
-                  <dd className="font-semibold">
-                    {formatCurrency(stats.totalRevenue)}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-muted">MoM student growth</dt>
-                  <dd className="font-semibold">
-                    {formatPercent(stats.momGrowth)}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-muted">New students this month</dt>
-                  <dd className="font-semibold">{stats.studentsThisMonth}</dd>
-                </div>
-              </dl>
-            </AdminPanel>
-          )}
+          <AdminPanel title="Milestone Completion Funnel">
+            {milestoneRates.length > 0 ? (
+              <DonutChart title="" data={milestoneRates} />
+            ) : (
+              <AdminEmptyState
+                title="No milestone data yet"
+                hint="Funnel numbers fill in as enrollments progress."
+              />
+            )}
+          </AdminPanel>
         </div>
       )}
 
-      {(section === "overview" || section === "learning") && (
-        <AdminPanel title="Milestone Completion Funnel">
-          {milestoneRates.length > 0 ? (
-            <DonutChart title="" data={milestoneRates} />
-          ) : (
-            <AdminEmptyState
-              title="No milestone data yet"
-              hint="Funnel numbers fill in as enrollments progress."
-            />
-          )}
+      {section === "learning" && milestoneRates.length > 0 ? (
+        <AdminPanel title="Completion by milestone">
+          <div className="space-y-3">
+            {milestoneRates.map((row) => (
+              <div key={row.name}>
+                <div className="mb-1 flex items-center justify-between text-xs">
+                  <span className="font-medium text-foreground">{row.name}</span>
+                  <span className="text-muted">{formatPercent(row.value)}</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-surface-3">
+                  <div
+                    className="h-full rounded-full bg-scalex-red"
+                    style={{
+                      width: `${Math.min(100, Math.max(0, row.value))}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </AdminPanel>
-      )}
-
-      {section === "learning" && (
-        <AdminPanel title="Student Growth">
-          <BarChartCard title="" data={growthSeries} />
-        </AdminPanel>
-      )}
+      ) : null}
 
       {section === "community" && (
         <AdminPanel title="Community signals">
@@ -172,9 +148,9 @@ export default async function AnalyticsPage({
           </span>
         }
       >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {insights.length > 0
-            ? insights.map((item) => (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {academicInsights.length > 0
+            ? academicInsights.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
@@ -200,11 +176,6 @@ export default async function AnalyticsPage({
                   body: `${stats.pendingReviews} submissions need review.`,
                   href: "/reviews",
                 },
-                {
-                  title: "Revenue pulse",
-                  body: `MoM growth ${formatPercent(stats.momGrowth)}.`,
-                  href: "/finance",
-                },
               ].map((card) => (
                 <Link
                   key={card.title}
@@ -223,7 +194,6 @@ export default async function AnalyticsPage({
       <AdminPanel title="Explore Detailed Reports">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            { label: "Revenue Analytics", href: "/finance" },
             { label: "Student Analytics", href: "/students" },
             {
               label: "Learning Analytics",
@@ -231,7 +201,6 @@ export default async function AnalyticsPage({
             },
             { label: "Community Analytics", href: "/community" },
             { label: "Task Reviews", href: "/reviews" },
-            { label: "Finance Analytics", href: "/finance" },
           ].map((item) => (
             <Link
               key={item.label}

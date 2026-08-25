@@ -108,17 +108,30 @@ export async function uploadAvatarAction(formData: FormData) {
 
   const path = `${userId}/avatar.${ext}`;
   const supabase = await createClient();
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const bytes = new Uint8Array(await file.arrayBuffer());
 
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(path, buffer, {
-      contentType: file.type,
+  let uploadError = (
+    await supabase.storage.from("avatars").upload(path, bytes, {
+      contentType: file.type || "image/jpeg",
       upsert: true,
-    });
+    })
+  ).error;
+
+  if (uploadError && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    const service = createServiceClient();
+    uploadError = (
+      await service.storage.from("avatars").upload(path, bytes, {
+        contentType: file.type || "image/jpeg",
+        upsert: true,
+      })
+    ).error;
+  }
 
   if (uploadError) {
-    settingsRedirect({ error: uploadError.message, tab: "profile" });
+    settingsRedirect({
+      error: uploadError.message || "Could not upload photo. Try a smaller JPG or PNG.",
+      tab: "profile",
+    });
   }
 
   const {

@@ -5,16 +5,7 @@ import { PLAN_FEATURES } from "@scalex/db";
 import { Card } from "@scalex/ui";
 import { AcademyCtaLink } from "@/components/academy-cta";
 import type { LiveSession } from "@/lib/data";
-
-function formatSessionTime(value: string) {
-  return new Date(value).toLocaleString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
+import { SessionWhen } from "@/components/session-when";
 
 function formatAnnounceDate(value: string) {
   return new Date(value).toLocaleDateString(undefined, {
@@ -60,7 +51,7 @@ export function LiveAndAnnouncements({
                   {next.title}
                 </h3>
                 <p className="mt-1 text-sm text-muted">
-                  {formatSessionTime(next.scheduled_at)}
+                  <SessionWhen value={next.scheduled_at} />
                 </p>
                 {next.description && (
                   <p className="mt-2 line-clamp-2 text-sm text-muted">

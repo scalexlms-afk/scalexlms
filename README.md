@@ -33,3 +33,8 @@ Deploy each app as a separate Vercel project from this repo:
 | Admin portal | `apps/admin-portal` |
 
 Both apps share workspace packages from the monorepo root.
+
+
+## End-to-end tests
+
+See tests/e2e/README.md.

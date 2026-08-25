@@ -48,3 +48,15 @@ export function monthLabel(key: string): string {
   const d = new Date(Number(year), Number(month) - 1, 1);
   return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
 }
+
+/** Stable public student code derived from the existing profile id. */
+export function studentPublicCode(id: string): string {
+  const compact = id.replace(/-/g, "").slice(0, 8).toUpperCase();
+  return `SX-${compact}`;
+}
+
+export function formatMomHint(value: number, hasBaseline: boolean): string | undefined {
+  if (!hasBaseline) return "No prior-month baseline";
+  const arrow = value >= 0 ? "↑" : "↓";
+  return `${arrow} ${formatPercent(Math.abs(value))} vs last month`;
+}

@@ -19,6 +19,7 @@ export interface LiveSession {
   recording_url: string | null;
   created_at: string;
   updated_at: string;
+  audience?: "all_premium" | "selected" | string | null;
 }
 
 export interface CommunityComment {

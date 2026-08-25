@@ -1,7 +1,6 @@
 "use client";
 
 import { GearSix } from "@phosphor-icons/react";
-import { ThemeToggle } from "@scalex/ui";
 
 export function SettingsHero() {
   return (
@@ -21,7 +20,6 @@ export function SettingsHero() {
           </div>
         </div>
       </div>
-      <ThemeToggle />
     </div>
   );
 }

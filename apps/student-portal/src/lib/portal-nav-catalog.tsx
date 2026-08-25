@@ -42,6 +42,11 @@ export function buildPortalNavGroups(unreadCount = 0): NavGroup[] {
           icon: <MapTrifold weight="duotone" className={navIcon} />,
         },
         {
+          label: "Lessons",
+          href: "/lessons",
+          icon: <PlayCircle weight="duotone" className={navIcon} />,
+        },
+        {
           label: "Tasks",
           href: "/tasks",
           icon: <CheckSquare weight="duotone" className={navIcon} />,

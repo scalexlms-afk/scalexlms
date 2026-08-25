@@ -151,7 +151,17 @@ export default async function AiKnowledgePage({
       />
 
       {canEdit ? (
-        <AdminPanel title="Add New Article">
+        <details className="rounded-2xl border border-line bg-surface-2 p-5">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+            <span className="font-display text-base font-semibold">
+              Knowledge articles
+            </span>
+            <span className="admin-btn-primary">Add</span>
+          </summary>
+          <div className="mt-5 border-t border-line pt-5">
+            <p className="mb-4 text-sm text-muted">
+              New articles stay closed until you press Add.
+            </p>
           <form
             action={createKnowledgeArticleAction}
             className="grid gap-4 sm:grid-cols-2"
@@ -204,7 +214,8 @@ export default async function AiKnowledgePage({
               <Button type="submit">Save article</Button>
             </div>
           </form>
-        </AdminPanel>
+          </div>
+        </details>
       ) : null}
 
       <AdminPanel>

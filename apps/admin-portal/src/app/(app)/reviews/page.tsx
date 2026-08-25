@@ -16,7 +16,11 @@ import {
   type ReviewFilter,
 } from "@/lib/data";
 import { formatDateTime } from "@/lib/format";
-import { reviewSubmissionAction } from "./actions";
+import { SubmissionPreview } from "@/components/submission-preview";
+import {
+  reviewSubmissionAction,
+  sendRevisionReminderAction,
+} from "./actions";
 import {
   submissionStatusLabel,
   submissionStatusVariant,
@@ -25,15 +29,6 @@ import {
   type SubmissionStatus,
 } from "@scalex/db";
 import { Button, StatusPill } from "@scalex/ui";
-
-function formatSubmissionContent(content: Record<string, unknown>): string {
-  if (typeof content.text === "string" && content.text) return content.text;
-  if (typeof content.link === "string" && content.link) return content.link;
-  if (typeof content.file_path === "string" && content.file_path) {
-    return `File: ${content.file_path}`;
-  }
-  return JSON.stringify(content, null, 2);
-}
 
 function formatAiScore(score: number | null): string {
   if (score == null) return "—";
@@ -355,13 +350,33 @@ export default async function ReviewsPage({
                       </form>
                     </div>
                   ) : (
-                    <p className="text-xs text-muted">
-                      This submission is already{" "}
-                      {submissionStatusLabel(
-                        selected.status as SubmissionStatus
-                      ).toLowerCase()}
-                      .
-                    </p>
+                    <div className="space-y-3">
+                      <p className="text-xs text-muted">
+                        This submission is already{" "}
+                        {submissionStatusLabel(
+                          selected.status as SubmissionStatus
+                        ).toLowerCase()}
+                        .
+                      </p>
+                      {selected.status === "revision_required" &&
+                      selected.student_id ? (
+                        <form action={sendRevisionReminderAction}>
+                          <input
+                            type="hidden"
+                            name="submissionId"
+                            value={selected.id}
+                          />
+                          <input
+                            type="hidden"
+                            name="studentId"
+                            value={selected.student_id}
+                          />
+                          <Button type="submit" className="w-full" variant="secondary">
+                            Send revision reminder
+                          </Button>
+                        </form>
+                      ) : null}
+                    </div>
                   )
                 }
               >
@@ -419,9 +434,9 @@ export default async function ReviewsPage({
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted">
                     Submission
                   </p>
-                  <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap rounded-xl bg-surface-3 p-3 text-xs text-muted">
-                    {formatSubmissionContent(selected.content)}
-                  </pre>
+                  <div className="mt-2 rounded-xl bg-surface-3 p-3">
+                    <SubmissionPreview content={selected.content} />
+                  </div>
                 </div>
 
                 <div>

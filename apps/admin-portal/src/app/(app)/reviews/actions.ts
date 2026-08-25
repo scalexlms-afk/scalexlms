@@ -183,3 +183,30 @@ export async function reviewSubmissionAction(formData: FormData) {
 
   revalidatePath("/reviews");
 }
+
+export async function sendRevisionReminderAction(formData: FormData) {
+  const submissionId = formData.get("submissionId") as string;
+  const studentId = formData.get("studentId") as string;
+  if (!submissionId || !studentId) throw new Error("Submission required");
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "task_review");
+
+  await createNotification({
+    userId: studentId,
+    type: "submission_review",
+    title: "Revision reminder",
+    body: "Please revise and resubmit your task. Your mentor is waiting on an update.",
+    payload: { submissionId, reminder: true, actorId: userId },
+  });
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "submission.revision_reminder",
+    targetType: "submission",
+    targetId: submissionId,
+    metadata: { studentId },
+  });
+
+  revalidatePath("/reviews");
+}

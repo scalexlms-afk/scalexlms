@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { writeAuditLog } from "@scalex/db";
 import type {
   CourseStatus,
+  Json,
   LessonCompletionType,
   LessonContentType,
 } from "@scalex/db/types";
@@ -988,19 +989,28 @@ export async function updateUnlockRuleAction(formData: FormData) {
 }
 
 function parseQuizOptions(formData: FormData): string[] {
-  const optionsRaw = (formData.get("options") as string) ?? "";
-  const fromTextarea = optionsRaw
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  if (fromTextarea.length > 0) return fromTextarea;
-
   const indexed: string[] = [];
   for (let i = 0; i < 8; i++) {
-    const value = (formData.get(`option${i}`) as string)?.trim();
+    const value = String(formData.get(`option${i}`) ?? "").trim();
     if (value) indexed.push(value);
   }
-  return indexed;
+  if (indexed.length > 0) return indexed;
+
+  const optionsRaw = String(
+    formData.get("optionsText") ?? formData.get("options") ?? ""
+  );
+  return optionsRaw
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+async function safeAudit(input: Parameters<typeof writeAuditLog>[0]) {
+  try {
+    await writeAuditLog(input);
+  } catch (err) {
+    console.error("audit log failed:", err instanceof Error ? err.message : err);
+  }
 }
 
 export async function createQuizAction(formData: FormData) {
@@ -1144,7 +1154,7 @@ export async function createQuizQuestionAction(formData: FormData) {
     .insert({
       quiz_id: quizId,
       prompt,
-      options,
+      options: JSON.parse(JSON.stringify(options)) as Json,
       correct_index,
       order_index,
     })
@@ -1152,7 +1162,7 @@ export async function createQuizQuestionAction(formData: FormData) {
     .single();
   if (error) throw new Error(error.message);
 
-  await writeAuditLog({
+  await safeAudit({
     actorId: userId,
     action: "quiz_question.created",
     targetType: "quiz_question",
@@ -1187,11 +1197,15 @@ export async function updateQuizQuestionAction(formData: FormData) {
   const db = getServiceDb();
   const { error } = await db
     .from("quiz_questions")
-    .update({ prompt, options, correct_index })
+    .update({
+      prompt,
+      options: JSON.parse(JSON.stringify(options)) as Json,
+      correct_index,
+    })
     .eq("id", questionId);
   if (error) throw new Error(error.message);
 
-  await writeAuditLog({
+  await safeAudit({
     actorId: userId,
     action: "quiz_question.updated",
     targetType: "quiz_question",

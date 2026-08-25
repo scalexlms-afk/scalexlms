@@ -61,11 +61,15 @@ function ConversationList({
   unreadFromMentor,
   lastMessagePreview,
   lastMessageAt,
+  onOpenMentor,
+  mentorActive,
 }: {
   mentor: MentorSummary;
   unreadFromMentor: number;
   lastMessagePreview: string | null;
   lastMessageAt: string | null;
+  onOpenMentor?: () => void;
+  mentorActive?: boolean;
 }) {
   return (
     <>
@@ -97,7 +101,13 @@ function ConversationList({
 
       <ul className="divide-y divide-line">
         <li>
-          <div className="flex w-full items-start gap-3 bg-accent-purple/10 px-4 py-3">
+          <button
+            type="button"
+            onClick={onOpenMentor}
+            className={`flex w-full items-start gap-3 px-4 py-3 text-left ${
+              mentorActive ? "bg-accent-purple/10" : "hover:bg-surface-3/50"
+            }`}
+          >
             <Avatar name={mentor.name} avatarUrl={mentor.avatarUrl} />
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
@@ -124,7 +134,7 @@ function ConversationList({
                 {lastMessagePreview ?? "No messages yet — say hello"}
               </p>
             </div>
-          </div>
+          </button>
         </li>
 
         <li>
@@ -181,6 +191,8 @@ export function ConversationRail({
   lastMessageAt,
   collapsible = false,
   fillHeight = false,
+  onOpenMentor,
+  mentorActive = false,
 }: {
   mentor: MentorSummary;
   unreadFromMentor: number;
@@ -188,6 +200,8 @@ export function ConversationRail({
   lastMessageAt: string | null;
   collapsible?: boolean;
   fillHeight?: boolean;
+  onOpenMentor?: () => void;
+  mentorActive?: boolean;
 }) {
   const body = (
     <ConversationList
@@ -195,6 +209,8 @@ export function ConversationRail({
       unreadFromMentor={unreadFromMentor}
       lastMessagePreview={lastMessagePreview}
       lastMessageAt={lastMessageAt}
+      onOpenMentor={onOpenMentor}
+      mentorActive={mentorActive}
     />
   );
 

@@ -9,6 +9,7 @@ import { CreateTicketDialog } from "@/components/support/create-ticket-dialog";
 import { RecentActivity } from "@/components/support/recent-activity";
 import { SupportFooterCta } from "@/components/support/support-footer-cta";
 import type { SupportPageData } from "@/lib/support-shared";
+import { ContactInfoCard } from "@/components/contact-info-card";
 
 export function SupportWorkspace({
   data,
@@ -40,6 +41,14 @@ export function SupportWorkspace({
       ) : null}
 
       <PriorityBanner premium={data.premium} />
+
+      {data.premium ? (
+        <ContactInfoCard
+          contact={data.contact}
+          title="Premium contact"
+          premiumOnly
+        />
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-2 lg:items-stretch">
         <MentorChatCard

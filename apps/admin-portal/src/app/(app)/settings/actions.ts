@@ -86,7 +86,12 @@ export async function updateUserRoleAction(formData: FormData) {
 
 export async function updatePaymentPlanAction(formData: FormData) {
   const planId = formData.get("planId") as string;
-  const totalCents = Number(formData.get("totalCents"));
+  const dollarsRaw = formData.get("totalDollars");
+  const centsRaw = formData.get("totalCents");
+  const totalCents =
+    dollarsRaw != null && String(dollarsRaw).trim() !== ""
+      ? Math.round(Number(dollarsRaw) * 100)
+      : Number(centsRaw);
   const firstPercent = Number(formData.get("firstPercent"));
   const remainingPercent = Number(formData.get("remainingPercent"));
   const section = (formData.get("section") as string) || "general";
@@ -231,6 +236,7 @@ function formValueToJson(
         tagline: String(formData.get("tagline") ?? "").trim(),
         accent: String(formData.get("accent") ?? "").trim(),
         supportEmail: String(formData.get("supportEmail") ?? "").trim(),
+        logoUrl: String(formData.get("logoUrl") ?? "").trim(),
       };
     case "auth":
       return {

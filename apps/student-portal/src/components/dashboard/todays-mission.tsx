@@ -19,6 +19,7 @@ export function TodaysMission({
   lessonsLeft,
   unlocksLabel,
   continueHref,
+  kind = "continue",
 }: {
   title: string | null;
   description: string | null;
@@ -26,13 +27,18 @@ export function TodaysMission({
   lessonsLeft: number;
   unlocksLabel: string;
   continueHref: string;
+  kind?: "watch" | "submit" | "continue";
 }) {
   const effortLabel =
-    lessonsLeft === 0
-      ? "Ready to submit"
-      : lessonsLeft === 1
-        ? "1 lesson left"
-        : `${lessonsLeft} lessons left`;
+    kind === "watch"
+      ? "Watch next lesson"
+      : kind === "submit"
+        ? "Submit deliverable"
+        : lessonsLeft === 0
+          ? "Ready to submit"
+          : lessonsLeft === 1
+            ? "1 lesson left"
+            : `${lessonsLeft} lessons left`;
 
   return (
     <Card className="relative overflow-hidden border-scalex-red/30 bg-scalex-red/[0.07]">
@@ -68,7 +74,11 @@ export function TodaysMission({
           </div>
 
           <AcademyCtaLink href={continueHref} className="mt-6 w-full sm:w-auto">
-            Continue Journey →
+            {kind === "watch"
+              ? "Watch lesson →"
+              : kind === "submit"
+                ? "Submit task →"
+                : "Continue Journey →"}
           </AcademyCtaLink>
         </div>
 

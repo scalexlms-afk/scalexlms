@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { AchievementsRow } from "@/components/dashboard/achievements-row";
 import { HelpLinks } from "@/components/dashboard/help-links";
+import { HowThisWorks } from "@/components/dashboard/how-this-works";
 import { JourneyProgress } from "@/components/dashboard/journey-progress";
 import { LiveAndAnnouncements } from "@/components/dashboard/live-and-announcements";
+import { RecentNotifications } from "@/components/dashboard/recent-notifications";
 import { StageHero } from "@/components/dashboard/stage-hero";
 import { TodaysMission } from "@/components/dashboard/todays-mission";
 import { requireStudentProfile } from "@/lib/auth";
@@ -26,6 +28,12 @@ export default async function DashboardPage() {
             Keep building momentum on your Amazon journey.
           </p>
         </div>
+
+        <AchievementsRow
+          badges={data.badges}
+          level={profile.level}
+          completionPercent={data.completionPercent}
+        />
 
         {data.remainingPayment && (
           <Card className="border-accent-amber/40 bg-accent-amber/5">
@@ -58,18 +66,23 @@ export default async function DashboardPage() {
         />
 
         <TodaysMission
-          title={data.currentTask?.title ?? null}
-          description={data.currentTask?.description ?? null}
+          title={data.nextAction.title}
+          description={data.nextAction.description}
           status={data.currentSubmission?.status ?? "not_started"}
           lessonsLeft={data.lessonsLeftInStage}
           unlocksLabel={data.unlocksLabel}
-          continueHref={data.continueHref}
+          continueHref={data.nextAction.href}
+          kind={data.nextAction.kind}
         />
+
+        <HowThisWorks />
 
         <JourneyProgress
           milestones={data.milestones}
           nextMilestone={data.nextMilestone}
         />
+
+        <RecentNotifications items={data.recentNotifications} />
 
         <HelpLinks premium={premium} />
 
@@ -78,8 +91,6 @@ export default async function DashboardPage() {
           sessions={data.upcomingSessions}
           announcements={data.announcements}
         />
-
-        <AchievementsRow badges={data.badges} level={profile.level} />
       </div>
     </>
   );

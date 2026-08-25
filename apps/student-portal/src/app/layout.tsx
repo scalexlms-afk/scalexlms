@@ -3,6 +3,7 @@ import { Inter, Poppins } from "next/font/google";
 import { ThemeProvider, ThemeScript } from "@scalex/ui";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import { WebVitalsReporter } from "@/components/web-vitals-reporter";
+import { AuthSessionRefresh } from "@/components/auth-session-refresh";
 import { rootMetadata } from "@/lib/seo";
 import "./globals.css";
 
@@ -38,6 +39,7 @@ export default function RootLayout({
         <ThemeProvider>
           <GoogleAnalytics />
           <WebVitalsReporter />
+          <AuthSessionRefresh />
           {children}
         </ThemeProvider>
       </body>

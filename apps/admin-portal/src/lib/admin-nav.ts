@@ -23,6 +23,7 @@ export type AdminBreadcrumb = {
 const NAV_LABELS: Record<string, { group: string; title: string }> = {
   "/": { group: "Overview", title: "Dashboard" },
   "/analytics": { group: "Overview", title: "Analytics" },
+  "/notifications": { group: "Overview", title: "Notifications" },
   "/content": { group: "Academy", title: "Courses" },
   "/resources": { group: "Academy", title: "Resources" },
   "/ai-knowledge": { group: "Academy", title: "AI Knowledge Base" },

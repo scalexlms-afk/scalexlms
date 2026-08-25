@@ -33,3 +33,10 @@ Thumbs.db
 # local tooling / large binaries
 tools/ffmpeg/
 *.zip
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/tests/e2e/.auth/

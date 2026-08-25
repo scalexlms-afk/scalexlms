@@ -21,7 +21,7 @@ export default async function PaymentPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login");
+  if (!user) redirect("/login?redirect=/payment");
 
   const { data: profile } = await supabase
     .from("profiles")

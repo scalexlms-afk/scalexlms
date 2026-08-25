@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@scalex/db/server";
 import type { Profile } from "@scalex/db/types";
@@ -25,10 +26,20 @@ export const getSessionProfile = cache(async (): Promise<{
   return { userId: user.id, profile: profile as Profile };
 });
 
+async function loginPath(): Promise<string> {
+  const hdrs = await headers();
+  const fromHeader = hdrs.get("x-scalex-pathname");
+  const dest =
+    fromHeader && fromHeader.startsWith("/") && !fromHeader.startsWith("//")
+      ? fromHeader
+      : "/dashboard";
+  return `/login?redirect=${encodeURIComponent(dest)}`;
+}
+
 export async function requireStudentProfile() {
   const session = await getSessionProfile();
   if (!session) {
-    redirect("/login");
+    redirect(await loginPath());
   }
   if (session.profile.role !== "student") {
     redirect("/unauthorized");

@@ -17,15 +17,13 @@ import {
   getMilestoneCompletionRates,
   getOpenSupportTicketCount,
   getRecentAuditLogs,
-  getRevenueSeries,
   getStudentGrowthSeries,
 } from "@/lib/data";
-import { formatCurrency, formatPercent } from "@/lib/format";
+import { formatMomHint, formatPercent } from "@/lib/format";
 import { canAccess } from "@scalex/db/rbac";
 import {
   BarChartCard,
   DonutChart,
-  LineChartCard,
   StatusPill,
 } from "@scalex/ui";
 
@@ -62,14 +60,12 @@ export default async function AdminDashboardPage() {
   const showCommunity = canAccess(role, "community");
   const showSessions = canAccess(role, "live_sessions");
   const showStudents = canAccess(role, "student_management");
-  const showFinance = canAccess(role, "finance");
   const showCrm = canAccess(role, "crm");
   const showContent = canAccess(role, "course_content");
 
-  const [stats, revenueSeries, growthSeries, milestoneRates, insights] =
+  const [stats, growthSeries, milestoneRates, insights] =
     await Promise.all([
       getDashboardStats(scope),
-      getRevenueSeries(scope),
       getStudentGrowthSeries(scope),
       getMilestoneCompletionRates(scope),
       getAiInsights(scope),
@@ -116,8 +112,7 @@ export default async function AdminDashboardPage() {
   const studentCount =
     role === "mentor" ? (assigned?.assignedCount ?? 0) : stats.totalStudents;
 
-  const momHint = (value: number) =>
-    `${value >= 0 ? "↑" : "↓"} ${formatPercent(Math.abs(value))} vs last month`;
+  const studentMom = formatMomHint(stats.momGrowth, stats.hasMomBaseline);
 
   return (
     <>
@@ -149,7 +144,7 @@ export default async function AdminDashboardPage() {
                 {
                   label: "Total Students",
                   value: String(studentCount),
-                  hint: momHint(stats.momGrowth),
+                  hint: studentMom,
                 },
                 {
                   label: "Active Students",
@@ -159,16 +154,6 @@ export default async function AdminDashboardPage() {
                     studentCount > 0
                       ? `${((stats.activeStudents / studentCount) * 100).toFixed(1)}% of total`
                       : undefined,
-                },
-              ]
-            : []),
-          ...(showFinance
-            ? [
-                {
-                  label: "Total Revenue",
-                  value: formatCurrency(stats.totalRevenue),
-                  hint: "Paid volume",
-                  tone: "success" as const,
                 },
               ]
             : []),
@@ -503,11 +488,6 @@ export default async function AdminDashboardPage() {
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        {showFinance ? (
-          <AdminPanel title="Revenue Overview" className="lg:col-span-1">
-            <LineChartCard title="" data={revenueSeries} valuePrefix="$" />
-          </AdminPanel>
-        ) : null}
         {showCommunity ? (
           <AdminPanel
             title="Community Overview"

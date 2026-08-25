@@ -6,9 +6,11 @@ import type { Badge } from "@/lib/data";
 export function AchievementsRow({
   badges,
   level,
+  completionPercent,
 }: {
   badges: Badge[];
   level: string | null;
+  completionPercent?: number;
 }) {
   const earned = new Set(badges.map((b) => b.key));
   const display = Object.entries(BADGE_LABELS).slice(0, 6);
@@ -23,6 +25,11 @@ export function AchievementsRow({
             <span className="text-foreground">
               {level ? LEVEL_LABELS[level] ?? level : "Beginner Seller"}
             </span>
+            {completionPercent != null ? (
+              <span className="ml-2 text-foreground">
+                · {completionPercent}% complete
+              </span>
+            ) : null}
           </p>
         </div>
         <Link

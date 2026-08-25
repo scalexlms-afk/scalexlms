@@ -79,13 +79,30 @@ const ACTION_REQUIRED_TYPES = new Set([
   "support_ticket",
 ]);
 
+export function isUnread(readAt: string | null | undefined): boolean {
+  if (readAt == null) return true;
+  const t = String(readAt).trim();
+  if (!t || t === "null" || t === "undefined" || t === "0") return true;
+  const parsed = Date.parse(t);
+  return Number.isNaN(parsed);
+}
+
+function typeMatches(type: string, exact: Set<string>, needles: string[]): boolean {
+  if (exact.has(type)) return true;
+  const t = type.toLowerCase();
+  return needles.some((n) => t.includes(n));
+}
+
 export function notificationCategory(type: string): NotificationCategory {
-  if (TASK_TYPES.has(type)) return "tasks";
-  if (MENTOR_TYPES.has(type)) return "mentor";
-  if (LIVE_TYPES.has(type)) return "live";
-  if (COMMUNITY_TYPES.has(type)) return "community";
+  if (typeMatches(type, TASK_TYPES, ["submission", "review", "milestone", "task"]))
+    return "tasks";
+  if (typeMatches(type, MENTOR_TYPES, ["message", "mentor", "chat"])) return "mentor";
+  if (typeMatches(type, LIVE_TYPES, ["session", "live", "class"])) return "live";
+  if (typeMatches(type, COMMUNITY_TYPES, ["community", "moderation"]))
+    return "community";
   if (PAYMENT_TYPES.has(type) || type.startsWith("payment_")) return "payments";
-  if (SYSTEM_TYPES.has(type)) return "system";
+  if (typeMatches(type, SYSTEM_TYPES, ["badge", "support", "ticket", "system"]))
+    return "system";
   return "system";
 }
 
@@ -161,20 +178,50 @@ export function notificationCtaLabel(type: string): string {
 }
 
 export function isActionRequired(type: string, readAt: string | null): boolean {
-  return !readAt && ACTION_REQUIRED_TYPES.has(type);
+  return (
+    isUnread(readAt) &&
+    typeMatches(type, ACTION_REQUIRED_TYPES, [
+      "review",
+      "message",
+      "session",
+      "payment_reminder",
+      "payment_failed",
+      "payment_overdue",
+      "support",
+      "revision",
+    ])
+  );
 }
 
 export function isReviewsPending(type: string, readAt: string | null): boolean {
-  return !readAt && type === "submission_review";
+  return (
+    isUnread(readAt) &&
+    typeMatches(type, new Set(["submission_review"]), ["review", "revision"])
+  );
 }
 
 export function isAnnouncement(type: string): boolean {
-  return (
-    type === "milestone_unlocked" ||
-    type === "session_scheduled" ||
-    type === "community_moderation" ||
-    type === "plan_upgrade"
+  return typeMatches(
+    type,
+    new Set([
+      "milestone_unlocked",
+      "session_scheduled",
+      "community_moderation",
+      "plan_upgrade",
+    ]),
+    ["announcement", "milestone", "session", "community", "upgrade"]
   );
+}
+
+export function buildNotificationSummary(
+  items: NotificationItem[]
+): NotificationSummary {
+  return {
+    unread: items.filter((n) => isUnread(n.readAt)).length,
+    actionRequired: items.filter((n) => n.actionRequired || isActionRequired(n.type, n.readAt)).length,
+    reviewsPending: items.filter((n) => isReviewsPending(n.type, n.readAt)).length,
+    announcements: items.filter((n) => isAnnouncement(n.type) && isUnread(n.readAt)).length,
+  };
 }
 
 export type NotificationTimeGroup =
@@ -242,7 +289,7 @@ export function filterNotifications(
   filter: NotificationFilter
 ): NotificationItem[] {
   if (filter === "all") return items;
-  if (filter === "unread") return items.filter((n) => !n.readAt);
+  if (filter === "unread") return items.filter((n) => isUnread(n.readAt));
   return items.filter((n) => n.category === filter);
 }
 

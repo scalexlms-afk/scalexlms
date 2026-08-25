@@ -7,6 +7,7 @@ import {
   AdminDetailRail,
 } from "@/components/admin-ui";
 import { Field } from "@/components/field";
+import { MediaUploadField } from "@/components/media-upload-field";
 import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
 import {
   getPaymentPlanSettings,
@@ -254,10 +255,12 @@ export default async function SettingsPage({
                             </ul>
                           </div>
                           <Field
-                            label="Total (cents)"
-                            name="totalCents"
+                            label="Total (USD)"
+                            name="totalDollars"
                             type="number"
-                            defaultValue={String(plan.total_cents)}
+                            step="0.01"
+                            min="0"
+                            defaultValue={(plan.total_cents / 100).toFixed(2)}
                           />
                           <Field
                             label="First %"
@@ -277,9 +280,21 @@ export default async function SettingsPage({
                             </Button>
                           </div>
                           <p className="sm:col-span-4 text-xs text-muted">
-                            Current: {formatCurrency(plan.total_cents)} ·{" "}
-                            {plan.first_payment_percent}% /{" "}
-                            {plan.remaining_percent}%
+                            {formatCurrency(plan.total_cents)} total ·{" "}
+                            {plan.first_payment_percent}% (
+                            {formatCurrency(
+                              Math.round(
+                                (plan.total_cents * plan.first_payment_percent) /
+                                  100
+                              )
+                            )}
+                            ) / {plan.remaining_percent}% (
+                            {formatCurrency(
+                              Math.round(
+                                (plan.total_cents * plan.remaining_percent) / 100
+                              )
+                            )}
+                            )
                           </p>
                         </form>
                       );
@@ -330,6 +345,14 @@ export default async function SettingsPage({
                       )}
                     />
                   </div>
+                  <MediaUploadField
+                    folder="branding"
+                    accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                    label="Academy logo"
+                    name="logoUrl"
+                    defaultUrl={str(branding.logoUrl)}
+                    helperText="PNG, JPG, SVG, or WebP"
+                  />
                   <SaveBar />
                 </form>
               </AdminPanel>

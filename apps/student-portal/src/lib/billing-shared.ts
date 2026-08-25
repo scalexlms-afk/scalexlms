@@ -37,6 +37,11 @@ export type BillingPageData = {
   history: BillingHistoryItem[];
   paidViaStripe: boolean;
   stripeCustomerId: string | null;
+  contact: {
+    email: string | null;
+    phone: string | null;
+    whatsapp: string | null;
+  };
 };
 
 export function formatBillingMoney(cents: number, currency = "USD") {

@@ -1,15 +1,14 @@
 import { getNotifications, type Notification } from "@/lib/data";
 import { ensureNotificationPreferences } from "@/lib/settings";
 import {
+  buildNotificationSummary,
   isActionRequired,
-  isAnnouncement,
-  isReviewsPending,
+  isUnread,
   notificationCategory,
   notificationCtaLabel,
   notificationHref,
   type NotificationItem,
   type NotificationsPageData,
-  type NotificationSummary,
 } from "@/lib/notifications-shared";
 
 export type {
@@ -23,10 +22,12 @@ export type {
 export {
   NOTIFICATION_FILTERS,
   TIME_GROUP_LABELS,
+  buildNotificationSummary,
   filterNotifications,
   formatNotificationTime,
   groupNotifications,
   isActionRequired,
+  isUnread,
   notificationCategory,
   notificationCtaLabel,
   notificationHref,
@@ -42,29 +43,18 @@ function asPayload(
 
 function mapNotification(row: Notification): NotificationItem {
   const payload = asPayload(row.payload);
+  const readAt = isUnread(row.read_at) ? null : row.read_at;
   return {
     id: row.id,
     type: row.type,
     title: row.title,
     body: row.body,
     createdAt: row.created_at,
-    readAt: row.read_at,
+    readAt,
     category: notificationCategory(row.type),
     href: notificationHref(row.type, payload),
     ctaLabel: notificationCtaLabel(row.type),
-    actionRequired: isActionRequired(row.type, row.read_at),
-  };
-}
-
-function buildSummary(items: NotificationItem[]): NotificationSummary {
-  return {
-    unread: items.filter((n) => !n.readAt).length,
-    actionRequired: items.filter((n) => n.actionRequired).length,
-    reviewsPending: items.filter((n) =>
-      isReviewsPending(n.type, n.readAt)
-    ).length,
-    announcements: items.filter((n) => isAnnouncement(n.type) && !n.readAt)
-      .length,
+    actionRequired: isActionRequired(row.type, readAt),
   };
 }
 
@@ -78,7 +68,7 @@ export async function getNotificationsPageData(
   const notifications = rows.map(mapNotification);
   return {
     notifications,
-    summary: buildSummary(notifications),
+    summary: buildNotificationSummary(notifications),
     prefs: {
       inApp: prefs.inApp,
       email: prefs.email,

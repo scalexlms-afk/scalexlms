@@ -39,10 +39,21 @@ export type HubTaskItem = {
   unlocked: boolean;
   submittedAt: string | null;
   reviewedAt: string | null;
+  lessonNumber: number | null;
+  lessonHref: string | null;
 };
+
+export function isTaskOpen(
+  unlocked: boolean,
+  status: SubmissionStatus
+): boolean {
+  return unlocked || status === "revision_required";
+}
 
 export type TasksHubData = {
   stats: TasksHubStats;
+  currentStage: HubTaskItem[];
+  upcoming: HubTaskItem[];
   current: {
     milestoneId: string;
     milestoneTitle: string;
@@ -286,6 +297,8 @@ export async function getTasksHubData(
 
   const empty: TasksHubData = {
     stats: { pending: 0, underReview: 0, completed: 0, total: 0 },
+    currentStage: [],
+    upcoming: [],
     current: null,
     completed: [],
     allTasks: [],
@@ -322,6 +335,15 @@ export async function getTasksHubData(
     tasksByMilestoneId.set(key, list);
   }
 
+  const lessonNumberById = new Map<string, number>();
+  let lessonCursor = 0;
+  for (const ms of ordered) {
+    for (const lesson of orderedLessons(ms.modules)) {
+      lessonCursor += 1;
+      lessonNumberById.set(lesson.id, lessonCursor);
+    }
+  }
+
   const allTasks: HubTaskItem[] = [];
 
   ordered.forEach((ms, index) => {
@@ -332,15 +354,20 @@ export async function getTasksHubData(
       const submission = submissionByTaskId.get(task.id);
       const status = (submission?.status ?? "not_started") as SubmissionStatus;
       const latestReview = submission?.reviews?.[0] ?? null;
+      const lessonNumber = task.lesson_id
+        ? lessonNumberById.get(task.lesson_id) ?? null
+        : null;
 
       allTasks.push({
         milestoneId: ms.id,
         milestoneTitle: ms.title,
         task,
         status,
-        unlocked,
+        unlocked: isTaskOpen(unlocked, status),
         submittedAt: submission?.submitted_at ?? null,
         reviewedAt: latestReview?.reviewed_at ?? null,
+        lessonNumber,
+        lessonHref: task.lesson_id ? `/lessons/${task.lesson_id}` : null,
       });
     }
   });
@@ -363,7 +390,7 @@ export async function getTasksHubData(
     }
   }
 
-  const completedItems = allTasks.filter((t) => t.status === "approved");
+  const completedItems = allTasks.filter((item) => item.status === "approved");
 
   const currentItem =
     allTasks.find((t) => t.milestoneId === dashboard.currentMilestoneId) ??
@@ -375,6 +402,18 @@ export async function getTasksHubData(
     allTasks.find((t) => t.unlocked && t.status !== "approved") ??
     null;
 
+  const currentStageItems = allTasks.filter(
+    (item) =>
+      item.milestoneId === dashboard.currentMilestoneId &&
+      item.status !== "approved"
+  );
+  const upcomingItems = allTasks.filter(
+    (item) =>
+      !item.unlocked &&
+      item.status !== "approved" &&
+      item.status !== "revision_required"
+  );
+
   if (!currentItem) {
     return {
       stats: {
@@ -383,6 +422,8 @@ export async function getTasksHubData(
         completed,
         total: allTasks.length,
       },
+      currentStage: currentStageItems,
+      upcoming: upcomingItems,
       current: null,
       completed: completedItems,
       allTasks,
@@ -408,7 +449,7 @@ export async function getTasksHubData(
   const hasAiNotes = Boolean(submission?.ai_notes || submission?.ai_score != null);
   const hasMentorReview = Boolean(submission?.reviews?.[0]);
   const canSubmit =
-    currentItem.unlocked &&
+    isTaskOpen(currentItem.unlocked, currentItem.status) &&
     (currentItem.status === "not_started" ||
       currentItem.status === "revision_required");
 
@@ -432,6 +473,8 @@ export async function getTasksHubData(
       completed,
       total: allTasks.length,
     },
+    currentStage: currentStageItems,
+    upcoming: upcomingItems,
     current: {
       milestoneId: currentItem.milestoneId,
       milestoneTitle: currentItem.milestoneTitle,

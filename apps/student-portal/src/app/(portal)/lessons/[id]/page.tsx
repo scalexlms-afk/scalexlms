@@ -153,6 +153,15 @@ export default async function LessonPage({
             </div>
           )}
         </Card>
+        {lesson.content_type === "pdf" && secureMediaUrl ? (
+          <a
+            href={secureMediaUrl}
+            download
+            className="inline-flex text-sm font-semibold text-scalex-red hover:underline"
+          >
+            Download PDF
+          </a>
+        ) : null}
 
         {completionType === "quiz_pass" && quiz ? (
           <QuizPlayer

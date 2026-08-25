@@ -18,6 +18,7 @@ export type SessionListItem = {
   hostName: string | null;
   hostAvatarUrl: string | null;
   registrationCount: number;
+  audience?: "all_premium" | "selected" | string | null;
 };
 
 export type RecordingListItem = {
@@ -46,6 +47,7 @@ export function formatSessionDateTime(value: string) {
     day: "numeric",
     hour: "numeric",
     minute: "2-digit",
+    timeZoneName: "short",
   });
 }
 
@@ -60,6 +62,7 @@ export function formatSessionTime(value: string) {
   return new Date(value).toLocaleTimeString(undefined, {
     hour: "numeric",
     minute: "2-digit",
+    timeZoneName: "short",
   });
 }
 
