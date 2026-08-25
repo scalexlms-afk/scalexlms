@@ -4,6 +4,7 @@ import { ProtectedMediaPlayer } from "@/components/protected-media-player";
 import { QuizPlayer } from "@/components/lessons/quiz-player";
 import { requireStudentProfile } from "@/lib/auth";
 import {
+  getAcademyResourcesForContext,
   getLessonById,
   getLessonQuizForStudent,
   getTasksByLessonId,
@@ -83,11 +84,15 @@ export default async function LessonPage({
   const isComplete = !!completion;
   const completionType = lesson.completion_type ?? "view_only";
 
-  const [quiz, lessonTasks] = await Promise.all([
+  const [quiz, lessonTasks, academyResources] = await Promise.all([
     completionType === "quiz_pass" ? getLessonQuizForStudent(id) : null,
     completionType === "upload_file" || completionType === "mentor_task"
       ? getTasksByLessonId(id)
       : Promise.resolve([]),
+    getAcademyResourcesForContext({
+      lessonId: id,
+      milestoneId: lessonMilestoneId,
+    }),
   ]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -161,6 +166,33 @@ export default async function LessonPage({
           >
             Download PDF
           </a>
+        ) : null}
+
+        {academyResources.length > 0 ? (
+          <Card>
+            <h2 className="text-sm font-semibold">Resources</h2>
+            <ul className="mt-3 space-y-2">
+              {academyResources.map((resource) => (
+                <li key={resource.id}>
+                  {resource.href ? (
+                    <a
+                      href={resource.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-scalex-red hover:underline"
+                    >
+                      {resource.title} →
+                    </a>
+                  ) : (
+                    <span className="text-sm">{resource.title}</span>
+                  )}
+                  {resource.description ? (
+                    <p className="text-xs text-muted">{resource.description}</p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </Card>
         ) : null}
 
         {completionType === "quiz_pass" && quiz ? (

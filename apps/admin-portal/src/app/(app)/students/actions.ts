@@ -199,3 +199,97 @@ export async function replyToStudentAction(formData: FormData) {
     redirect(`/messages/${studentId}?sent=1`);
   }
 }
+
+export async function grantComplimentaryAccessAction(formData: FormData) {
+  const studentId = formData.get("studentId") as string;
+  if (!studentId) throw new Error("Student required");
+
+  const { userId, profile } = await requireAdminProfile();
+  if (profile.role !== "super_admin") throw new Error("Forbidden");
+  requireFeature(profile.role, "student_management", "full");
+
+  const db = getServiceDb();
+  const { data: student, error: fetchError } = await db
+    .from("profiles")
+    .select("id, role, status")
+    .eq("id", studentId)
+    .maybeSingle();
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!student || student.role !== "student") {
+    throw new Error("Student not found");
+  }
+
+  const { error } = await db
+    .from("profiles")
+    .update({ complimentary_access: true, status: "active" })
+    .eq("id", studentId)
+    .eq("role", "student");
+
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "student.complimentary_access_granted",
+    targetType: "profile",
+    targetId: studentId,
+    metadata: { previousStatus: student.status },
+  });
+
+  revalidatePath("/students");
+  revalidatePath(`/students/${studentId}`);
+}
+
+export async function deleteUnpaidStudentAction(formData: FormData) {
+  const studentId = formData.get("studentId") as string;
+  if (!studentId) throw new Error("Student required");
+
+  const { userId, profile } = await requireAdminProfile();
+  if (profile.role !== "super_admin") throw new Error("Forbidden");
+  requireFeature(profile.role, "student_management", "full");
+
+  const db = getServiceDb();
+  const { data: student, error: fetchError } = await db
+    .from("profiles")
+    .select("id, role, complimentary_access, status")
+    .eq("id", studentId)
+    .maybeSingle();
+
+  if (fetchError) throw new Error(fetchError.message);
+  if (!student || student.role !== "student") {
+    throw new Error("Student not found");
+  }
+  if (student.complimentary_access) {
+    throw new Error("Cannot delete a student with complimentary access");
+  }
+
+  const { count, error: payError } = await db
+    .from("payments")
+    .select("id", { count: "exact", head: true })
+    .eq("student_id", studentId)
+    .eq("status", "paid");
+
+  if (payError) throw new Error(payError.message);
+  if ((count ?? 0) > 0) {
+    throw new Error("Cannot delete a student who has paid");
+  }
+
+  const { error } = await db
+    .from("profiles")
+    .update({ status: "inactive" })
+    .eq("id", studentId)
+    .eq("role", "student");
+
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: "student.unpaid_deleted",
+    targetType: "profile",
+    targetId: studentId,
+    metadata: { method: "soft_inactive", previousStatus: student.status },
+  });
+
+  revalidatePath("/students");
+  revalidatePath(`/students/${studentId}`);
+}

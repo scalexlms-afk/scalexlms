@@ -43,6 +43,7 @@ export interface CommunityPost {
   status: "pending_approval" | "approved" | "rejected";
   like_count: number;
   media_urls?: string[];
+  pinned?: boolean;
   created_at: string;
   updated_at: string;
   profiles?: {

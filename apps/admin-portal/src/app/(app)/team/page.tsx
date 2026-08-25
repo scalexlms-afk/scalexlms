@@ -8,10 +8,12 @@ import {
   AdminEmptyState,
 } from "@/components/admin-ui";
 import { requireAdminProfile, requireFeaturePage } from "@/lib/auth";
-import { getAdminUsers } from "@/lib/data";
+import { getAdminUsers, getPendingStaffInvites } from "@/lib/data";
 import { formatDate, formatStatus } from "@/lib/format";
+import { Field, inputClasses } from "@/components/field";
 import { Button, DataTable, StatusPill } from "@scalex/ui";
 import { updateUserRoleAction } from "@/app/(app)/settings/actions";
+import { deleteStaffInviteAction, inviteStaffAction } from "./actions";
 import Link from "next/link";
 
 type TeamTab = "all" | "admins" | "mentors" | "sales";
@@ -19,7 +21,7 @@ type TeamTab = "all" | "admins" | "mentors" | "sales";
 export default async function TeamMembersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; member?: string; q?: string }>;
+  searchParams: Promise<{ tab?: string; member?: string; q?: string; invited?: string }>;
 }) {
   const { profile } = await requireAdminProfile();
   requireFeaturePage(profile.role, "system_settings", "full");
@@ -32,7 +34,10 @@ export default async function TeamMembersPage({
       ? params.tab
       : "all";
 
-  const users = await getAdminUsers();
+  const [users, pendingInvites] = await Promise.all([
+    getAdminUsers(),
+    getPendingStaffInvites(),
+  ]);
   const active = users.filter((u) => u.status === "active").length;
   const admins = users.filter(
     (u) => u.role === "super_admin" || u.role === "instructor"
@@ -102,6 +107,86 @@ export default async function TeamMembersPage({
       <AdminSplit
         main={
           <div className="space-y-4">
+            {params.invited === "1" ? (
+              <p className="rounded-xl border border-accent-green/30 bg-accent-green/10 px-4 py-3 text-sm text-accent-green">
+                Invite stored. Share onboarding details with the new teammate.
+              </p>
+            ) : null}
+            <AdminPanel title="Invite staff">
+              <form action={inviteStaffAction} className="grid gap-3 sm:grid-cols-2">
+                <Field
+                  label="Email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="name@example.com"
+                />
+                <div>
+                  <label
+                    htmlFor="inviteRole"
+                    className="mb-1.5 block text-sm font-medium text-muted"
+                  >
+                    Role
+                  </label>
+                  <select
+                    id="inviteRole"
+                    name="role"
+                    required
+                    defaultValue="instructor"
+                    className={inputClasses}
+                  >
+                    <option value="instructor">Instructor</option>
+                    <option value="mentor">Mentor</option>
+                    <option value="sales">Sales</option>
+                    <option value="super_admin">Super Admin</option>
+                  </select>
+                </div>
+                <div className="sm:col-span-2">
+                  <Button type="submit">Send invite</Button>
+                </div>
+              </form>
+            </AdminPanel>
+            {pendingInvites.length > 0 ? (
+              <AdminPanel title="Pending invites">
+                <DataTable
+                  rows={pendingInvites}
+                  getRowKey={(row) => row.id}
+                  columns={[
+                    {
+                      key: "email",
+                      header: "Email",
+                      render: (row) => row.email,
+                    },
+                    {
+                      key: "role",
+                      header: "Role",
+                      render: (row) => row.role.replace(/_/g, " "),
+                    },
+                    {
+                      key: "expires",
+                      header: "Expires",
+                      render: (row) => formatDate(row.expires_at),
+                    },
+                    {
+                      key: "actions",
+                      header: "",
+                      render: (row) => (
+                        <form action={deleteStaffInviteAction}>
+                          <input type="hidden" name="inviteId" value={row.id} />
+                          <Button
+                            type="submit"
+                            variant="destructive"
+                            className="!px-2 !py-1 text-xs"
+                          >
+                            Delete
+                          </Button>
+                        </form>
+                      ),
+                    },
+                  ]}
+                />
+              </AdminPanel>
+            ) : null}
             <AdminFilterTabs
               active={tab}
               tabs={[
@@ -225,8 +310,8 @@ export default async function TeamMembersPage({
                     {formatDate(selected.created_at)}
                   </p>
                   <p className="text-xs text-subtle">
-                    Invite flow is stubbed — create staff users in Supabase Auth
-                    then assign roles here.
+                    Use the invite form to store a pending staff invite, then
+                    assign roles here after they sign in.
                   </p>
                 </div>
               ) : (
@@ -239,7 +324,7 @@ export default async function TeamMembersPage({
             <AdminPanel title="Quick Actions">
               <div className="space-y-2">
                 <p className="text-sm text-muted">
-                  Create staff accounts in Supabase Auth, then assign roles here.
+                  Invite staff above, then assign or change roles in the table.
                 </p>
                 <Link href="/roles" className="admin-btn-secondary w-full">
                   Manage Roles

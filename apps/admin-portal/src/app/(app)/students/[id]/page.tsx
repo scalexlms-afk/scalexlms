@@ -25,6 +25,8 @@ import {
   updateStudentPlanAction,
   logMentorCallAction,
   replyToStudentAction,
+  grantComplimentaryAccessAction,
+  deleteUnpaidStudentAction,
 } from "../actions";
 import { Button, DataTable, ProgressBar, StatusPill } from "@scalex/ui";
 
@@ -157,6 +159,14 @@ export default async function StudentDetailPage({
                   <div>
                     <dt className="text-subtle">Mentor</dt>
                     <dd className="mt-1">{mentor?.name ?? "Unassigned"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-subtle">Access</dt>
+                    <dd className="mt-1">
+                      {detail.student.complimentary_access
+                        ? "Complimentary (free)"
+                        : "Standard billing"}
+                    </dd>
                   </div>
                   <div className="sm:col-span-2">
                     <dt className="text-subtle">Course Progress</dt>
@@ -455,6 +465,47 @@ export default async function StudentDetailPage({
                     </Button>
                   )}
                 </form>
+              </AdminPanel>
+            ) : null}
+
+            {profile.role === "super_admin" ? (
+              <AdminPanel title="Access">
+                <div className="space-y-4">
+                  {detail.student.complimentary_access ? (
+                    <p className="text-sm text-accent-green">
+                      This student has complimentary (free) access.
+                    </p>
+                  ) : (
+                    <form action={grantComplimentaryAccessAction}>
+                      <input type="hidden" name="studentId" value={id} />
+                      <p className="mb-3 text-xs text-muted">
+                        Grant free access without payment. Status stays active.
+                      </p>
+                      <Button type="submit" className="w-full">
+                        Grant free access
+                      </Button>
+                    </form>
+                  )}
+                  {!detail.student.complimentary_access &&
+                  !detail.payments.some((pay) => pay.status === "paid") ? (
+                    <form
+                      action={deleteUnpaidStudentAction}
+                      className="border-t border-line pt-4"
+                    >
+                      <input type="hidden" name="studentId" value={id} />
+                      <p className="mb-3 text-xs text-muted">
+                        Soft-deactivate this unpaid student (no paid invoices).
+                      </p>
+                      <Button
+                        type="submit"
+                        variant="destructive"
+                        className="w-full"
+                      >
+                        Delete unpaid student
+                      </Button>
+                    </form>
+                  ) : null}
+                </div>
               </AdminPanel>
             ) : null}
 

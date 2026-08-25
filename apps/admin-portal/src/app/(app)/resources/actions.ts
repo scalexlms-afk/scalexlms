@@ -20,6 +20,8 @@ export async function createAcademyResourceAction(formData: FormData) {
   const visibility = (str(formData, "visibility") ||
     "draft") as "public" | "private" | "draft";
   const courseId = str(formData, "courseId") || null;
+  const milestoneId = str(formData, "milestoneId") || null;
+  const lessonId = str(formData, "lessonId") || null;
   const filePath = str(formData, "filePath") || null;
   const fileUrl = str(formData, "fileUrl") || null;
   const sizeRaw = str(formData, "fileSizeBytes");
@@ -36,6 +38,8 @@ export async function createAcademyResourceAction(formData: FormData) {
     file_type: fileType,
     visibility,
     course_id: courseId,
+    milestone_id: milestoneId,
+    lesson_id: lessonId,
     file_path: filePath,
     file_url: fileUrl,
     file_size_bytes:

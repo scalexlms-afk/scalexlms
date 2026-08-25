@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Field, TextArea } from "@/components/field";
+import { MediaUploadField } from "@/components/media-upload-field";
 import {
   deleteCourseAction,
   updateCourseAction,
@@ -18,6 +19,8 @@ export function CourseSettingsForm({
     title: string;
     description: string | null;
     status: string;
+    cover_path?: string | null;
+    cover_url?: string | null;
   };
 }) {
   const initialStatus: CourseStatus =
@@ -44,6 +47,16 @@ export function CourseSettingsForm({
           rows={4}
           defaultValue={course.description ?? ""}
           placeholder="What students will learn"
+        />
+
+        <MediaUploadField
+          folder={`covers/${course.id}`}
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          label="Cover image"
+          name="coverPath"
+          defaultUrl={course.cover_path || course.cover_url}
+          helperText="Upload a new cover or leave as-is to keep the current image."
+          dropHint="PNG, JPG, WebP, or GIF"
         />
 
         <div className="flex items-center justify-between gap-4 rounded-xl border border-line px-4 py-3">

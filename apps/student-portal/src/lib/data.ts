@@ -647,6 +647,7 @@ export async function getCommunityPosts(
       "*, profiles:author_id(name, avatar_url, plan, level, role)"
     )
     .or(`status.eq.approved,author_id.eq.${userId}`)
+    .order("pinned", { ascending: false })
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -735,3 +736,76 @@ export async function getCommunityPost(
     liked_by_user: Boolean(likes),
   };
 }
+
+export type StudentAcademyResource = {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  file_type: string;
+  href: string | null;
+  lesson_id: string | null;
+  milestone_id: string | null;
+};
+
+export async function getAcademyResourcesForContext(opts: {
+  lessonId?: string | null;
+  milestoneId?: string | null;
+}): Promise<StudentAcademyResource[]> {
+  const filters: string[] = [];
+  if (opts.lessonId) filters.push(`lesson_id.eq.${opts.lessonId}`);
+  if (opts.milestoneId) {
+    filters.push(`and(milestone_id.eq.${opts.milestoneId},lesson_id.is.null)`);
+  }
+  if (filters.length === 0) return [];
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("academy_resources")
+    .select(
+      "id, title, description, category, file_type, file_path, file_url, lesson_id, milestone_id"
+    )
+    .eq("visibility", "public")
+    .or(filters.join(","))
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    console.error("getAcademyResourcesForContext:", error.message);
+    return [];
+  }
+
+  type ResourceRow = {
+    id: string;
+    title: string;
+    description: string | null;
+    category: string;
+    file_type: string;
+    file_path: string | null;
+    file_url: string | null;
+    lesson_id: string | null;
+    milestone_id: string | null;
+  };
+  const rows = (data ?? []) as ResourceRow[];
+  return Promise.all(
+    rows.map(async (row) => {
+      let href: string | null = row.file_url;
+      if (!href && row.file_path) {
+        const { data: signed } = await supabase.storage
+          .from("academy-resources")
+          .createSignedUrl(row.file_path, 60 * 60);
+        href = signed?.signedUrl ?? null;
+      }
+      return {
+        id: row.id,
+        title: row.title,
+        description: row.description,
+        category: row.category,
+        file_type: row.file_type,
+        href,
+        lesson_id: row.lesson_id,
+        milestone_id: row.milestone_id,
+      };
+    })
+  );
+}
+

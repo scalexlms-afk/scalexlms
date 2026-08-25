@@ -27,6 +27,8 @@ export type Database = {
           file_type: string
           file_url: string | null
           id: string
+          lesson_id: string | null
+          milestone_id: string | null
           title: string
           updated_at: string
           updated_by: string | null
@@ -44,6 +46,8 @@ export type Database = {
           file_type?: string
           file_url?: string | null
           id?: string
+          lesson_id?: string | null
+          milestone_id?: string | null
           title: string
           updated_at?: string
           updated_by?: string | null
@@ -61,6 +65,8 @@ export type Database = {
           file_type?: string
           file_url?: string | null
           id?: string
+          lesson_id?: string | null
+          milestone_id?: string | null
           title?: string
           updated_at?: string
           updated_by?: string | null
@@ -79,6 +85,20 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_resources_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "academy_resources_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
             referencedColumns: ["id"]
           },
           {
@@ -396,6 +416,7 @@ export type Database = {
           id: string
           like_count: number
           media_urls: string[]
+          pinned: boolean
           status: Database["public"]["Enums"]["post_status"]
           updated_at: string
         }
@@ -407,6 +428,7 @@ export type Database = {
           id?: string
           like_count?: number
           media_urls?: string[]
+          pinned?: boolean
           status?: Database["public"]["Enums"]["post_status"]
           updated_at?: string
         }
@@ -418,6 +440,7 @@ export type Database = {
           id?: string
           like_count?: number
           media_urls?: string[]
+          pinned?: boolean
           status?: Database["public"]["Enums"]["post_status"]
           updated_at?: string
         }
@@ -433,6 +456,8 @@ export type Database = {
       }
       courses: {
         Row: {
+          cover_path: string | null
+          cover_url: string | null
           created_at: string
           created_by: string | null
           description: string | null
@@ -442,6 +467,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cover_path?: string | null
+          cover_url?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -451,6 +478,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cover_path?: string | null
+          cover_url?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1302,6 +1331,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          complimentary_access: boolean
           country: string | null
           created_at: string
           current_stage: string | null
@@ -1320,6 +1350,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          complimentary_access?: boolean
           country?: string | null
           created_at?: string
           current_stage?: string | null
@@ -1338,6 +1369,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          complimentary_access?: boolean
           country?: string | null
           created_at?: string
           current_stage?: string | null
@@ -1564,6 +1596,44 @@ export type Database = {
           {
             foreignKeyName: "session_registrations_student_id_fkey"
             columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_invites: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string | null
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_invites_invited_by_fkey"
+            columns: ["invited_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -2133,3 +2203,5 @@ export type AiKnowledgeArticle =
   Database["public"]["Tables"]["ai_knowledge_articles"]["Row"];
 export type PlatformSetting =
   Database["public"]["Tables"]["platform_settings"]["Row"];
+export type StaffInvite =
+  Database["public"]["Tables"]["staff_invites"]["Row"];

@@ -1,6 +1,7 @@
 import type { Lesson } from "@scalex/db/types";
 import { getDashboardData, type DashboardMilestone } from "@/lib/dashboard";
 import {
+  getAcademyResourcesForContext,
   getCommunityPosts,
   getCompletedLessonIds,
   getCourseWithRoadmap,
@@ -307,6 +308,21 @@ export async function getContinueLearningData(
       href: `/lessons/${l.id}`,
       downloadable: l.content_type === "pdf",
     }));
+
+  const academyResources = await getAcademyResourcesForContext({
+    lessonId: currentLesson?.id,
+    milestoneId: milestone.id,
+  });
+  for (const resource of academyResources) {
+    if (!resource.href) continue;
+    resources.push({
+      id: resource.id,
+      title: resource.title,
+      typeLabel: resource.file_type.toUpperCase(),
+      href: resource.href,
+      downloadable: true,
+    });
+  }
 
   if (task) {
     for (const format of task.accepted_formats ?? []) {

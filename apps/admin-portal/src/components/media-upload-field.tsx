@@ -11,6 +11,7 @@ type MediaUploadFieldProps = {
   name: string;
   defaultUrl?: string | null;
   helperText?: string;
+  dropHint?: string;
 };
 
 export function MediaUploadField({
@@ -20,6 +21,7 @@ export function MediaUploadField({
   name,
   defaultUrl,
   helperText,
+  dropHint = "MP4, WebM, or PDF",
 }: MediaUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [url, setUrl] = useState(defaultUrl ?? "");
@@ -106,7 +108,7 @@ export function MediaUploadField({
                 : "Drop a video or PDF, or click to browse"}
         </span>
         <span className="mt-1 text-xs text-subtle">
-          MP4, WebM, or PDF
+          {dropHint}
         </span>
       </button>
       {uploading || progress > 0 ? (

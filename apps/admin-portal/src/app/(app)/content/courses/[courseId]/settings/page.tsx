@@ -27,6 +27,8 @@ export default async function CourseSettingsPage({
             title: course.title,
             description: course.description,
             status: course.status,
+            cover_path: course.cover_path,
+            cover_url: course.cover_url,
           }}
         />
       ) : (

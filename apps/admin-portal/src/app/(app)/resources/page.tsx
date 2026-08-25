@@ -1,4 +1,5 @@
 import { Field, TextArea, inputClasses } from "@/components/field";
+import { ResourceTargetFields } from "@/components/resource-target-fields";
 import { ResourceUploadField } from "@/components/resource-upload-field";
 import {
   AdminFilterTabs,
@@ -11,7 +12,7 @@ import { canAccess } from "@scalex/db/rbac";
 import {
   getAcademyResources,
   getAcademyResourceStats,
-  getCoursesOptions,
+  getCourseAttachOptions,
 } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 import { Button, DataTable, StatusPill } from "@scalex/ui";
@@ -48,7 +49,7 @@ export default async function ResourcesPage({
   const [rows, stats, courses] = await Promise.all([
     getAcademyResources(),
     getAcademyResourceStats(),
-    getCoursesOptions(),
+    getCourseAttachOptions(),
   ]);
 
   const filtered =
@@ -165,19 +166,7 @@ export default async function ResourcesPage({
                 <option value="private">Private</option>
               </select>
             </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-muted">
-                Course (optional)
-              </label>
-              <select name="courseId" className={inputClasses} defaultValue="">
-                <option value="">All courses</option>
-                {courses.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <ResourceTargetFields courses={courses} />
             <div className="sm:col-span-2">
               <TextArea label="Description" name="description" rows={2} />
             </div>
@@ -228,8 +217,15 @@ export default async function ResourcesPage({
             },
             {
               key: "course",
-              header: "Course",
-              render: (r) => r.course?.title ?? "—",
+              header: "Attached to",
+              render: (r) => {
+                const parts = [
+                  r.course?.title,
+                  r.milestone?.title,
+                  r.lesson?.title,
+                ].filter(Boolean);
+                return parts.length ? parts.join(" · ") : "—";
+              },
             },
             {
               key: "type",

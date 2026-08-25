@@ -121,3 +121,31 @@ export async function createStaffPostAction(formData: FormData) {
 
   revalidatePath("/community");
 }
+
+export async function togglePinPostAction(formData: FormData) {
+  const postId = formData.get("postId") as string;
+  const pinned = formData.get("pinned") === "true";
+
+  if (!postId) throw new Error("Post required");
+
+  const { userId, profile } = await requireAdminProfile();
+  requireFeature(profile.role, "community");
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("community_posts")
+    .update({ pinned } as never)
+    .eq("id", postId);
+
+  if (error) throw new Error(error.message);
+
+  await writeAuditLog({
+    actorId: userId,
+    action: pinned ? "community_post.pinned" : "community_post.unpinned",
+    targetType: "community_post",
+    targetId: postId,
+    metadata: { pinned },
+  });
+
+  revalidatePath("/community");
+}

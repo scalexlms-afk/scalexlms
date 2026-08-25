@@ -990,6 +990,8 @@ export type CourseSummary = {
   description: string | null;
   status: string;
   created_at: string;
+  cover_path: string | null;
+  cover_url: string | null;
   milestoneCount: number;
   lessonCount: number;
   moduleCount: number;
@@ -1002,7 +1004,7 @@ export async function getCoursesSummary(): Promise<CourseSummary[]> {
     .from("courses")
     .select(
       `
-      id, title, description, status, created_at,
+      id, title, description, status, created_at, cover_path, cover_url,
       milestones(
         id,
         tasks(id),
@@ -1049,6 +1051,8 @@ export async function getCoursesSummary(): Promise<CourseSummary[]> {
       description: course.description,
       status: course.status,
       created_at: course.created_at,
+      cover_path: (course as { cover_path?: string | null }).cover_path ?? null,
+      cover_url: (course as { cover_url?: string | null }).cover_url ?? null,
       milestoneCount: milestones.length,
       lessonCount,
       moduleCount,
@@ -1124,6 +1128,8 @@ export type ContentCourse = {
   title: string;
   description: string | null;
   status: string;
+  cover_path: string | null;
+  cover_url: string | null;
   milestones: Array<{
     id: string;
     title: string;
@@ -1158,7 +1164,7 @@ export const getContentTree = cache(async (courseId?: string): Promise<ContentCo
     .from("courses")
     .select(
       `
-      id, title, description, status,
+      id, title, description, status, cover_path, cover_url,
       milestones(
         id, title, order_index,
         tasks(id, title, description, accepted_formats, is_required, review_method, lesson_id, milestone_id),
@@ -1294,6 +1300,8 @@ export const getContentTree = cache(async (courseId?: string): Promise<ContentCo
         title: raw.title as string,
         description: (raw.description as string | null) ?? null,
         status: raw.status as string,
+        cover_path: (raw.cover_path as string | null) ?? null,
+        cover_url: (raw.cover_url as string | null) ?? null,
         milestones,
       } satisfies ContentCourse;
     }
@@ -1866,6 +1874,7 @@ export type CommunityModerationPost = {
   channel: string;
   content: string;
   status: string;
+  pinned: boolean;
   created_at: string;
   media_urls?: string[] | null;
   author: { name: string; email: string; role?: string } | null;
@@ -1884,6 +1893,7 @@ export async function getCommunityPostsByStatus(
       channel,
       content,
       status,
+      pinned,
       created_at,
       media_urls,
       author:profiles!author_id(name, email, role)
@@ -2002,6 +2012,8 @@ export type AcademyResourceRow = {
   description: string | null;
   category: string;
   course_id: string | null;
+  milestone_id: string | null;
+  lesson_id: string | null;
   file_type: string;
   file_path: string | null;
   file_url: string | null;
@@ -2010,6 +2022,8 @@ export type AcademyResourceRow = {
   download_count: number;
   updated_at: string;
   course?: { title: string } | null;
+  milestone?: { title: string } | null;
+  lesson?: { title: string } | null;
   updater?: { name: string } | null;
 };
 
@@ -2019,9 +2033,12 @@ export async function getAcademyResources(): Promise<AcademyResourceRow[]> {
     .from("academy_resources")
     .select(
       `
-      id, title, description, category, course_id, file_type, file_path, file_url,
+      id, title, description, category, course_id, milestone_id, lesson_id,
+      file_type, file_path, file_url,
       file_size_bytes, visibility, download_count, updated_at,
       course:courses(title),
+      milestone:milestones(title),
+      lesson:lessons(title),
       updater:profiles!updated_by(name)
     `
     )
@@ -2143,3 +2160,85 @@ export async function getCoursesOptions(): Promise<
   if (error) return [];
   return data ?? [];
 }
+
+export type CourseAttachOption = {
+  id: string;
+  title: string;
+  milestones: Array<{
+    id: string;
+    title: string;
+    lessons: Array<{ id: string; title: string }>;
+  }>;
+};
+
+export async function getCourseAttachOptions(): Promise<CourseAttachOption[]> {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("courses")
+    .select(
+      "id, title, milestones(id, title, order_index, modules(id, lessons(id, title, order_index)))"
+    )
+    .order("title", { ascending: true });
+  if (error) {
+    console.error("getCourseAttachOptions:", error.message);
+    return [];
+  }
+
+  const asArray = <T,>(value: T | T[] | null | undefined): T[] =>
+    Array.isArray(value) ? value : value ? [value] : [];
+
+  return ((data ?? []) as unknown as Array<Record<string, unknown>>).map((c) => {
+    const milestones = asArray(c.milestones as unknown)
+      .map((msRaw) => {
+        const ms = msRaw as Record<string, unknown>;
+        const lessons = asArray(ms.modules as unknown).flatMap((modRaw) => {
+          const mod = modRaw as Record<string, unknown>;
+          return asArray(mod.lessons as unknown)
+            .map((lRaw) => {
+              const l = lRaw as Record<string, unknown>;
+              return {
+                id: l.id as string,
+                title: l.title as string,
+                order_index: Number(l.order_index ?? 0),
+              };
+            })
+            .sort((a, b) => a.order_index - b.order_index)
+            .map(({ id, title }) => ({ id, title }));
+        });
+        return {
+          id: ms.id as string,
+          title: ms.title as string,
+          order_index: Number(ms.order_index ?? 0),
+          lessons,
+        };
+      })
+      .sort((a, b) => a.order_index - b.order_index)
+      .map(({ id, title, lessons }) => ({ id, title, lessons }));
+    return { id: c.id as string, title: c.title as string, milestones };
+  });
+}
+
+export type StaffInviteRow = {
+  id: string;
+  email: string;
+  role: string;
+  created_at: string;
+  expires_at: string;
+  accepted_at: string | null;
+  invited_by: string | null;
+};
+
+export async function getPendingStaffInvites(): Promise<StaffInviteRow[]> {
+  const db = getServiceDb();
+  const { data, error } = await db
+    .from("staff_invites")
+    .select("id, email, role, created_at, expires_at, accepted_at, invited_by")
+    .is("accepted_at", null)
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("getPendingStaffInvites:", error.message);
+    return [];
+  }
+  return (data ?? []) as StaffInviteRow[];
+}
+

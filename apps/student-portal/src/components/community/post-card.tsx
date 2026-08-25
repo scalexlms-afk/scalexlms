@@ -102,6 +102,9 @@ export function PostCard({
                   variant={planPillVariant(post.profiles.plan)}
                 />
               )}
+              {post.pinned ? (
+                <StatusPill label="Pinned" variant="active" />
+              ) : null}
               {solved ? (
                 <StatusPill label="Solved" variant="approved" />
               ) : null}

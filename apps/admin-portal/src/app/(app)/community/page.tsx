@@ -15,7 +15,7 @@ import {
   type CommunityModerationStatus,
 } from "@/lib/data";
 import { inputClasses } from "@/components/field";
-import { createStaffPostAction, moderatePostAction } from "./actions";
+import { createStaffPostAction, moderatePostAction, togglePinPostAction } from "./actions";
 import { Button, StatusPill } from "@scalex/ui";
 
 function channelLabel(channel: string): string {
@@ -231,6 +231,24 @@ export default async function CommunityModerationPage({
                       {new Date(post.created_at).toLocaleString()}
                     </p>
 
+                    {post.status === "approved" && (
+                      <div className="mt-4 flex flex-wrap items-center gap-3">
+                        {post.pinned ? (
+                          <StatusPill label="Pinned" variant="active" />
+                        ) : null}
+                        <form action={togglePinPostAction}>
+                          <input type="hidden" name="postId" value={post.id} />
+                          <input
+                            type="hidden"
+                            name="pinned"
+                            value={post.pinned ? "false" : "true"}
+                          />
+                          <Button type="submit" size="sm" variant="secondary">
+                            {post.pinned ? "Unpin" : "Pin"}
+                          </Button>
+                        </form>
+                      </div>
+                    )}
                     {post.status === "pending_approval" && (
                       <div className="mt-4 flex flex-wrap gap-3">
                         <form action={moderatePostAction}>

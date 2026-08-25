@@ -70,6 +70,7 @@ export async function updateCourseAction(formData: FormData) {
   const title = (formData.get("title") as string)?.trim();
   const description = (formData.get("description") as string)?.trim() || null;
   const status = formData.get("status") as CourseStatus;
+  const coverInput = (formData.get("coverPath") as string)?.trim() || "";
 
   if (!courseId || !title || !status) throw new Error("Invalid course");
 
@@ -77,10 +78,27 @@ export async function updateCourseAction(formData: FormData) {
   requireFeature(profile.role, "course_content", "full");
 
   const db = getServiceDb();
-  const { error } = await db
-    .from("courses")
-    .update({ title, description, status })
-    .eq("id", courseId);
+  const patch: {
+    title: string;
+    description: string | null;
+    status: CourseStatus;
+    cover_path?: string | null;
+    cover_url?: string | null;
+  } = { title, description, status };
+
+  if (coverInput) {
+    if (coverInput.includes("://") || coverInput.startsWith("/")) {
+      patch.cover_url = coverInput;
+    } else {
+      patch.cover_path = coverInput;
+      const { data } = db.storage
+        .from(LESSON_MEDIA_BUCKET)
+        .getPublicUrl(coverInput);
+      patch.cover_url = data.publicUrl;
+    }
+  }
+
+  const { error } = await db.from("courses").update(patch).eq("id", courseId);
 
   if (error) throw new Error(error.message);
 
@@ -89,7 +107,7 @@ export async function updateCourseAction(formData: FormData) {
     action: "course.updated",
     targetType: "course",
     targetId: courseId,
-    metadata: { title, status },
+    metadata: { title, status, coverUpdated: Boolean(coverInput) },
   });
 
   revalidateContent(courseId);
